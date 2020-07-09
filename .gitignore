@@ -1,0 +1,9 @@
+# editor
+.*.sw*
+
+# Build directories
+build*/
+
+# Android
+Pipfile.lock
+android-*.txt

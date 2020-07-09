@@ -1,0 +1,38 @@
+#ifndef CHANNELER_CONFIG_H
+#define CHANNELER_CONFIG_H
+
+/*****************************************************************************
+ * Project metadata
+ **/
+// Name
+#mesondefine CHANNELER_PACKAGE_NAME
+
+// Version
+#mesondefine CHANNELER_PACKAGE_MAJOR
+#mesondefine CHANNELER_PACKAGE_MINOR
+#mesondefine CHANNELER_PACKAGE_PATCH
+#mesondefine CHANNELER_PACKAGE_VERSION
+#mesondefine CHANNELER_ABI_VERSION
+#mesondefine CHANNELER_LIB_VERSION
+
+// URL
+#mesondefine CHANNELER_PACKAGE_URL
+
+
+/*****************************************************************************
+ * Options
+ **/
+
+
+/*****************************************************************************
+ * Headers
+ **/
+// TODO?
+
+
+/*****************************************************************************
+ * Platform checks
+ **/
+#mesondefine CHANNELER_BIGENDIAN
+
+#endif // guard
