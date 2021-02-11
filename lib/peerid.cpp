@@ -33,7 +33,49 @@
 
 namespace channeler {
 
+
+peerid_wrapper::peerid_wrapper(std::byte * start)
+  : raw{start}
+{
+}
+
+
+std::string
+peerid_wrapper::display() const
+{
+  std::string res = "0x";
+  return res + liberate::string::hexencode(raw, PEERID_SIZE_BYTES);
+}
+
+
+
+size_t
+peerid_wrapper::hash() const
+{
+  return liberate::cpp::range_hash(raw, raw+ PEERID_SIZE_BYTES);
+}
+
+
+
+bool
+peerid_wrapper::is_equal_to(peerid_wrapper const & other) const
+{
+  return (0 == ::memcmp(raw, other.raw, PEERID_SIZE_BYTES));
+}
+
+
+
+bool
+peerid_wrapper::is_less_than(peerid_wrapper const & other) const
+{
+  return (0 > ::memcmp(raw, other.raw, PEERID_SIZE_BYTES));
+}
+
+
+
+
 peerid::peerid()
+  : peerid_wrapper{buffer}
 {
   // XXX When we have a crypto library, this should no longer be necessary.
   //     For one thing, we probably don't want random peerids any longer, but
@@ -53,6 +95,7 @@ peerid::peerid()
 
 
 peerid::peerid(std::byte const * buf, size_t bufsize)
+  : peerid_wrapper{buffer}
 {
   if (bufsize < PEERID_SIZE_BYTES) {
     throw std::out_of_range("Peer identifier buffer is too small.");
@@ -64,6 +107,7 @@ peerid::peerid(std::byte const * buf, size_t bufsize)
 
 
 peerid::peerid(char const * buf, size_t bufsize)
+  : peerid_wrapper{buffer}
 {
   char const * start = buf;
   size_t buflen = bufsize;
@@ -85,39 +129,6 @@ peerid::peerid(char const * buf, size_t bufsize)
   if (used != PEERID_SIZE_BYTES) {
     throw std::invalid_argument("Could not decode hexadecimal peer identifier.");
   }
-}
-
-
-
-std::string
-peerid::display() const
-{
-  std::string res = "0x";
-  return res + liberate::string::hexencode(buffer, PEERID_SIZE_BYTES);
-}
-
-
-
-size_t
-peerid::hash() const
-{
-  return liberate::cpp::range_hash(&buffer[0], buffer + PEERID_SIZE_BYTES);
-}
-
-
-
-bool
-peerid::is_equal_to(peerid const & other) const
-{
-  return (0 == ::memcmp(buffer, other.buffer, PEERID_SIZE_BYTES));
-}
-
-
-
-bool
-peerid::is_less_than(peerid const & other) const
-{
-  return (0 > ::memcmp(buffer, other.buffer, PEERID_SIZE_BYTES));
 }
 
 

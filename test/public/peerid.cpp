@@ -125,3 +125,25 @@ TEST(PeerID, default_constructed_hashes_unique)
 
   ASSERT_NE(id1.hash(), id2.hash());
 }
+
+
+TEST(PeerIDWrapper, use_with_peerid)
+{
+  auto id = channeler::peerid{};
+  auto wrap = channeler::peerid_wrapper(id.raw);
+
+  ASSERT_EQ(id.hash(), wrap.hash());
+  ASSERT_EQ(id.display(), wrap.display());
+  ASSERT_EQ(id, wrap);
+
+  // Ok, modify a byte in the wrapper - this should yield the same comparisons
+  auto idhash = id.hash();
+  wrap.raw[0] = static_cast<std::byte>(static_cast<char>(wrap.raw[0]) + 128);
+
+  ASSERT_EQ(id.hash(), wrap.hash());
+  ASSERT_EQ(id.display(), wrap.display());
+  ASSERT_EQ(id, wrap);
+
+  // The hash should be different after this modification, though.
+  ASSERT_NE(idhash, id.hash());
+}

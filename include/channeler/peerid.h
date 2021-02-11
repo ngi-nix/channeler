@@ -38,31 +38,51 @@ constexpr size_t const PEERID_SIZE_BYTES = 16;
 constexpr size_t const PEERID_SIZE_BITS = PEERID_SIZE_BYTES * 8;
 
 /**
+ * This class wraps a memory region and interprets it as a peer identifier.
+ * Note that the memory region must be PEERID_SIZE_BYTES in size; the wrapper
+ * class does not perform any range checks.
+ *
  * For now, a peer identifier is a fixed length byte string that is largely
  * opaque to the protocol.
  */
-struct CHANNELER_API peerid
-  : public ::liberate::cpp::comparison_operators<peerid>
+struct CHANNELER_API peerid_wrapper
+  : public ::liberate::cpp::comparison_operators<peerid_wrapper>
 {
-  std::byte buffer[PEERID_SIZE_BYTES];
-
   // Create random peer identifier
-  peerid();
-
-  // Read a peer identifier from a buffer
-  peerid(std::byte const * buf, size_t bufsize);
-  peerid(char const * buf, size_t bufsize);
+  peerid_wrapper(std::byte * start);
 
   std::string display() const;
   size_t hash() const;
 
-  bool is_equal_to(peerid const & other) const;
-  bool is_less_than(peerid const & other) const;
+  bool is_equal_to(peerid_wrapper const & other) const;
+  bool is_less_than(peerid_wrapper const & other) const;
+
+  // Pointer to raw buffer; equivalent to start in the constructor
+  std::byte * raw;
 };
+
+
+/**
+ * By contrast, this class manages a buffer for a peer identifier. It shares
+ * most of its implementation with peerid_wrapper.
+ */
+struct CHANNELER_API peerid
+  : public peerid_wrapper
+{
+  std::byte buffer[PEERID_SIZE_BYTES];
+
+  // New random peer identifier
+  peerid();
+
+  // Copy peer identifier from a buffer
+  peerid(std::byte const * buf, size_t bufsize);
+  peerid(char const * buf, size_t bufsize);
+};
+
 
 } // namespace channeler
 
-LIBERATE_MAKE_HASHABLE(channeler::peerid)
+LIBERATE_MAKE_HASHABLE(channeler::peerid_wrapper)
 
 
 #endif // guard
