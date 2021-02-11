@@ -175,11 +175,14 @@ compiler.sizeof('ssize_t', prefix: '#include <stdint.h>')
 configure_file(
   input: 'build-config.h.in',
   output: 'build-config.h',
-  configuration: conf_data)
+  configuration: conf_data
+)
+
 
 
 ##############################################################################
 # Meson Wrap Dependencies
+liberate = subproject('liberate')
 packeteer = subproject('packeteer')
 gtest = subproject('gtest')
 # FIXME? clipp = subproject('muellan-clipp')
@@ -205,12 +208,16 @@ install_headers(
 
 libsrc = [
   'lib' / 'version.cpp',
+  'lib' / 'peerid.cpp',
+  'lib' / 'packet.cpp',
 ]
 
 
 lib = library('channeler', libsrc,
     include_directories: [includes, libincludes],
-    # FIXME? dependencies: [thread],
+    dependencies: [
+      liberate.get_variable('liberate_dep'),
+    ],
     link_args: link_args,
     cpp_args: cpp_lib_is_building,
     version: LIB_VERSION,
@@ -219,66 +226,14 @@ lib = library('channeler', libsrc,
 
 channeler_dep = declare_dependency(
     include_directories: [includes],
+    dependencies: [
+      liberate.get_variable('liberate_dep'),
+    ],
     link_with: [lib],
     link_args: link_args,
     version: LIB_VERSION,
 )
 
-##############################################################################
-# Tests
-
-# Tests in a subproject are complicicated. You need all the compile and
-# link flags from the enclosing project, etc.
-if not meson.is_subproject()
-
-  # See https://github.com/google/googletest/issues/813
-  test_args = []
-  if host_machine.system() == 'cygwin'
-    test_args += ['-D_POSIX_C_SOURCE=200809L']
-  endif
-
-  # Google test issues this warning; disable it in *test* code only.
-  if compiler_id == 'msvc'
-    test_args = [
-      '/wd4389',
-    ]
-  endif
-
-  # We're building two tests:
-  # - public_tests include *only* public headers
-  # - private_tests include private headers
-
-  public_test_src = [
-    'test' / 'runner.cpp',
-  ]
-
-  private_test_src = [
-    'test' / 'runner.cpp',
-  ]
-
-  public_tests = executable('public_tests', public_test_src,
-      dependencies: [
-        channeler_dep,
-        gtest.get_variable('gtest_dep'),
-      ],
-      cpp_args: test_args,
-  )
-  test('public_tests', public_tests)
-
-  # Due to symbol visibility, private tests won't link for non-debug builds
-  if bt in ['debug', 'debugoptimized']
-    private_tests = executable('private_tests', private_test_src,
-        include_directories: [libincludes],  # Also private headers
-        dependencies: [
-          channeler_dep,
-          gtest.get_variable('gtest_dep'),
-        ],
-        cpp_args: test_args,
-    )
-    test('private_tests', private_tests)
-  endif
-
-endif
 
 
 ##############################################################################
@@ -332,5 +287,4 @@ endif
 
 ##############################################################################
 # Subdirectories
-# TODO? subdir('examples')
-# TODO? subdir('benchmarks')
+subdir('test')
