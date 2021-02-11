@@ -73,6 +73,13 @@ peerid_wrapper::is_less_than(peerid_wrapper const & other) const
 
 
 
+peerid
+peerid_wrapper::copy() const
+{
+  return {raw, size()};
+}
+
+
 
 peerid::peerid()
   : peerid_wrapper{buffer}
@@ -115,19 +122,19 @@ peerid::peerid(char const * buf, size_t bufsize)
     start += 2;
     buflen -= 2;
     if (bufsize < (PEERID_SIZE_BYTES * 2) + 2) {
-      throw std::out_of_range("Peer identifier buffer is too small.");
+      throw std::out_of_range{"Peer identifier buffer is too small."};
     }
   }
   else {
     if (bufsize < PEERID_SIZE_BYTES * 2) {
-      throw std::out_of_range("Peer identifier buffer is too small.");
+      throw std::out_of_range{"Peer identifier buffer is too small."};
     }
   }
 
   auto used = liberate::string::hexdecode(buffer, PEERID_SIZE_BYTES,
       reinterpret_cast<std::byte const *>(start), buflen);
   if (used != PEERID_SIZE_BYTES) {
-    throw std::invalid_argument("Could not decode hexadecimal peer identifier.");
+    throw std::invalid_argument{"Could not decode hexadecimal peer identifier."};
   }
 }
 

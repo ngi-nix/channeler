@@ -147,3 +147,17 @@ TEST(PeerIDWrapper, use_with_peerid)
   // The hash should be different after this modification, though.
   ASSERT_NE(idhash, id.hash());
 }
+
+
+TEST(PeerID, construct_from_wrapper)
+{
+  auto buf = channeler::peerid{};
+  auto wrap = channeler::peerid_wrapper(buf.raw);
+
+  // Ok, ignoring buf - this is just the random ID buffer.
+  // The test is to construct a peer identifier from a warpper, which means
+  // copying the wrapped data.
+  channeler::peerid copy = wrap.copy();
+
+  ASSERT_EQ(buf, copy);
+}

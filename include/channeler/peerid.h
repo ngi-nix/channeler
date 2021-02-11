@@ -38,6 +38,11 @@ constexpr size_t const PEERID_SIZE_BYTES = 16;
 constexpr size_t const PEERID_SIZE_BITS = PEERID_SIZE_BYTES * 8;
 
 /**
+ * Forward declaration.
+ */
+struct CHANNELER_API peerid;
+
+/**
  * This class wraps a memory region and interprets it as a peer identifier.
  * Note that the memory region must be PEERID_SIZE_BYTES in size; the wrapper
  * class does not perform any range checks.
@@ -56,6 +61,14 @@ struct CHANNELER_API peerid_wrapper
 
   bool is_equal_to(peerid_wrapper const & other) const;
   bool is_less_than(peerid_wrapper const & other) const;
+
+  constexpr size_t size() const
+  {
+    return PEERID_SIZE_BYTES;
+  }
+
+  // Create a copy of the wrapped data
+  peerid copy() const;
 
   // Pointer to raw buffer; equivalent to start in the constructor
   std::byte * raw;
