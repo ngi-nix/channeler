@@ -25,6 +25,7 @@ if not meson.is_subproject()
   public_test_src = [
     'runner.cpp',
     'public' / 'peerid.cpp',
+    'public' / 'packet.cpp',
   ]
 
   private_test_src = [

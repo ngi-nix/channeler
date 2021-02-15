@@ -62,7 +62,7 @@ struct CHANNELER_API peerid_wrapper
   bool is_equal_to(peerid_wrapper const & other) const;
   bool is_less_than(peerid_wrapper const & other) const;
 
-  constexpr size_t size() const
+  static constexpr size_t size()
   {
     return PEERID_SIZE_BYTES;
   }
