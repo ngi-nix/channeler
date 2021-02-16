@@ -45,12 +45,51 @@ using channel_id = uint32_t; // FIXME
 using packet_size_t = uint16_t;
 using payload_size_t = packet_size_t;
 
+
+
 /**
  * Flags representation
  */
 using flags_bits_t = uint16_t;
 constexpr size_t FLAG_COUNT = sizeof(flags_bits_t) * 8;
 using flags_t = std::bitset<FLAG_COUNT>;
+
+/**
+ * Flags
+ *
+ * This enum provides names for indices into the flags bitset. The meaning of
+ * each flag is also documented here.
+ *
+ * Note that flag indices in bitsets are LSB to MSB.
+ *
+ * TODO no flags are used at this moment, these are placeholders for future
+ *      development.
+ */
+enum flag_index : std::size_t
+{
+  // If set, the private header and packet payload are encrypted. An
+  // implication is that the checksum mechanism may also be part of
+  // the MAC for the encrypted payload.
+  FLAG_ENCRYPTED = 0,
+
+  // See https://tools.ietf.org/html/draft-ietf-quic-spin-exp-01 for an
+  // explanation on how the flag is used.
+  FLAG_SPIN_BIT = 1,
+};
+
+
+
+/**
+ * We use sequence numbers in all packets. The initial sequence number in a
+ * channel is selected randomly. Sequence numbers increase monotonically
+ * per channel. Implementations must handle overflows gracefully. With a
+ * 16-bit sequence number, and a wireless friendly MTU of around 1 KiB,
+ * overflows will occur once every 64 MiB (on average), which could be in sub-
+ * second intervals at sufficient transmission rates.
+ **/
+using sequence_no_t = uint16_t;
+
+
 
 /**
  * This file contains classes related to handling networking packets.
@@ -140,7 +179,8 @@ struct public_header_layout
  */
 struct private_header_layout
 {
-  static constexpr size_t PRIV_OFFS_PAYLOAD_SIZE = 0;
+  static constexpr size_t PRIV_OFFS_SEQUENCE_NO = 0;
+  static constexpr size_t PRIV_OFFS_PAYLOAD_SIZE = PRIV_OFFS_SEQUENCE_NO + sizeof(sequence_no_t);
 
   static constexpr size_t PRIV_SIZE = PRIV_OFFS_PAYLOAD_SIZE + sizeof(payload_size_t);
 };
@@ -155,6 +195,7 @@ struct footer_layout
 
   static constexpr size_t FOOT_SIZE = -1 * FOOT_OFFS_CHECKSUM;
 };
+
 
 
 /**
@@ -176,8 +217,8 @@ struct CHANNELER_API public_header_fields
   packet_size_t   packet_size;
 
   public_header_fields(std::byte * buf)
-    : sender{buf + PUB_OFFS_SENDER}
-    , recipient{buf + PUB_OFFS_RECIPIENT}
+    : sender{buf + PUB_OFFS_SENDER, peerid::size()}
+    , recipient{buf + PUB_OFFS_RECIPIENT, peerid::size()}
   {
   }
 };
@@ -186,6 +227,7 @@ struct CHANNELER_API public_header_fields
 struct CHANNELER_API private_header_fields
   : public public_header_layout
 {
+  sequence_no_t   sequence_no;
   payload_size_t  payload_size;
 };
 
@@ -196,6 +238,11 @@ struct CHANNELER_API footer_fields
   liberate::checksum::crc32_checksum  checksum;
 };
 
+
+/**
+ * Forward declaration.
+ */
+class CHANNELER_API packet;
 
 
 /**
@@ -225,7 +272,21 @@ public:
    * buffer, but merely presents a packet interface for it. This means
    * (de-)serializing from/to the buffer as necessary.
    */
-  packet_wrapper(std::byte * buf, size_t buffer_size);
+  packet_wrapper(std::byte * buf, size_t buffer_size,
+      bool validate_now = true);
+
+  /**
+   * The constructor just remembers the buffer, and parses and validates only
+   * as required. This function performs the parsing and validation parts.
+   *
+   * On success, the first part of the pair contains ERR_SUCCESS and the second
+   * part is undefined.
+   *
+   * On failure, the first part contains an error code, and the second part an
+   * optional error message.
+   */
+  std::pair<error_t, std::string>
+  validate();
 
   /**
    * Field accessors
@@ -279,6 +340,17 @@ public:
     return m_public_header.flags;
   }
 
+  inline bool flag(flag_index idx) const
+  {
+    return m_public_header.flags[idx];
+  }
+
+  inline flags_t::reference flag(flag_index idx)
+  {
+    return m_public_header.flags[idx];
+  }
+
+
 
   inline packet_size_t packet_size() const
   {
@@ -295,13 +367,6 @@ public:
     return m_footer.checksum;
   }
 
-
-  // TODO
-  // - has_valid_protoid()
-  // - is_encrypted()
-  //  -> enum for bitset positions; make a simpler getter/setter that
-  //     just updates bitset
-  // - modifiers
 
   /**
    * Metadata helpers
@@ -355,6 +420,10 @@ public:
 
   /**
    * Return a pointer to the start of the buffer.
+   *
+   * This function always updates the buffer with the current header data, so
+   * should be considered potentially expensive. In very rare circumstances,
+   * it may throw if the header data cannot be serialised.
    */
   std::byte const * buffer() const;
 
@@ -363,12 +432,21 @@ public:
    * that.
    */
   std::unique_ptr<std::byte[]> copy() const;
+  packet copy_packet() const;
 
   /**
    * Calculate and validate checksum
    */
   liberate::checksum::crc32_checksum calculate_checksum() const;
   bool has_valid_checksum() const;
+
+  /**
+   * Validate protocol identifier
+   */
+  inline bool has_valid_proto() const
+  {
+    return proto() == PROTOID;
+  }
 
   /**
    * Value type semantics
@@ -387,16 +465,23 @@ class CHANNELER_API packet
   : public packet_wrapper
 {
 public:
+  /**
+   * Construct a packet, and allocate a buffer with the given size for it.
+   */
   packet(size_t buffer_size);
+
+  /**
+   * Construct a packet, allocate a buffer, and fill it with data from a
+   * given source buffer.
+   */
+  packet(std::byte const * input_buffer, size_t buffer_size,
+      bool validate_now = true);
+
 
 private:
   std::shared_ptr<std::byte[]> m_ptr;
 };
 
-// TODO
-// - packet_holder (wrapper that takes ownership)
-// - packet (packet_holder that allocates); needs MTU
-//   OR payload size OR either
 
 } // namespace channeler
 

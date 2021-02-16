@@ -183,7 +183,7 @@ configure_file(
 ##############################################################################
 # Meson Wrap Dependencies
 liberate = subproject('liberate')
-packeteer = subproject('packeteer')
+# TODO not yet used packeteer = subproject('packeteer')
 gtest = subproject('gtest')
 # FIXME? clipp = subproject('muellan-clipp')
 # FIXME thread = dependency('threads', required: true)
@@ -202,14 +202,25 @@ libincludes = include_directories(
 
 install_headers(
   'include' / 'channeler.h',
+)
+
+install_headers(
+  'include' / 'channeler' / 'error.h',
+  'include' / 'channeler' / 'packet.h',
+  'include' / 'channeler' / 'peerid.h',
+  'include' / 'channeler' / 'protoid.h',
+  'include' / 'channeler' / 'version.h',
+  'include' / 'channeler' / 'visibility.h',
+
   subdir: 'channeler',
 )
 
 
 libsrc = [
-  'lib' / 'version.cpp',
-  'lib' / 'peerid.cpp',
+  'lib' / 'error.cpp',
   'lib' / 'packet.cpp',
+  'lib' / 'peerid.cpp',
+  'lib' / 'version.cpp',
 ]
 
 

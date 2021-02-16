@@ -43,7 +43,7 @@
 // FIXME #include <packeteer/types.h>
 
 // Not all, but the very basic headers are always included.
-// FIXME #include <packeteer/error.h>
+#include <channeler/error.h>
 #include <channeler/version.h>
 
 /**

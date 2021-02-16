@@ -30,7 +30,8 @@ namespace channeler {
 
 namespace {
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_from_buffer(
     public_header_fields & pub_header,
     std::byte const * buffer,
@@ -41,7 +42,7 @@ update_from_buffer(
       buffer + public_header_layout::PUB_OFFS_PROTO,
       sizeof(pub_header.proto));
   if (res != sizeof(pub_header.proto)) {
-    throw std::invalid_argument{"Could not deserialize protocol identifier."};
+    return {ERR_DECODE, "Could not deserialize protocol identifier."};
   }
 
   // Channel ID
@@ -49,7 +50,7 @@ update_from_buffer(
       buffer + public_header_layout::PUB_OFFS_CHANNEL_ID,
       sizeof(pub_header.channel));
   if (res != sizeof(pub_header.channel)) {
-    throw std::invalid_argument{"Could not deserialize channel identifier."};
+    return {ERR_DECODE, "Could not deserialize channel identifier."};
   }
 
   // Flags
@@ -58,7 +59,7 @@ update_from_buffer(
       buffer + public_header_layout::PUB_OFFS_FLAGS,
       sizeof(bits));
   if (res != sizeof(bits)) {
-    throw std::invalid_argument{"Could not deserialize flags."};
+    return {ERR_DECODE, "Could not deserialize flags."};
   }
   pub_header.flags = flags_t{bits};
 
@@ -67,37 +68,51 @@ update_from_buffer(
       buffer + public_header_layout::PUB_OFFS_PACKET_SIZE,
       sizeof(pub_header.packet_size));
   if (res != sizeof(pub_header.packet_size)) {
-    throw std::invalid_argument{"Could not deserialize packet size."};
+    return {ERR_DECODE, "Could not deserialize packet size."};
   }
 
   if (pub_header.packet_size > buffer_size) {
-    throw std::invalid_argument{"Packet size exceeds buffer size."};
+    return {ERR_DECODE, "Packet size exceeds buffer size."};
   }
+
+  return {ERR_SUCCESS, {}};
 }
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_from_buffer(
     private_header_fields & priv_header,
     std::byte const * buffer,
     size_t packet_size)
 {
+  // Sequence number
+  auto res = liberate::serialization::deserialize_int(priv_header.sequence_no,
+      buffer + private_header_layout::PRIV_OFFS_SEQUENCE_NO,
+      sizeof(priv_header.sequence_no));
+  if (res != sizeof(priv_header.sequence_no)) {
+    return {ERR_DECODE, "Could not deserialize sequence number."};
+  }
+
   // Payload size
-  auto res = liberate::serialization::deserialize_int(priv_header.payload_size,
+  res = liberate::serialization::deserialize_int(priv_header.payload_size,
       buffer + private_header_layout::PRIV_OFFS_PAYLOAD_SIZE,
       sizeof(priv_header.payload_size));
   if (res != sizeof(priv_header.payload_size)) {
-    throw std::invalid_argument{"Could not deserialize payload size."};
+    return {ERR_DECODE, "Could not deserialize payload size."};
   }
 
   if (priv_header.payload_size > (packet_size - packet_wrapper::envelope_size())) {
-    throw std::invalid_argument{"Payload size exceeds available buffer size."};
+    return {ERR_DECODE, "Payload size exceeds available buffer size."};
   }
+
+  return {ERR_SUCCESS, {}};
 }
 
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_from_buffer(
     footer_fields & footer,
     std::byte const * buffer,
@@ -110,14 +125,17 @@ update_from_buffer(
       buffer + buffer_size - footer.FOOT_SIZE,
       sizeof(tmp));
   if (res != sizeof(tmp)) {
-    throw std::invalid_argument{"Could not deserialize checksum."};
+    return {ERR_DECODE, "Could not deserialize checksum."};
   }
   footer.checksum = tmp;
+
+  return {ERR_SUCCESS, {}};
 }
 
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_from_buffer(
     public_header_fields & pub_header,
     private_header_fields & priv_header,
@@ -125,19 +143,28 @@ update_from_buffer(
     std::byte const * buffer,
     size_t buffer_size)
 {
-  update_from_buffer(pub_header, buffer, buffer_size);
-  update_from_buffer(priv_header, buffer + pub_header.PUB_SIZE,
+  auto err = update_from_buffer(pub_header, buffer, buffer_size);
+  if (err.first != ERR_SUCCESS) {
+    return err;
+  }
+
+  err = update_from_buffer(priv_header, buffer + pub_header.PUB_SIZE,
       pub_header.packet_size);
+  if (err.first != ERR_SUCCESS) {
+    return err;
+  }
 
   // Since we've decoded the packet size, we need to calculate the buffer
   // offsets from that size.
   update_from_buffer(footer, buffer, pub_header.packet_size);
+  return err;
 }
 
 
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_to_buffer(
     std::byte * buffer,
     size_t buffer_size [[maybe_unused]],
@@ -149,7 +176,7 @@ update_to_buffer(
       sizeof(pub_header.proto),
       pub_header.proto);
   if (res != sizeof(pub_header.proto)) {
-    throw std::invalid_argument{"Could not serialize protocol identifier."};
+    return {ERR_ENCODE, "Could not serialize protocol identifier."};
   }
 
   // Channel ID
@@ -158,7 +185,7 @@ update_to_buffer(
       sizeof(pub_header.channel),
       pub_header.channel);
   if (res != sizeof(pub_header.channel)) {
-    throw std::invalid_argument{"Could not serialize channel identifier."};
+    return {ERR_ENCODE, "Could not serialize channel identifier."};
   }
 
   // Flags
@@ -168,7 +195,7 @@ update_to_buffer(
       sizeof(bits),
       bits);
   if (res != sizeof(bits)) {
-    throw std::invalid_argument{"Could not serialize flags."};
+    return {ERR_ENCODE, "Could not serialize flags."};
   }
 
   // Packet size
@@ -177,14 +204,17 @@ update_to_buffer(
       sizeof(pub_header.packet_size),
       pub_header.packet_size);
   if (res != sizeof(pub_header.packet_size)) {
-    throw std::invalid_argument{"Could not serialize packet size."};
+    return {ERR_ENCODE, "Could not serialize packet size."};
   }
+
+  return {ERR_SUCCESS, {}};
 }
 
 
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_to_buffer(
     std::byte * buffer,
     size_t buffer_size [[maybe_unused]],
@@ -196,14 +226,17 @@ update_to_buffer(
       sizeof(priv_header.payload_size),
       priv_header.payload_size);
   if (res != sizeof(priv_header.payload_size)) {
-    throw std::invalid_argument{"Could not serialize payload size."};
+    return {ERR_ENCODE, "Could not serialize payload size."};
   }
+
+  return {ERR_SUCCESS, {}};
 }
 
 
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_to_buffer(
     std::byte * buffer,
     size_t buffer_size,
@@ -216,13 +249,16 @@ update_to_buffer(
       buffer + buffer_size - footer.FOOT_SIZE,
       sizeof(tmp));
   if (res != sizeof(tmp)) {
-    throw std::invalid_argument{"Could not serialize checksum."};
+    return {ERR_ENCODE, "Could not serialize checksum."};
   }
+
+  return {ERR_SUCCESS, {}};
 }
 
 
 
-inline void
+inline
+std::pair<error_t, std::string>
 update_to_buffer(
     std::byte * buffer,
     size_t buffer_size,
@@ -233,28 +269,52 @@ update_to_buffer(
   // We don't really need length checks; this function is entirely internal
   // and will not be called unless a packet has been decoded from the buffer
   // already.
-  update_to_buffer(buffer, buffer_size, pub_header);
-  update_to_buffer(buffer + pub_header.PUB_SIZE,
+  auto err = update_to_buffer(buffer, buffer_size, pub_header);
+  if (err.first != ERR_SUCCESS) {
+    return err;
+  }
+
+  err = update_to_buffer(buffer + pub_header.PUB_SIZE,
       buffer_size - pub_header.PUB_SIZE, priv_header);
-  update_to_buffer(buffer, buffer_size, footer);
+  if (err.first != ERR_SUCCESS) {
+    return err;
+  }
+
+  err = update_to_buffer(buffer, buffer_size, footer);
+  return err;
 }
 
 
 } // anonymous namespace
 
-packet_wrapper::packet_wrapper(std::byte * buf, size_t buffer_size)
+packet_wrapper::packet_wrapper(std::byte * buf, size_t buffer_size,
+    bool validate_now /* = true */)
   : m_buffer{buf}
   , m_size{buffer_size}
   , m_public_header{m_buffer}
   , m_private_header{}
   , m_footer{}
 {
+  if (validate_now) {
+    auto err = validate();
+    if (err.first != ERR_SUCCESS) {
+      throw exception{err.first, err.second};
+    }
+  }
+}
+
+
+
+std::pair<error_t, std::string>
+packet_wrapper::validate()
+{
   if (m_size < public_envelope_size()) {
-    throw std::out_of_range{"Buffer passed to packet_wrapper is too small to accomodate envelope!"};
+    throw exception{ERR_INSUFFICIENT_BUFFER_SIZE,
+      "Buffer passed to packet_wrapper is too small to accomodate envelope!"};
   }
 
   // Update (some) fields from buffer
-  update_from_buffer(m_public_header, m_private_header, m_footer, m_buffer,
+  return update_from_buffer(m_public_header, m_private_header, m_footer, m_buffer,
       m_size);
 }
 
@@ -271,12 +331,15 @@ packet_wrapper::payload() const
 std::byte const *
 packet_wrapper::buffer() const
 {
-  update_to_buffer(
+  auto err = update_to_buffer(
       const_cast<std::byte *>(m_buffer),
       m_size,
       m_public_header,
       m_private_header,
       m_footer);
+  if (err.first != ERR_SUCCESS) {
+    throw exception{err.first, err.second};
+  }
   return m_buffer;
 }
 
@@ -289,6 +352,15 @@ packet_wrapper::copy() const
   std::memcpy(ptr, buffer(), m_public_header.packet_size);
   return std::unique_ptr<std::byte[]>{ptr};
 }
+
+
+
+packet
+packet_wrapper::copy_packet() const
+{
+  return packet{buffer(), m_public_header.packet_size};
+}
+
 
 
 
@@ -378,6 +450,22 @@ packet::packet(size_t buffer_size)
 {
 }
 
+
+
+packet::packet(std::byte const * input_buffer, size_t buffer_size,
+      bool validate_now /* = true */)
+  : packet_wrapper{new std::byte[buffer_size], buffer_size, false}
+  , m_ptr{m_buffer}
+{
+  ::memcpy(m_buffer, input_buffer, buffer_size);
+
+  if (validate_now) {
+    auto err = validate();
+    if (err.first != ERR_SUCCESS) {
+      throw exception{err.first, err.second};
+    }
+  }
+}
 
 
 } // namespace channeler

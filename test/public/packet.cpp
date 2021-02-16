@@ -31,6 +31,7 @@ inline constexpr std::byte operator "" _b(unsigned long long arg) noexcept
 
 
 std::byte const packet01[] = {
+  // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
 
@@ -49,14 +50,23 @@ std::byte const packet01[] = {
   0xa0_b, 0x0a_b,
 
   // Packet size - packet is empty, this includes the envelope
-  0x00_b, 0x32_b,
+  0x00_b, 0x34_b,
+
+  // **** private header
+  // Sequence number - a random one is fine
+  0x01_b, 0xfa_b,
 
   // Payload size - no payload
   0x00_b, 0x00_b,
+ 
+  // **** payload
+  // n/a
 
+  // **** footer
   // Checksum
-  0x65_b, 0xb3_b, 0xcc_b, 0x15_b,
+  0xfa_b, 0xfa_b, 0x25_b, 0xc3_b,
 
+  // **** trailing dat
   // Spurious data in the buffer - this will be ignored
   0xde_b, 0xad_b, 0xbe_b, 0xef_b,
 };
@@ -87,8 +97,8 @@ TEST(PacketWrapper, construct_from_buffer_failure_too_small)
 {
   std::byte buf[] = { 0xab_b, 0xcd_b };
 
-  ASSERT_THROW((channeler::packet_wrapper{buf, 0}), std::out_of_range);
-  ASSERT_THROW((channeler::packet_wrapper{buf, sizeof(buf)}), std::out_of_range);
+  ASSERT_THROW((channeler::packet_wrapper{buf, 0}), channeler::exception);
+  ASSERT_THROW((channeler::packet_wrapper{buf, sizeof(buf)}), channeler::exception);
 }
 
 
@@ -100,6 +110,8 @@ TEST(PacketWrapper, construct_from_buffer)
   channeler::packet_wrapper pkt{data.buf, data.size};
 
   ASSERT_EQ(pkt.proto(), 0xdeadd00d);
+  ASSERT_FALSE(pkt.has_valid_proto());
+
   ASSERT_EQ(pkt.sender().display(), "0x000000000000000000000000000a11c3");
   ASSERT_EQ(pkt.recipient().display(), "0x00000000000000000000000000000b0b");
 
@@ -121,6 +133,10 @@ TEST(PacketWrapper, construct_from_buffer)
   ASSERT_TRUE(pkt.flags()[13]);
   ASSERT_FALSE(pkt.flags()[14]);
   ASSERT_TRUE(pkt.flags()[15]);
+
+  // With symbolic names
+  ASSERT_FALSE(pkt.flag(channeler::FLAG_ENCRYPTED));
+  ASSERT_TRUE(pkt.flag(channeler::FLAG_SPIN_BIT));
 
   // Also ensure that the checksum is correct
   // std::cout << std::hex << pkt.calculate_checksum() << std::dec << std::endl;
@@ -159,33 +175,32 @@ TEST(PacketWrapper, copy)
 
 
 
-//TEST(PacketWrapper, make_packet)
-//{
-//  holder data{packet01, sizeof(packet01)};
-//  channeler::packet_wrapper pkt0{data.buf, data.size};
-//
-//  // Create copy
-//  auto buf = pkt0.copy();
-//  channeler::packet_wrapper pkt1{buf.get(), pkt0.packet_size()};
-//
-//  // Both packets must effectively be identical.
-//  ASSERT_EQ(pkt0.packet_size(), pkt1.packet_size());
-//  ASSERT_EQ(pkt0.payload_size(), pkt1.payload_size());
-//  ASSERT_EQ(pkt0.checksum(), pkt1.checksum());
-//  ASSERT_EQ(pkt0.flags(), pkt1.flags());
-//  ASSERT_EQ(pkt0.sender(), pkt1.sender());
-//  ASSERT_EQ(pkt0.recipient(), pkt1.recipient());
-//
-//  ASSERT_EQ(pkt0.hash(), pkt1.hash());
-//  ASSERT_EQ(pkt0, pkt1);
-//
-//  ASSERT_FALSE(pkt0 > pkt1);
-//  ASSERT_FALSE(pkt0 < pkt1);
-//
-//  // However - pkt0 will have a larger *buffer* size than pkt1, because
-//  // the original buffer contained spurious data.
-//  ASSERT_GT(pkt0.buffer_size(), pkt1.buffer_size());
-//}
+TEST(PacketWrapper, copy_packet)
+{
+  holder data{packet01, sizeof(packet01)};
+  channeler::packet_wrapper pkt0{data.buf, data.size};
+
+  // Create copy
+  auto pkt1 = pkt0.copy_packet();
+
+  // Both packets must effectively be identical.
+  ASSERT_EQ(pkt0.packet_size(), pkt1.packet_size());
+  ASSERT_EQ(pkt0.payload_size(), pkt1.payload_size());
+  ASSERT_EQ(pkt0.checksum(), pkt1.checksum());
+  ASSERT_EQ(pkt0.flags(), pkt1.flags());
+  ASSERT_EQ(pkt0.sender(), pkt1.sender());
+  ASSERT_EQ(pkt0.recipient(), pkt1.recipient());
+
+  ASSERT_EQ(pkt0.hash(), pkt1.hash());
+  ASSERT_EQ(pkt0, pkt1);
+
+  ASSERT_FALSE(pkt0 > pkt1);
+  ASSERT_FALSE(pkt0 < pkt1);
+
+  // However - pkt0 will have a larger *buffer* size than pkt1, because
+  // the original buffer contained spurious data.
+  ASSERT_GT(pkt0.buffer_size(), pkt1.buffer_size());
+}
 
 // TODO
 // - message iterations (later)

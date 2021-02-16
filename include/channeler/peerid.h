@@ -53,8 +53,12 @@ struct CHANNELER_API peerid;
 struct CHANNELER_API peerid_wrapper
   : public ::liberate::cpp::comparison_operators<peerid_wrapper>
 {
-  // Create random peer identifier
-  peerid_wrapper(std::byte * start);
+  /**
+   * Create a peerid_wrapper using the peer identifier in the given byte
+   * buffer. The required buffer size is a constexpr, and the passed buffer
+   * size is checked for sufficient size.
+   */
+  peerid_wrapper(std::byte * start, size_t bufsize);
 
   std::string display() const;
   size_t hash() const;

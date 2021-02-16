@@ -20,6 +20,7 @@
 #include <build-config.h>
 
 #include <channeler/peerid.h>
+#include <channeler/error.h>
 
 #include <cstring>
 
@@ -34,9 +35,13 @@
 namespace channeler {
 
 
-peerid_wrapper::peerid_wrapper(std::byte * start)
+peerid_wrapper::peerid_wrapper(std::byte * start, size_t bufsize)
   : raw{start}
 {
+  if (bufsize < size()) {
+    throw exception{ERR_INSUFFICIENT_BUFFER_SIZE,
+      "Input buffer too small for a peer identifier."};
+  }
 }
 
 
@@ -82,7 +87,7 @@ peerid_wrapper::copy() const
 
 
 peerid::peerid()
-  : peerid_wrapper{buffer}
+  : peerid_wrapper{buffer, PEERID_SIZE_BYTES}
 {
   // XXX When we have a crypto library, this should no longer be necessary.
   //     For one thing, we probably don't want random peerids any longer, but
@@ -102,19 +107,15 @@ peerid::peerid()
 
 
 peerid::peerid(std::byte const * buf, size_t bufsize)
-  : peerid_wrapper{buffer}
+  : peerid_wrapper{buffer, bufsize}
 {
-  if (bufsize < PEERID_SIZE_BYTES) {
-    throw std::out_of_range("Peer identifier buffer is too small.");
-  }
-
   ::memcpy(buffer, buf, PEERID_SIZE_BYTES);
 }
 
 
 
 peerid::peerid(char const * buf, size_t bufsize)
-  : peerid_wrapper{buffer}
+  : peerid_wrapper{buffer, sizeof(buffer)}
 {
   char const * start = buf;
   size_t buflen = bufsize;
@@ -122,19 +123,22 @@ peerid::peerid(char const * buf, size_t bufsize)
     start += 2;
     buflen -= 2;
     if (bufsize < (PEERID_SIZE_BYTES * 2) + 2) {
-      throw std::out_of_range{"Peer identifier buffer is too small."};
+      throw exception{ERR_INSUFFICIENT_BUFFER_SIZE,
+        "Peer identifier buffer is too small."};
     }
   }
   else {
     if (bufsize < PEERID_SIZE_BYTES * 2) {
-      throw std::out_of_range{"Peer identifier buffer is too small."};
+      throw exception{ERR_INSUFFICIENT_BUFFER_SIZE,
+        "Peer identifier buffer is too small."};
     }
   }
 
   auto used = liberate::string::hexdecode(buffer, PEERID_SIZE_BYTES,
       reinterpret_cast<std::byte const *>(start), buflen);
   if (used != PEERID_SIZE_BYTES) {
-    throw std::invalid_argument{"Could not decode hexadecimal peer identifier."};
+    throw exception{ERR_DECODE,
+      "Could not decode hexadecimal peer identifier."};
   }
 }
 

@@ -73,8 +73,8 @@ TEST(PeerID, construction_failure_from_buffer)
 {
   std::byte * buf = nullptr;
 
-  ASSERT_THROW((channeler::peerid{buf, 0}), std::out_of_range);
-  ASSERT_THROW((channeler::peerid{buf, 1}), std::out_of_range);
+  ASSERT_THROW((channeler::peerid{buf, 0}), channeler::exception);
+  ASSERT_THROW((channeler::peerid{buf, 1}), channeler::exception);
 }
 
 
@@ -82,10 +82,10 @@ TEST(PeerID, construction_failure_from_buffer)
 TEST(PeerID, construction_failure_from_short_hex)
 {
   char const * const foo = "0xd00d";
-  ASSERT_THROW((channeler::peerid{foo, strlen(foo)}), std::out_of_range);
+  ASSERT_THROW((channeler::peerid{foo, strlen(foo)}), channeler::exception);
 
   char const * const bar = "0xthis-is-not-a-valid-hex-string-is-it-now?";
-  ASSERT_THROW((channeler::peerid{bar, strlen(bar)}), std::invalid_argument);
+  ASSERT_THROW((channeler::peerid{bar, strlen(bar)}), channeler::exception);
 }
 
 
@@ -130,7 +130,7 @@ TEST(PeerID, default_constructed_hashes_unique)
 TEST(PeerIDWrapper, use_with_peerid)
 {
   auto id = channeler::peerid{};
-  auto wrap = channeler::peerid_wrapper(id.raw);
+  auto wrap = channeler::peerid_wrapper{id.raw, id.size()};
 
   ASSERT_EQ(id.hash(), wrap.hash());
   ASSERT_EQ(id.display(), wrap.display());
@@ -152,7 +152,7 @@ TEST(PeerIDWrapper, use_with_peerid)
 TEST(PeerID, construct_from_wrapper)
 {
   auto buf = channeler::peerid{};
-  auto wrap = channeler::peerid_wrapper(buf.raw);
+  auto wrap = channeler::peerid_wrapper{buf.raw, buf.size()};
 
   // Ok, ignoring buf - this is just the random ID buffer.
   // The test is to construct a peer identifier from a warpper, which means
