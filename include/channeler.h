@@ -26,7 +26,7 @@
 
 /**
  * Which platform are we on?
- **/
+ */
 #if !defined(CHANNELER_PLATFORM_DEFINED)
 #  if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
 #    define CHANNELER_WIN32
@@ -35,6 +35,17 @@
 #  endif
 #  define CHANNELER_PLATFORM_DEFINED
 #endif
+
+/**
+ * Anonymous structs are a C++ extension for GNU
+ */
+#if defined(__GNUC__)
+#  define CHANNELER_ANONYMOUS __extension__
+#else
+#  define CHANNELER_ANONYMOUS
+#endif
+
+
 
 // Visibility macros are used by all, so they must come first.
 #include <channeler/visibility.h>

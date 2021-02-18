@@ -70,6 +70,10 @@ CHANNELER_ERRDEF(ERR_ENCODE,
     3,
     "Could not encode data buffer.")
 
+CHANNELER_ERRDEF(ERR_INVALID_CHANNELID,
+    4,
+    "Channel identifier is invalid.")
+
 CHANNELER_END_ERRORS
 
 

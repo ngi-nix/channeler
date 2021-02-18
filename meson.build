@@ -205,6 +205,7 @@ install_headers(
 )
 
 install_headers(
+  'include' / 'channeler' / 'channelid.h',
   'include' / 'channeler' / 'error.h',
   'include' / 'channeler' / 'packet.h',
   'include' / 'channeler' / 'peerid.h',
@@ -217,6 +218,7 @@ install_headers(
 
 
 libsrc = [
+  'lib' / 'channelid.cpp',
   'lib' / 'error.cpp',
   'lib' / 'packet.cpp',
   'lib' / 'peerid.cpp',
