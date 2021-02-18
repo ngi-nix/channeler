@@ -202,6 +202,34 @@ TEST(PacketWrapper, copy_packet)
   ASSERT_GT(pkt0.buffer_size(), pkt1.buffer_size());
 }
 
+
+TEST(Packet, checksum)
+{
+  // Create three packets
+  channeler::packet pkt0{packet01, sizeof(packet01)};
+  channeler::packet pkt1{packet01, sizeof(packet01)};
+  channeler::packet pkt2{packet01, sizeof(packet01)};
+
+  // The checksums must be ok.
+  ASSERT_TRUE(pkt0.has_valid_checksum());
+  ASSERT_TRUE(pkt1.has_valid_checksum());
+  ASSERT_TRUE(pkt2.has_valid_checksum());
+
+  ASSERT_EQ(pkt0.checksum(), pkt1.checksum());
+  ASSERT_EQ(pkt1.checksum(), pkt2.checksum());
+  ASSERT_EQ(pkt2.checksum(), pkt0.checksum());
+
+  // Now modify a bit in one packet's data buffer, and the checksum
+  // must fail.
+  pkt1.buffer()[0] = 0xff_b; // Part of the protocol ID
+  ASSERT_FALSE(pkt1.has_valid_checksum());
+  ASSERT_EQ(pkt0.checksum(), pkt1.checksum()); // Checksums are unaltered in header
+
+  // Similarly, if we modify the checksum validation should fail
+  pkt2.checksum() = 0xabcdef01uL;
+  ASSERT_FALSE(pkt2.has_valid_checksum());
+  ASSERT_NE(pkt0.checksum(), pkt2.checksum());
+}
+
 // TODO
 // - message iterations (later)
-// - checksum & packet modification -> failures for checksum

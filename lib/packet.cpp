@@ -345,6 +345,23 @@ packet_wrapper::buffer() const
 
 
 
+std::byte *
+packet_wrapper::buffer()
+{
+  auto err = update_to_buffer(
+      m_buffer,
+      m_size,
+      m_public_header,
+      m_private_header,
+      m_footer);
+  if (err.first != ERR_SUCCESS) {
+    throw exception{err.first, err.second};
+  }
+  return m_buffer;
+}
+
+
+
 std::unique_ptr<std::byte[]>
 packet_wrapper::copy() const
 {

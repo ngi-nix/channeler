@@ -302,7 +302,7 @@ public:
     return m_public_header.sender;
   }
 
-  inline peerid_wrapper sender()
+  inline peerid_wrapper & sender()
   {
     return m_public_header.sender;
   }
@@ -313,7 +313,7 @@ public:
     return m_public_header.recipient;
   }
 
-  inline peerid_wrapper recipient()
+  inline peerid_wrapper & recipient()
   {
     return m_public_header.recipient;
   }
@@ -324,7 +324,7 @@ public:
     return m_public_header.channel;
   }
 
-  inline channel_id channel()
+  inline channel_id & channel()
   {
     return m_public_header.channel;
   }
@@ -335,7 +335,7 @@ public:
     return m_public_header.flags;
   }
 
-  inline flags_t flags()
+  inline flags_t & flags()
   {
     return m_public_header.flags;
   }
@@ -362,7 +362,13 @@ public:
     return m_private_header.payload_size;
   }
 
+
   inline liberate::checksum::crc32_checksum checksum() const
+  {
+    return m_footer.checksum;
+  }
+
+  inline liberate::checksum::crc32_checksum & checksum()
   {
     return m_footer.checksum;
   }
@@ -426,6 +432,7 @@ public:
    * it may throw if the header data cannot be serialised.
    */
   std::byte const * buffer() const;
+  std::byte * buffer();
 
   /**
    * Copy packet_size() Bytes from the buffer intoa new buffer, and return
