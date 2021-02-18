@@ -46,8 +46,8 @@ update_from_buffer(
   }
 
   // Channel ID
-  res = liberate::serialization::deserialize_int(pub_header.channel,
-      buffer + public_header_layout::PUB_OFFS_CHANNEL_ID,
+  res = liberate::serialization::deserialize_int(pub_header.channel.full,
+      buffer + public_header_layout::PUB_OFFS_CHANNELID,
       sizeof(pub_header.channel));
   if (res != sizeof(pub_header.channel)) {
     return {ERR_DECODE, "Could not deserialize channel identifier."};
@@ -181,9 +181,9 @@ update_to_buffer(
 
   // Channel ID
   res = liberate::serialization::serialize_int(
-      buffer + public_header_layout::PUB_OFFS_CHANNEL_ID,
+      buffer + public_header_layout::PUB_OFFS_CHANNELID,
       sizeof(pub_header.channel),
-      pub_header.channel);
+      pub_header.channel.full);
   if (res != sizeof(pub_header.channel)) {
     return {ERR_ENCODE, "Could not serialize channel identifier."};
   }

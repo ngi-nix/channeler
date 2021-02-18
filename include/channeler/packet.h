@@ -34,10 +34,9 @@
 
 #include <channeler/protoid.h>
 #include <channeler/peerid.h>
+#include <channeler/channelid.h>
 
 namespace channeler {
-
-using channel_id = uint32_t; // FIXME
 
 /**
  * Packet/payload size types
@@ -167,8 +166,8 @@ struct public_header_layout
   static constexpr size_t PUB_OFFS_PROTO = 0;
   static constexpr size_t PUB_OFFS_SENDER = sizeof(protoid);
   static constexpr size_t PUB_OFFS_RECIPIENT = PUB_OFFS_SENDER + peerid::size();
-  static constexpr size_t PUB_OFFS_CHANNEL_ID = PUB_OFFS_RECIPIENT + peerid::size();
-  static constexpr size_t PUB_OFFS_FLAGS = PUB_OFFS_CHANNEL_ID + sizeof(channel_id);
+  static constexpr size_t PUB_OFFS_CHANNELID = PUB_OFFS_RECIPIENT + peerid::size();
+  static constexpr size_t PUB_OFFS_FLAGS = PUB_OFFS_CHANNELID + sizeof(channelid);
   static constexpr size_t PUB_OFFS_PACKET_SIZE = PUB_OFFS_FLAGS + (FLAG_COUNT / 8);
 
   static constexpr size_t PUB_SIZE = PUB_OFFS_PACKET_SIZE + sizeof(packet_size_t);
@@ -210,7 +209,7 @@ struct CHANNELER_API public_header_fields
   peerid_wrapper  sender;
   peerid_wrapper  recipient;
 
-  channel_id      channel;
+  channelid       channel;
 
   flags_t         flags;
 
@@ -319,12 +318,12 @@ public:
   }
 
 
-  inline channel_id channel() const
+  inline channelid channel() const
   {
     return m_public_header.channel;
   }
 
-  inline channel_id & channel()
+  inline channelid & channel()
   {
     return m_public_header.channel;
   }
