@@ -29,6 +29,9 @@ TEST(ChannelID, default_constructed)
   ASSERT_EQ(id.full, channeler::DEFAULT_CHANNELID.full);
   ASSERT_EQ(id.initiator, channeler::DEFAULT_CHANNELID.initiator);
   ASSERT_EQ(id.responder, channeler::DEFAULT_CHANNELID.responder);
+
+  ASSERT_FALSE(id.has_initiator());
+  ASSERT_FALSE(id.has_responder());
 }
 
 
@@ -36,6 +39,8 @@ TEST(ChannelID, create)
 {
   auto id = channeler::create_new_channelid();
   ASSERT_NE(id, channeler::DEFAULT_CHANNELID);
+  ASSERT_TRUE(id.has_initiator());
+  ASSERT_FALSE(id.has_responder());
 }
 
 
@@ -63,6 +68,6 @@ TEST(ChannelID, complete)
   ASSERT_EQ(channeler::ERR_SUCCESS,
       channeler::complete_channelid(id));
 
-  ASSERT_NE(id.initiator, channeler::DEFAULT_CHANNELID.initiator);
-  ASSERT_NE(id.responder, channeler::DEFAULT_CHANNELID.responder);
+  ASSERT_TRUE(id.has_initiator());
+  ASSERT_TRUE(id.has_responder());
 }
