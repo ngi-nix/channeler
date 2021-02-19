@@ -31,6 +31,7 @@ if not meson.is_subproject()
 
   private_test_src = [
     'private' / 'memory' / 'packet_block.cpp',
+    'private' / 'memory' / 'packet_pool.cpp',
     'runner.cpp',
   ]
 
