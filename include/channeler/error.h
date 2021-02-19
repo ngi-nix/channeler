@@ -74,6 +74,10 @@ CHANNELER_ERRDEF(ERR_INVALID_CHANNELID,
     4,
     "Channel identifier is invalid.")
 
+CHANNELER_ERRDEF(ERR_INVALID_REFERENCE,
+    5,
+    "A reference does not resolve to a valid object.")
+
 CHANNELER_END_ERRORS
 
 

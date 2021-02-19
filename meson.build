@@ -216,7 +216,6 @@ install_headers(
   subdir: 'channeler',
 )
 
-
 libsrc = [
   'lib' / 'channelid.cpp',
   'lib' / 'error.cpp',
