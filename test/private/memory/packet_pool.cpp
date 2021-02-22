@@ -28,7 +28,7 @@ TEST(PacketPool, construction)
 
   // A block size of 1 means that for every pool allocation, a new block
   // must be created.
-  packet_pool<42, 1> pool;
+  packet_pool<1> pool{42};;
 
   // Initially, we have no memory allocated for packets
   ASSERT_EQ(pool.capacity(), 0);
@@ -39,7 +39,7 @@ TEST(PacketPool, construction)
 TEST(PacketPool, allocation)
 {
   using namespace channeler::memory;
-  packet_pool<42, 3> pool;
+  packet_pool<3> pool{42};;
   EXPECT_EQ(pool.capacity(), 0);
   EXPECT_TRUE(pool.empty());
 
@@ -59,7 +59,7 @@ TEST(PacketPool, allocation)
 TEST(PacketPool, deallocation)
 {
   using namespace channeler::memory;
-  packet_pool<42, 3> pool;
+  packet_pool<3> pool{42};;
   EXPECT_EQ(pool.capacity(), 0);
   EXPECT_TRUE(pool.empty());
 
@@ -89,7 +89,7 @@ TEST(PacketPool, deallocation)
 TEST(PacketPool, deallocation_automatic)
 {
   using namespace channeler::memory;
-  packet_pool<42, 3> pool;
+  packet_pool<3> pool{42};;
   EXPECT_EQ(pool.capacity(), 0);
   EXPECT_TRUE(pool.empty());
 
@@ -168,7 +168,7 @@ inline void prune_helper(
 TEST(PacketPool, pruning_ascending)
 {
   using namespace channeler::memory;
-  packet_pool<42, 1> pool;
+  packet_pool<1> pool{42};;
   EXPECT_EQ(pool.capacity(), 0);
   EXPECT_TRUE(pool.empty());
 
@@ -184,7 +184,7 @@ TEST(PacketPool, pruning_ascending)
 TEST(PacketPool, pruning_descending)
 {
   using namespace channeler::memory;
-  packet_pool<42, 1> pool;
+  packet_pool<1> pool{42};;
   EXPECT_EQ(pool.capacity(), 0);
   EXPECT_TRUE(pool.empty());
 

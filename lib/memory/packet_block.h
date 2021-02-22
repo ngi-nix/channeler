@@ -42,7 +42,6 @@ namespace channeler::memory {
  * access to its functions.
  */
 template <
-  std::size_t PACKET_SIZE,
   std::size_t CAPACITY
 >
 class packet_block
@@ -60,21 +59,17 @@ private:
   struct chunk
   {
     chunk_header  header;
-    std::byte     data[PACKET_SIZE];
+    std::byte *   data;
   };
 
 public:
-  // Some constants
-  constexpr static std::size_t capacity = CAPACITY;
-  constexpr static std::size_t packet_size = PACKET_SIZE;
-  constexpr static std::size_t memory_size = capacity * packet_size;
-
+  // *************************************************************************
   // We allocate and deallocate in slots.
   struct slot
   {
     std::byte * data()
     {
-      if (m_index == capacity) {
+      if (m_index == capacity()) {
         return nullptr;
       }
       return m_block.m_chunks[m_index].data;
@@ -82,28 +77,36 @@ public:
 
     std::size_t size() const
     {
-      if (m_index == capacity) {
+      if (m_index == capacity()) {
         return 0;
       }
-      return packet_size;
+      return m_packet_size;
     }
 
   private:
     friend class packet_block;
 
-    slot(packet_block & block, std::size_t index)
+    slot(packet_block & block, std::size_t index, std::size_t packet_size)
       : m_block{block}
       , m_index{index}
+      , m_packet_size{packet_size}
     {
     }
 
-    packet_block &  m_block;
-    std::size_t     m_index;
+    packet_block &    m_block;
+    std::size_t       m_index;
+    std::size_t const m_packet_size;
   };
 
+  // *************************************************************************
   // Block implementation
-  inline packet_block()
+  inline packet_block(std::size_t packet_size)
+    : m_packet_size{packet_size}
+    , m_data{new std::byte[m_packet_size * CAPACITY]}
+    , m_chunks{new chunk[CAPACITY]}
   {
+    // Allocate data and chunks.
+
     // We have to initialize the free list. This means a) setting the freelist
     // to point at the first chunk, and b) setting the header of each chunk but
     // the last to the next chunk.
@@ -111,8 +114,33 @@ public:
 
     for (std::size_t i = 0 ; i < CAPACITY - 1 ; ++i) {
       m_chunks[i].header.next = &(m_chunks[i + 1]);
+      m_chunks[i].data = m_data + (i * m_packet_size);
     }
     m_chunks[CAPACITY - 1].header.next = nullptr;
+    m_chunks[CAPACITY - 1].data = m_data + ((CAPACITY - 1) * m_packet_size);
+  }
+
+  inline ~packet_block()
+  {
+    delete [] m_data;
+    delete [] m_chunks;
+  }
+
+
+  // Metadata
+  static constexpr inline std::size_t capacity()
+  {
+    return CAPACITY;
+  }
+
+  inline std::size_t packet_size() const
+  {
+    return m_packet_size;
+  }
+
+  inline std::size_t memory_size() const
+  {
+    return packet_size() * capacity();
   }
 
 
@@ -131,14 +159,14 @@ public:
 
   inline std::size_t size() const
   {
-    return capacity - avail();
+    return capacity() - avail();
   }
 
   // Similarly, reporting empty() requires use of the free list, while
   // reporting full() is fast.
   inline bool empty() const
   {
-    return avail() == capacity;
+    return avail() == capacity();
   }
 
   inline bool full() const
@@ -153,7 +181,7 @@ public:
     // Allocation is largely finding the right slot index. Since we have a
     // free list, that is simple enough.
     if (m_freelist == nullptr) {
-      return {*this, capacity};
+      return {*this, capacity(), m_packet_size};
     }
 
     // Ok, we know m_freelist points at the first available slot.
@@ -166,7 +194,7 @@ public:
     m_freelist = cur.header.next;
     cur.header.next = nullptr; // Take out of the list entirely
 
-    return slot{*this, idx};
+    return {*this, idx, m_packet_size};
   }
 
 
@@ -180,7 +208,7 @@ public:
     }
 
     // Unused slots are detected by pointing at capacity
-    if (s.m_index == capacity) {
+    if (s.m_index == capacity()) {
       return;
     }
 
@@ -191,19 +219,21 @@ public:
     m_freelist = &(m_chunks[s.m_index]);
 
     // Finally, mark the slot variable as unused.
-    s.m_index = capacity;
+    s.m_index = capacity();
   }
 
 
 private:
+  // Keep a notion of the packet size around
+  std::size_t const m_packet_size;
 
-  // We have two data elements. The first contains all of the chunks as a
-  // contiguous array.
-  chunk   m_chunks[CAPACITY];
+  // Chunk headers and data.
+  std::byte *       m_data = nullptr;
+  chunk *           m_chunks = nullptr;
 
-  // The second element is the head of the current free list, as a pointer
+  // We also need a free list is the head of the current free list, as a pointer
   // to a chunk header. If this is NULL, there are no free elements.
-  chunk * m_freelist = nullptr;
+  chunk *           m_freelist = nullptr;
 };
 
 

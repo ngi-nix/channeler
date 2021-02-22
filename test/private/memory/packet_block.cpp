@@ -25,22 +25,20 @@
 TEST(PacketBlock, memory_footprint)
 {
   using namespace channeler::memory;
-  packet_block<42, 3> block;
+  packet_block<3> block{42};
 
   // This set of 'tests' really just shows the memory footprint associated with
   // managing the free list. It doesn't test anything as such.
-  ASSERT_EQ(block.capacity, 3);
-  ASSERT_EQ(block.packet_size, 42);
-  ASSERT_EQ(block.memory_size, 42 * 3);
-
-  ASSERT_GT(sizeof(block), block.memory_size);
+  ASSERT_EQ(block.capacity(), 3);
+  ASSERT_EQ(block.packet_size(), 42);
+  ASSERT_EQ(block.memory_size(), 42 * 3);
 }
 
 
 TEST(PacketBlock, freelist_after_construction)
 {
   using namespace channeler::memory;
-  packet_block<42, 3> block;
+  packet_block<3> block{42};
 
   ASSERT_EQ(block.avail(), 3);
   ASSERT_EQ(block.size(), 0);
@@ -52,7 +50,7 @@ TEST(PacketBlock, freelist_after_construction)
 TEST(PacketBlock, allocation)
 {
   using namespace channeler::memory;
-  packet_block<42, 2> block;
+  packet_block<2> block{42};
 
   EXPECT_EQ(block.avail(), 2);
   EXPECT_EQ(block.size(), 0);
@@ -89,7 +87,7 @@ TEST(PacketBlock, allocation)
 TEST(PacketBlock, deallocation)
 {
   using namespace channeler::memory;
-  packet_block<42, 2> block;
+  packet_block<2> block{42};
 
   EXPECT_EQ(block.avail(), 2);
   EXPECT_EQ(block.size(), 0);

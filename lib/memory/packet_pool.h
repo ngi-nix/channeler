@@ -29,8 +29,6 @@
 #include <memory>
 #include <set>
 
-#include <iostream> // FIXME
-
 #include "packet_block.h"
 
 namespace channeler::memory {
@@ -105,19 +103,22 @@ struct guard<null_lock_policy>
  * empty blocks.
  */
 template <
-  std::size_t PACKET_SIZE,
   std::size_t BLOCK_SIZE, // In packets
   typename lock_policyT = null_lock_policy
 >
 class packet_pool
 {
 private:
-  using block_type = packet_block<PACKET_SIZE, BLOCK_SIZE>;
+  using block_type = packet_block<BLOCK_SIZE>;
 
   // We maintain a list of blocks, with a freelist. This freelist points at
   // blocks with free elements.
   struct block_entry
   {
+    inline block_entry(std::size_t packet_size)
+      : block{packet_size}
+    {}
+
     block_entry * next = nullptr;
     block_entry * next_free = nullptr;
     block_type    block;
@@ -179,8 +180,9 @@ public:
   };
 
   // Constructor
-  packet_pool(lock_policyT * lock = nullptr)
-    : m_lock(lock)
+  packet_pool(std::size_t packet_size, lock_policyT * lock = nullptr)
+    : m_packet_size{packet_size}
+    , m_lock{lock}
   {
   }
 
@@ -229,7 +231,7 @@ public:
     std::size_t count = 0;
     block_entry * cur = m_blocks;
     while (cur) {
-      count += cur->block.capacity;
+      count += cur->block.capacity();
       cur = cur->next;
     }
 
@@ -367,7 +369,7 @@ private:
 
   inline block_entry * allocate_block()
   {
-    block_entry * n = new block_entry;
+    block_entry * n = new block_entry{m_packet_size};
 
     // Insert into blocks list.
     n->next = m_blocks;
@@ -406,6 +408,8 @@ private:
 
   }
 
+  // Packet size
+  std::size_t     m_packet_size;
 
   // We maintain first a linked list of blocks
   block_entry *   m_blocks = nullptr;
