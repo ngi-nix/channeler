@@ -129,7 +129,7 @@ Filters
 
 The pipe arranges filters in the following steps:
 
-1. `De-Envelope` - parses public the packet header.
+1. `De-Envelope` - parses the public packet header.
 1. `Route` - routes the packet according to header information. Note that we
    currently do not perform routing between e.g. peers, though this could be
    implemented here if a packet was intended for another recipient. Rather, the
