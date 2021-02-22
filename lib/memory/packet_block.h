@@ -75,6 +75,14 @@ public:
       return m_block.m_chunks[m_index].data;
     }
 
+    inline std::byte const * data() const
+    {
+      if (m_index == capacity()) {
+        return nullptr;
+      }
+      return m_block.m_chunks[m_index].data;
+    }
+
     inline std::size_t size() const
     {
       if (m_index == capacity()) {

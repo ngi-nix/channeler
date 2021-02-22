@@ -154,6 +154,14 @@ public:
       return m_impl->block_slot.data();
     }
 
+    inline std::byte const * data() const
+    {
+      if (!m_impl) {
+        return nullptr;
+      }
+      return m_impl->block_slot.data();
+    }
+
     inline std::size_t size() const
     {
       if (!m_impl) {
