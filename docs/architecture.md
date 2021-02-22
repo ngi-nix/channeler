@@ -35,9 +35,12 @@ such buffers can be (relatively) unbounded. We therefore provide a PUSH
 pipe-and-filter architecture, allowing for a PULL-based message queue to
 be added for simplifying the API.
 
+```
   +----------------------+     +--------+      +----------+
   | PUSH pipe-and-filter |---->| Buffer |<-----| PULL API |
   +----------------------+     +--------+      +----------+
+```
+
 
 Filter Interface
 ----------------
