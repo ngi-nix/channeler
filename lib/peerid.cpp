@@ -35,7 +35,7 @@
 namespace channeler {
 
 
-peerid_wrapper::peerid_wrapper(std::byte * start, size_t bufsize)
+peerid_wrapper::peerid_wrapper(std::byte const * start, size_t bufsize)
   : raw{start}
 {
   if (bufsize < size()) {

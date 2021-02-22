@@ -138,7 +138,8 @@ TEST(PeerIDWrapper, use_with_peerid)
 
   // Ok, modify a byte in the wrapper - this should yield the same comparisons
   auto idhash = id.hash();
-  wrap.raw[0] = static_cast<std::byte>(static_cast<char>(wrap.raw[0]) + 128);
+  std::byte * target = const_cast<std::byte *>(wrap.raw);
+  target[0] = static_cast<std::byte>(static_cast<char>(wrap.raw[0]) + 128);
 
   ASSERT_EQ(id.hash(), wrap.hash());
   ASSERT_EQ(id.display(), wrap.display());

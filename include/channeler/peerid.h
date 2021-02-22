@@ -58,7 +58,7 @@ struct CHANNELER_API peerid_wrapper
    * buffer. The required buffer size is a constexpr, and the passed buffer
    * size is checked for sufficient size.
    */
-  peerid_wrapper(std::byte * start, size_t bufsize);
+  peerid_wrapper(std::byte const * start, size_t bufsize);
 
   std::string display() const;
   size_t hash() const;
@@ -75,7 +75,7 @@ struct CHANNELER_API peerid_wrapper
   peerid copy() const;
 
   // Pointer to raw buffer; equivalent to start in the constructor
-  std::byte * raw;
+  std::byte const * raw;
 };
 
 

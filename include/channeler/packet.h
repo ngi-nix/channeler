@@ -215,7 +215,7 @@ struct CHANNELER_API public_header_fields
 
   packet_size_t   packet_size;
 
-  public_header_fields(std::byte * buf)
+  public_header_fields(std::byte const * buf)
     : sender{buf + PUB_OFFS_SENDER, peerid::size()}
     , recipient{buf + PUB_OFFS_RECIPIENT, peerid::size()}
   {
