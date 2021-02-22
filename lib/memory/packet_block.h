@@ -67,7 +67,7 @@ public:
   // We allocate and deallocate in slots.
   struct slot
   {
-    std::byte * data()
+    inline std::byte * data()
     {
       if (m_index == capacity()) {
         return nullptr;
@@ -75,7 +75,7 @@ public:
       return m_block.m_chunks[m_index].data;
     }
 
-    std::size_t size() const
+    inline std::size_t size() const
     {
       if (m_index == capacity()) {
         return 0;
@@ -86,7 +86,7 @@ public:
   private:
     friend class packet_block;
 
-    slot(packet_block & block, std::size_t index, std::size_t packet_size)
+    inline slot(packet_block & block, std::size_t index, std::size_t packet_size)
       : m_block{block}
       , m_index{index}
       , m_packet_size{packet_size}

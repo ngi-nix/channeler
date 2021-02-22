@@ -132,7 +132,7 @@ private:
     block_entry *             block;
     typename block_type::slot block_slot;
 
-    ~slot_impl()
+    inline ~slot_impl()
     {
       // Since slot_impl is only ever passed around as a shared pointer, the
       // destructor is only called when the refcount goes to zero. We can
@@ -165,12 +165,12 @@ public:
   private:
     friend class packet_pool;
 
-    slot()
+    inline slot()
       : m_impl{}
     {
     }
 
-    slot(packet_pool & pool, block_entry * block,
+    inline slot(packet_pool & pool, block_entry * block,
         typename block_type::slot const & bs)
       : m_impl{new slot_impl{pool, block, bs}}
     {
@@ -180,13 +180,13 @@ public:
   };
 
   // Constructor
-  packet_pool(std::size_t packet_size, lock_policyT * lock = nullptr)
+  inline packet_pool(std::size_t packet_size, lock_policyT * lock = nullptr)
     : m_packet_size{packet_size}
     , m_lock{lock}
   {
   }
 
-  ~packet_pool()
+  inline ~packet_pool()
   {
     guard g{m_lock};
 
@@ -308,7 +308,7 @@ public:
     s.m_impl = nullptr;
   }
 
-  void prune()
+  inline void prune()
   {
     guard g{m_lock};
 
