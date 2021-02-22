@@ -29,6 +29,8 @@
 #include <list>
 #include <memory>
 
+#include <channeler/peerid.h>
+
 namespace channeler::pipe {
 
 
@@ -56,11 +58,37 @@ struct action
 // Action list type
 using action_list_type = std::list<std::unique_ptr<action>>;
 
-// TODO:
-// - filter action
-//  - ingress or egress
-// - template with address type (peerid, address_t)
-// - pass down
+
+/**
+ * Action for requesting filtering on different address types.
+ */
+template <typename addressT>
+struct transport_filter_request_action
+  : public action
+{
+  addressT address;
+  bool     ingress = true; // FIXME enum?
+
+  inline transport_filter_request_action(addressT const & addr)
+    : action{AT_FILTER_TRANSPORT}
+    , address{addr}
+  {
+  }
+};
+
+struct peer_filter_request_action
+  : public action
+{
+  peerid peer;
+  bool   ingress = true; // FIXME enum?
+
+  inline peer_filter_request_action(peerid_wrapper const & p)
+    : action{AT_FILTER_PEER}
+    , peer{p.copy()}
+  {
+  }
+};
+
 
 } // namespace channeler::pipe
 

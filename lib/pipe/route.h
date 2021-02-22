@@ -17,8 +17,8 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE.
  **/
-#ifndef CHANNELER_PIPE_DE_ENVELOPE_H
-#define CHANNELER_PIPE_DE_ENVELOPE_H
+#ifndef CHANNELER_PIPE_ROUTE_H
+#define CHANNELER_PIPE_ROUTE_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -27,6 +27,7 @@
 #include <channeler.h>
 
 #include <memory>
+#include <set>
 
 #include "../memory/packet_pool.h"
 #include "event.h"
@@ -39,8 +40,15 @@
 namespace channeler::pipe {
 
 /**
- * The de-envelope filter raw buffers, parses packet headers, and passes on the
- * result.
+ * Route packets.
+ *
+ * For the time being, this means dropping packets with unacceptable source
+ * or destination addresses.
+ *
+ * TODO:
+ * - unban action or interface
+ * - timeout of bans
+ * 
  */
 template <
   typename addressT,
@@ -48,29 +56,32 @@ template <
   typename next_filterT,
   typename next_eventT
 >
-struct de_envelope_filter
+struct route_filter
 {
   using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
   using slot_type = typename pool_type::slot;
 
   struct input_event : public event
   {
-    addressT  src_addr;
-    addressT  dst_addr;
-    slot_type data;
+    addressT                        src_addr;
+    addressT                        dst_addr;
+    channeler::public_header_fields header;
+    slot_type                       data;
 
     inline input_event(addressT const & src, addressT const & dst,
+        channeler::public_header_fields const & hdr,
         slot_type const & slot)
-      : event{ET_RAW_BUFFER}
+      : event{ET_PARSED_HEADER}
       , src_addr{src}
       , dst_addr{dst}
+      , header{hdr}
       , data{slot}
     {
     }
   };
 
 
-  inline de_envelope_filter(next_filterT * next)
+  inline route_filter(next_filterT * next)
     : m_next{next}
   {
   }
@@ -81,27 +92,59 @@ struct de_envelope_filter
     if (!ev) {
       throw exception{ERR_INVALID_REFERENCE};
     }
-    if (ev->type != ET_RAW_BUFFER) {
+    if (ev->type != ET_PARSED_HEADER) {
       throw exception{ERR_INVALID_PIPE_EVENT};
     }
 
-    input_event const * in = reinterpret_cast<input_event const *>(ev.get());
+    input_event * in = reinterpret_cast<input_event *>(ev.get());
 
     // If there is no data passed, we should also throw.
     if (nullptr == in->data.data()) {
       throw exception{ERR_INVALID_REFERENCE};
     }
 
-    // Parse header data, and pass on a new event to the next filter
-    ::channeler::public_header_fields header{in->data.data()};
+    // Do the actual filtering.
+    peerid id = in->header.sender.copy();
+    if (m_sender_banlist.find(id) != m_sender_banlist.end()) {
+      return {};
+    }
+    id = in->header.recipient.copy();
+    if (m_recipient_banlist.find(id) != m_recipient_banlist.end()) {
+      return {};
+    }
 
+    // At the next event, we expect a packet not just a header. This means
+    // parsing the header a second time for now.
+    // TODO: new packet constructor
     auto next = std::make_unique<next_eventT>(
-        in->src_addr, in->dst_addr, header, in->data);
-    return m_next->consume(std::move(next));
+        in->src_addr, in->dst_addr,
+        channeler::packet_wrapper{in->data.data(), in->data.size()},
+        in->data);
+    auto res = m_next->consume(std::move(next));
+
+    // We do have to handle some action types.
+    for (auto & action : res) {
+      if (AT_FILTER_PEER == action->type) {
+        auto act = reinterpret_cast<peer_filter_request_action *>(action.get());
+        if (act->ingress) {
+          m_sender_banlist.insert(act->peer);
+        }
+        else {
+          m_recipient_banlist.insert(act->peer);
+        }
+      }
+    }
+
+    return res;
   }
 
 
   next_filterT *  m_next;
+
+  // The route filter currently mostly drops packets if their source or
+  // destination peer address is not acceptable.
+  std::set<peerid>  m_sender_banlist;
+  std::set<peerid>  m_recipient_banlist;
 };
 
 
