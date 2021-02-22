@@ -78,6 +78,10 @@ CHANNELER_ERRDEF(ERR_INVALID_REFERENCE,
     5,
     "A reference does not resolve to a valid object.")
 
+CHANNELER_ERRDEF(ERR_INVALID_PIPE_EVENT,
+    6,
+    "An filter could not handle the event type passed to it.")
+
 CHANNELER_END_ERRORS
 
 
