@@ -91,6 +91,7 @@ operations can be introduced easily enough, provided that each IEvent
 and IAction is self-contained, or at least contains ownership of the data
 it references, such that passing IEvent or IAction also passes ownership.
 
+
 Zero-Copy and Buffering
 -----------------------
 
@@ -127,10 +128,31 @@ system boundary:
 1. Releasing the packet from a channel buffer also releases its slot reservation
    in the memory pool.
 
-Filters
+
+Actions
 -------
 
-The pipe arranges filters in the following steps:
+The action part of the filter interface is concerned with passing information
+back from later filters to earlier ones. In particular, it is interesting for
+various filters to inform earlier filters that a packet is not valid, and let
+earlier filters provide some kind of security against further malformed packets.
+
+- `State handling` can inform earlier filters of messages that do not fit
+  the protocol state and should be considered malformed or malicious.
+- `Message parsing` can inform earlier filters of malformed packet payloads.
+- `Decrypt` and `Validate` can inform earlier filters that basic packet
+  validity could not be ensured.
+- etc.
+
+It is then up to e.g. the `Route` filter, or indeed the layer managing network
+I/O to discard further packets from the peer associated with the malformed or
+malicious packet.
+
+
+Input Filters
+-------------
+
+The input pipe arranges filters in the following steps:
 
 1. `De-Envelope` - parses the public packet header.
 1. `Route` - routes the packet according to header information. Note that we
@@ -152,22 +174,22 @@ The pipe arranges filters in the following steps:
 1. `State handling` - this last filter encapsulates the protocol state machine.
    Any internal messages are processed and discarded, while data messages are
    made available to the application.
-   This filter provides data and other notifications to the application layer,
-   which is considered a "filter" here.
+1. The last filter provides data and other notifications to the application
+   layer, which is considered a "filter" here.
 
-The action part of the interface is in particular concerned with passing
-information back from later filters to earlier ones. In particular, it is
-interesting for various filters to inform earlier filters that a packet is
-not valid, and let earlier filters provide some kind of security against
-further malformed packets.
 
-- `State handling` can inform earlier filters of messages that do not fit
-  the protocol state and should be considered malformed or malicious.
-- `Message parsing` can inform earlier filters of malformed packet payloads.
-- `Decrypt` and `Validate` can inform earlier filters that basic packet
-  validity could not be ensured.
+Output Filters
+--------------
 
-It is then up to e.g. the `Route` filter, or indeed the layer managing network
-I/O to discard further packets from the peer associated with the malformed or
-malicious packet.
+The output pipe is simpler than the input pipe, and provides the following
+steps:
 
+1. `Message Bundling` - the filter decides, based on channel settings and
+  message flags, whether to buffer data from the application layer until a
+  packet can be filled, or send a packet immediately.
+1. `Encryption` - takes an unencrypted packet and encrypts it [not yet
+  implemented]
+1. `Checksum` - calculates the packet checksum. Depending on the crypto
+  algorithm, this might be subsumed into the encryption pipeline.
+1. `Buffer` - places the filter in the output buffer.
+1. The last filter provides data and other notifications to the I/O loop.
