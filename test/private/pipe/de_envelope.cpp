@@ -33,23 +33,7 @@ using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
 struct next
 {
-  struct input_event : public channeler::pipe::event
-  {
-    inline input_event(address_t src, address_t dst, channeler::public_header_fields f,
-        pool_type::slot slot)
-      : event{channeler::pipe::ET_PARSED_HEADER}
-      , src_addr{src}
-      , dst_addr{dst}
-      , header{f}
-      , data{slot}
-    {
-    }
-
-    address_t src_addr;
-    address_t dst_addr;
-    channeler::public_header_fields header;
-    pool_type::slot data;
-  };
+  using input_event = channeler::pipe::parsed_header_event<address_t, POOL_BLOCK_SIZE>;
 
   inline channeler::pipe::action_list_type consume(std::unique_ptr<channeler::pipe::event> event)
   {
@@ -106,6 +90,6 @@ TEST(DeEnvelopeFilter, parse_data)
   // elsewhere. This tests that the filter passes on things well.
   ASSERT_EQ(n.m_event->type, ET_PARSED_HEADER);
   next::input_event * ptr = reinterpret_cast<next::input_event *>(n.m_event.get());
-  ASSERT_EQ(123, ptr->src_addr);
-  ASSERT_EQ(321, ptr->dst_addr);
+  ASSERT_EQ(123, ptr->transport.source);
+  ASSERT_EQ(321, ptr->transport.destination);
 }

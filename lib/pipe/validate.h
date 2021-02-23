@@ -71,6 +71,14 @@ struct null_policy
  * If a packet is known to be invalid, the filter consults the peer failure
  * policy to decide whether to institute filtering at the level of the peerid,
  * and the transport failure policy whether to filter at the transport level.
+ *
+ * Expects the next_eventT constructor to take
+ * - transport source address
+ * - transport destination address
+ * - packet_wrapper
+ * - a pool slot
+ *
+ * such as e.g. decrypted_packet_event
  */
 template <
   typename addressT,
@@ -82,28 +90,7 @@ template <
 >
 struct validate_filter
 {
-  using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
-  using slot_type = typename pool_type::slot;
-
-  struct input_event : public event
-  {
-    addressT                  src_addr;
-    addressT                  dst_addr;
-    channeler::packet_wrapper packet;
-    slot_type                 data;
-
-    inline input_event(addressT const & src, addressT const & dst,
-        channeler::packet_wrapper const & pkt,
-        slot_type const & slot)
-      : event{ET_DECRYPTED_PACKET}
-      , src_addr{src}
-      , dst_addr{dst}
-      , packet{pkt}
-      , data{slot}
-    {
-    }
-  };
-
+  using input_event = decrypted_packet_event<addressT, POOL_BLOCK_SIZE>;
 
   inline validate_filter(next_filterT * next,
       peer_failure_policyT * peer_p = nullptr,
@@ -147,13 +134,13 @@ struct validate_filter
       }
 
       if (m_transport_policy) {
-        if (m_transport_policy->should_filter(in->src_addr, true)) {
+        if (m_transport_policy->should_filter(in->transport.source, true)) {
           res.push_back(std::make_shared<transport_filter_request_action<addressT>>(
-                in->src_addr, true));
+                in->transport.source, true));
         }
-        if (m_transport_policy->should_filter(in->dst_addr, false)) {
+        if (m_transport_policy->should_filter(in->transport.destination, false)) {
           res.push_back(std::make_shared<transport_filter_request_action<addressT>>(
-                in->dst_addr, false));
+                in->transport.destination, false));
         }
       }
 

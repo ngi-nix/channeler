@@ -79,23 +79,7 @@ using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
 struct next
 {
-  struct input_event : public channeler::pipe::event
-  {
-    inline input_event(address_t src, address_t dst, channeler::packet_wrapper p,
-        pool_type::slot slot)
-      : event{channeler::pipe::ET_DECRYPTED_PACKET}
-      , src_addr{src}
-      , dst_addr{dst}
-      , packet{p}
-      , data{slot}
-    {
-    }
-
-    address_t                 src_addr;
-    address_t                 dst_addr;
-    channeler::packet_wrapper packet;
-    pool_type::slot           data;
-  };
+  using input_event = channeler::pipe::decrypted_packet_event<address_t, POOL_BLOCK_SIZE>;
 
   inline channeler::pipe::action_list_type consume(std::unique_ptr<channeler::pipe::event> event)
   {
@@ -171,8 +155,8 @@ TEST(ValidateFilter, pass_packet)
   // is in the output event.
   ASSERT_EQ(n.m_event->type, ET_DECRYPTED_PACKET);
   next::input_event * ptr = reinterpret_cast<next::input_event *>(n.m_event.get());
-  ASSERT_EQ(123, ptr->src_addr);
-  ASSERT_EQ(321, ptr->dst_addr);
+  ASSERT_EQ(123, ptr->transport.source);
+  ASSERT_EQ(321, ptr->transport.destination);
   ASSERT_EQ(ptr->packet.sender().display(), "0x000000000000000000000000000a11c3");
   ASSERT_EQ(ptr->packet.recipient().display(), "0x00000000000000000000000000000b0b");
 }

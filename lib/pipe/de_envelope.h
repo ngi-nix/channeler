@@ -41,6 +41,14 @@ namespace channeler::pipe {
 /**
  * The de-envelope filter raw buffers, parses packet headers, and passes on the
  * result.
+ *
+ * Expects the next_eventT constructor to take
+ * - transport source address
+ * - transport destination address
+ * - public headers
+ * - a pool slot
+ *
+ * such as e.g. parsed_header_event
  */
 template <
   typename addressT,
@@ -50,25 +58,7 @@ template <
 >
 struct de_envelope_filter
 {
-  using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
-  using slot_type = typename pool_type::slot;
-
-  struct input_event : public event
-  {
-    addressT  src_addr;
-    addressT  dst_addr;
-    slot_type data;
-
-    inline input_event(addressT const & src, addressT const & dst,
-        slot_type const & slot)
-      : event{ET_RAW_BUFFER}
-      , src_addr{src}
-      , dst_addr{dst}
-      , data{slot}
-    {
-    }
-  };
-
+  using input_event = raw_buffer_event<addressT, POOL_BLOCK_SIZE>;
 
   inline de_envelope_filter(next_filterT * next)
     : m_next{next}
@@ -96,7 +86,10 @@ struct de_envelope_filter
     ::channeler::public_header_fields header{in->data.data()};
 
     auto next = std::make_unique<next_eventT>(
-        in->src_addr, in->dst_addr, header, in->data);
+        in->transport.source,
+        in->transport.destination,
+        header,
+        in->data);
     return m_next->consume(std::move(next));
   }
 
