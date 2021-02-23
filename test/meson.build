@@ -35,6 +35,7 @@ if not meson.is_subproject()
     'private' / 'memory' / 'packet_buffer.cpp',
     'private' / 'pipe' / 'de_envelope.cpp',
     'private' / 'pipe' / 'route.cpp',
+    'private' / 'pipe' / 'validate.cpp',
     'runner.cpp',
   ]
 
