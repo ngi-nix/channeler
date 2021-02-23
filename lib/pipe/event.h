@@ -37,6 +37,8 @@ enum event_type : uint_fast16_t
   ET_UNKNOWN = 0,
   ET_RAW_BUFFER,
   ET_PARSED_HEADER,
+  // TODO encrypted or potentially encrypted packet might have a different
+  // event type.
   ET_DECRYPTED_PACKET,
 };
 
@@ -48,6 +50,11 @@ struct event
 {
   event_type const type = ET_UNKNOWN;
 };
+
+
+// TODO the input events of filters should be constructed from sharable
+// templates, i.e. all filters accepting ET_DECRYPTED_PACKET can share
+// code here.
 
 
 } // namespace channeler::pipe
