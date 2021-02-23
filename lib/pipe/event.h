@@ -37,6 +37,7 @@ enum event_type : uint_fast16_t
   ET_UNKNOWN = 0,
   ET_RAW_BUFFER,
   ET_PARSED_HEADER,
+  ET_DECRYPTED_PACKET,
 };
 
 

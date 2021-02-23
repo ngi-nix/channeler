@@ -56,7 +56,7 @@ struct action
 };
 
 // Action list type
-using action_list_type = std::list<std::unique_ptr<action>>;
+using action_list_type = std::list<std::shared_ptr<action>>;
 
 
 /**
@@ -67,11 +67,12 @@ struct transport_filter_request_action
   : public action
 {
   addressT address;
-  bool     ingress = true; // FIXME enum?
+  bool     ingress; // FIXME enum?
 
-  inline transport_filter_request_action(addressT const & addr)
+  inline transport_filter_request_action(addressT const & addr, bool _ingress = true)
     : action{AT_FILTER_TRANSPORT}
     , address{addr}
+    , ingress{_ingress}
   {
   }
 };
@@ -80,11 +81,12 @@ struct peer_filter_request_action
   : public action
 {
   peerid peer;
-  bool   ingress = true; // FIXME enum?
+  bool   ingress; // FIXME enum?
 
-  inline peer_filter_request_action(peerid_wrapper const & p)
+  inline peer_filter_request_action(peerid_wrapper const & p, bool _ingress = true)
     : action{AT_FILTER_PEER}
     , peer{p.copy()}
+    , ingress{_ingress}
   {
   }
 };
