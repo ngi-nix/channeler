@@ -138,12 +138,12 @@ The pipe arranges filters in the following steps:
    implemented here if a packet was intended for another recipient. Rather, the
    main decision point is whether to further process or drop the packet, e.g.
    according to "firewall" rules.
+1. `Decrypt` - only applies if the packet is encrypted. [not yet implemented]
 1. `Validate` - here, we provide simple packet-level validation. The protocol
    identifier must be one of the implemented set, and checksums have to be
    validated. Note that when encryption is used, this may be conflated with the
-   decryption filter below.
-1. `Decrypt` - only applies if the packet is encrypted. [not yet implemented]
-1. `Channel Assignment` - once a packet is decrypted, it can be put into a
+   decryption filter above.
+1. `Channel Assignment` - once a packet is validated, it can be put into a
     channel specific buffer.
 1. `Message Parsing` - this filter processes each packet as a sequence of
    messages, and passes messages further down the filter pipe (at the latest,
