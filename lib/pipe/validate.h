@@ -32,31 +32,13 @@
 #include "../memory/packet_pool.h"
 #include "event.h"
 #include "action.h"
+#include "filter_classifier.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>
 
 
 namespace channeler::pipe {
-
-/**
- * Null policy - does nothing, but provides the right kind of interface.
- *
- * See validate_filter for details.
- */
-template <
-  typename addressT = peerid
->
-struct null_policy
-{
-  // FIXME ingress as an enum? see action.h
-  inline bool should_filter(addressT const &, bool ingress [[maybe_unused]])
-  {
-    return false;
-  }
-};
-
-
 
 /**
  * Validate packets.
@@ -91,13 +73,13 @@ template <
 struct validate_filter
 {
   using input_event = decrypted_packet_event<addressT, POOL_BLOCK_SIZE>;
+  using classifier = filter_classifier<addressT, peer_failure_policyT, transport_failure_policyT>;
 
   inline validate_filter(next_filterT * next,
       peer_failure_policyT * peer_p = nullptr,
       transport_failure_policyT * trans_p = nullptr)
     : m_next{next}
-    , m_peer_policy{peer_p}
-    , m_transport_policy{trans_p}
+    , m_classifier{peer_p, trans_p}
   {
   }
 
@@ -121,31 +103,10 @@ struct validate_filter
     // We need to validate the packet. For now, this just means verifying the
     // checksum.
     if (!in->packet.has_valid_checksum()) {
-      action_list_type res;
-      if (m_peer_policy) {
-        if (m_peer_policy->should_filter(in->packet.sender(), true)) {
-          res.push_back(std::make_shared<peer_filter_request_action>(
-                  in->packet.sender(), true));
-        }
-        if (m_peer_policy->should_filter(in->packet.recipient(), false)) {
-          res.push_back(std::make_shared<peer_filter_request_action>(
-                  in->packet.recipient(), false));
-        }
-      }
-
-      if (m_transport_policy) {
-        if (m_transport_policy->should_filter(in->transport.source, true)) {
-          res.push_back(std::make_shared<transport_filter_request_action<addressT>>(
-                in->transport.source, true));
-        }
-        if (m_transport_policy->should_filter(in->transport.destination, false)) {
-          res.push_back(std::make_shared<transport_filter_request_action<addressT>>(
-                in->transport.destination, false));
-        }
-      }
-
-      // If the checksum is invalid, we know we want to exit the pipe here.
-      return res;
+      // If the checksum is invalid, we know we want to exit the pipe here. The
+      // classifier provides actions, if so desired.
+      return m_classifier.process(in->transport.source,
+          in->transport.destination, in->packet);
     }
 
     // At the next filter, we require full packets again. Let's just move
@@ -154,9 +115,8 @@ struct validate_filter
   }
 
 
-  next_filterT *              m_next;
-  peer_failure_policyT *      m_peer_policy;
-  transport_failure_policyT * m_transport_policy;
+  next_filterT *  m_next;
+  classifier      m_classifier;
 };
 
 
