@@ -170,6 +170,7 @@ public:
       return m_impl->block_slot.size();
     }
 
+
   private:
     friend class packet_pool;
 
