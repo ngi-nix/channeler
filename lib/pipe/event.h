@@ -26,6 +26,8 @@
 
 #include <channeler.h>
 
+#include "../channels.h"
+
 #include <channeler/packet.h>
 
 namespace channeler::pipe {
@@ -42,6 +44,7 @@ enum event_type : uint_fast16_t
   // TODO encrypted or potentially encrypted packet might have a different
   // event type.
   ET_DECRYPTED_PACKET,
+  ET_ENQUEUED_PACKET,
 };
 
 
@@ -154,6 +157,41 @@ struct decrypted_packet_event
   {
     // Explicitly override the type
     *const_cast<event_type *>(&(this->type)) = ET_DECRYPTED_PACKET;
+  }
+};
+
+
+
+/**
+ * The enqueued_packet_event extends the decrypted_packet_event by also
+ * carrying a channel structure pointer, which is Nullable.
+ */
+template <
+  typename addressT,
+  std::size_t POOL_BLOCK_SIZE,
+  typename channelT
+>
+struct enqueued_packet_event
+  : public decrypted_packet_event<addressT, POOL_BLOCK_SIZE>
+{
+  // *** Types
+  using super_t = decrypted_packet_event<addressT, POOL_BLOCK_SIZE>;
+  using channel_set = ::channeler::channels<channelT>;
+
+  // *** Data members
+  typename channel_set::channel_ptr channel;
+
+  // *** Constructor
+  inline enqueued_packet_event(addressT const & source,
+      addressT const & destination,
+      ::channeler::packet_wrapper const & pkt,
+      typename super_t::slot_type const & slot,
+      typename channel_set::channel_ptr const & ch)
+    : super_t{source, destination, pkt, slot}
+    , channel{ch}
+  {
+    // Explicitly override the type
+    *const_cast<event_type *>(&(this->type)) = ET_ENQUEUED_PACKET;
   }
 };
 

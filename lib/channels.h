@@ -70,7 +70,8 @@ public:
 
   inline bool has_pending_channel(channelid const & id) const
   {
-    return m_pending.end() != m_pending.find(id);
+    auto partial = id.create_partial();
+    return m_pending.end() != m_pending.find(partial);
   }
 
 
@@ -126,8 +127,7 @@ public:
 
     // Next, we need to construct a new channel identifier from the passed one
     // that is partial, i.e. has an initiator.
-    auto partial = id;
-    partial.responder = DEFAULT_CHANNELID.responder;
+    auto partial = id.create_partial();
 
     // If this partial identifier is in the pending set, remove it from there
     // and make a full entry.
