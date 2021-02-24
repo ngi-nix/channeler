@@ -7,7 +7,7 @@
  *
  * This software is licensed under the terms of the GNU GPLv3 for personal,
  * educational and non-profit use. For all other uses, alternative license
- * options are available. Please contact the copyright holder for additional
+ * options are available. Please contact the copyright temp_buffer for additional
  * information, stating your intended usage.
  *
  * You can find the full text of the GPLv3 in the COPYING file in this code
@@ -22,76 +22,9 @@
 
 #include <gtest/gtest.h>
 
-namespace {
+#include "../packets.h"
 
-inline constexpr std::byte operator "" _b(unsigned long long arg) noexcept
-{
-  return static_cast<std::byte>(arg);
-}
-
-
-std::byte const packet01[] = {
-  // **** public header
-  // Proto
-  0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
-
-  // Sender
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x0a_b, 0x11_b, 0xc3_b,
-
-  // Recipient
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x0b_b, 0x0b_b,
-
-  // Channel identifier - all zeroes is the default channel
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-
-  // Flags
-  0xa0_b, 0x0a_b,
-
-  // Packet size - packet is empty, this includes the envelope
-  0x00_b, 0x34_b,
-
-  // **** private header
-  // Sequence number - a random one is fine
-  0x01_b, 0xfa_b,
-
-  // Payload size - no payload
-  0x00_b, 0x00_b,
- 
-  // **** payload
-  // n/a
-
-  // **** footer
-  // Checksum
-  0xfa_b, 0xfa_b, 0x25_b, 0xc3_b,
-
-  // **** trailing dat
-  // Spurious data in the buffer - this will be ignored
-  0xde_b, 0xad_b, 0xbe_b, 0xef_b,
-};
-
-
-struct holder
-{
-  std::byte * buf;
-  size_t size;
-
-  holder(std::byte const * orig, size_t s)
-  {
-    size = s;
-    buf = new std::byte[size];
-    memcpy(buf, orig, size);
-  }
-
-  ~holder()
-  {
-    delete [] buf;
-  }
-};
-
-} // anonymous namespace
-
+using namespace test;
 
 TEST(PacketWrapper, construct_from_buffer_failure_too_small)
 {
@@ -105,7 +38,7 @@ TEST(PacketWrapper, construct_from_buffer_failure_too_small)
 
 TEST(PacketWrapper, construct_from_buffer)
 {
-  holder data{packet01, sizeof(packet01)};
+  temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
 
   channeler::packet_wrapper pkt{data.buf, data.size};
 
@@ -118,7 +51,7 @@ TEST(PacketWrapper, construct_from_buffer)
   // This packet isempty
   ASSERT_EQ(pkt.payload_size(), 0);
   ASSERT_EQ(pkt.packet_size(), pkt.envelope_size());
-  ASSERT_EQ(pkt.buffer_size(), sizeof(packet01));
+  ASSERT_EQ(pkt.buffer_size(), packet_default_channel_trailing_bytes_size);
 
   // We have some flags set though: specifically, 1010 in the least and most
   // significant nibbles.
@@ -147,7 +80,7 @@ TEST(PacketWrapper, construct_from_buffer)
 
 TEST(PacketWrapper, copy)
 {
-  holder data{packet01, sizeof(packet01)};
+  temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
   channeler::packet_wrapper pkt0{data.buf, data.size};
 
   // Create copy
@@ -169,7 +102,7 @@ TEST(PacketWrapper, copy)
   ASSERT_FALSE(pkt0 < pkt1);
 
   // However - pkt0 will have a larger *buffer* size than pkt1, because
-  // the original buffer contained spurious data.
+  // the original buffer contained trailing data.
   ASSERT_GT(pkt0.buffer_size(), pkt1.buffer_size());
 }
 
@@ -177,7 +110,7 @@ TEST(PacketWrapper, copy)
 
 TEST(PacketWrapper, copy_packet)
 {
-  holder data{packet01, sizeof(packet01)};
+  temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
   channeler::packet_wrapper pkt0{data.buf, data.size};
 
   // Create copy
@@ -198,7 +131,7 @@ TEST(PacketWrapper, copy_packet)
   ASSERT_FALSE(pkt0 < pkt1);
 
   // However - pkt0 will have a larger *buffer* size than pkt1, because
-  // the original buffer contained spurious data.
+  // the original buffer contained trailing data.
   ASSERT_GT(pkt0.buffer_size(), pkt1.buffer_size());
 }
 
@@ -206,9 +139,9 @@ TEST(PacketWrapper, copy_packet)
 TEST(Packet, checksum)
 {
   // Create three packets
-  channeler::packet pkt0{packet01, sizeof(packet01)};
-  channeler::packet pkt1{packet01, sizeof(packet01)};
-  channeler::packet pkt2{packet01, sizeof(packet01)};
+  channeler::packet pkt0{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
+  channeler::packet pkt1{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
+  channeler::packet pkt2{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
 
   // The checksums must be ok.
   ASSERT_TRUE(pkt0.has_valid_checksum());

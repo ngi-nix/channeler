@@ -22,62 +22,16 @@
 
 #include <gtest/gtest.h>
 
+#include "../../packets.h"
+
+using namespace test;
+
 namespace {
-
-
-inline constexpr std::byte operator "" _b(unsigned long long arg) noexcept
-{
-  return static_cast<std::byte>(arg);
-}
-
-
-std::byte const packet01[] = {
-  // **** public header
-  // Proto
-  0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
-
-  // Sender
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x0a_b, 0x11_b, 0xc3_b,
-
-  // Recipient
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x0b_b, 0x0b_b,
-
-  // Channel identifier - all zeroes is the default channel
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-
-  // Flags
-  0xa0_b, 0x0a_b,
-
-  // Packet size - packet is empty, this includes the envelope
-  0x00_b, 0x34_b,
-
-  // **** private header
-  // Sequence number - a random one is fine
-  0x01_b, 0xfa_b,
-
-  // Payload size - no payload
-  0x00_b, 0x00_b,
- 
-  // **** payload
-  // n/a
-
-  // **** footer
-  // Checksum
-  0xfa_b, 0xfa_b, 0x25_b, 0xc3_b,
-
-  // **** trailing dat
-  // Spurious data in the buffer - this will be ignored
-  0xde_b, 0xad_b, 0xbe_b, 0xef_b,
-};
-
-
 
 // For testing
 using address_t = uint16_t;
 constexpr std::size_t POOL_BLOCK_SIZE = 3;
-constexpr std::size_t PACKET_SIZE = sizeof(packet01);
+std::size_t PACKET_SIZE = packet_default_channel_size;
 
 using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
@@ -131,7 +85,7 @@ TEST(RouteFilter, pass_packet)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
   channeler::public_header_fields header{data.data()};
 
   next n;
@@ -161,7 +115,7 @@ TEST(RouteFilter, drop_sender)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
   channeler::public_header_fields header{data.data()};
 
   next n;
@@ -188,7 +142,7 @@ TEST(RouteFilter, drop_recipient)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
   channeler::public_header_fields header{data.data()};
 
   next n;
@@ -215,7 +169,7 @@ TEST(RouteFilter, pass_first_drop_second)
 
   // Copy packet data before parsing header
   auto data1 = pool.allocate();
-  ::memcpy(data1.data(), packet01, sizeof(packet01));
+  ::memcpy(data1.data(), packet_default_channel, packet_default_channel_size);
   channeler::public_header_fields header1{data1.data()};
 
   next n;
@@ -236,7 +190,7 @@ TEST(RouteFilter, pass_first_drop_second)
   n.m_event.reset();
 
   auto data2 = pool.allocate();
-  ::memcpy(data2.data(), packet01, sizeof(packet01));
+  ::memcpy(data2.data(), packet_default_channel, packet_default_channel_size);
   channeler::public_header_fields header2{data2.data()};
 
   auto ev2 = std::make_unique<filter_t::input_event>(123, 321, header2, data2);

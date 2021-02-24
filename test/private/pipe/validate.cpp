@@ -22,58 +22,16 @@
 
 #include <gtest/gtest.h>
 
+#include "../../packets.h"
+
+using namespace test;
+
 namespace {
-
-
-inline constexpr std::byte operator "" _b(unsigned long long arg) noexcept
-{
-  return static_cast<std::byte>(arg);
-}
-
-
-std::byte const packet01[] = {
-  // **** public header
-  // Proto
-  0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
-
-  // Sender
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x0a_b, 0x11_b, 0xc3_b,
-
-  // Recipient
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x0b_b, 0x0b_b,
-
-  // Channel identifier - all zeroes is the default channel
-  0x00_b, 0x00_b, 0x00_b, 0x00_b,
-
-  // Flags
-  0xa0_b, 0x0a_b,
-
-  // Packet size - packet is empty, this includes the envelope
-  0x00_b, 0x34_b,
-
-  // **** private header
-  // Sequence number - a random one is fine
-  0x01_b, 0xfa_b,
-
-  // Payload size - no payload
-  0x00_b, 0x00_b,
- 
-  // **** payload
-  // n/a
-
-  // **** footer
-  // Checksum
-  0xfa_b, 0xfa_b, 0x25_b, 0xc3_b,
-};
-
-
 
 // For testing
 using address_t = uint16_t;
 constexpr std::size_t POOL_BLOCK_SIZE = 3;
-constexpr std::size_t PACKET_SIZE = sizeof(packet01);
+std::size_t PACKET_SIZE = packet_default_channel_size;
 
 using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
@@ -141,7 +99,7 @@ TEST(ValidateFilter, pass_packet)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
@@ -171,8 +129,8 @@ TEST(ValidateFilter, drop_packet)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
-  data.data()[sizeof(packet01) - 1] = 0x00_b; // Bad checksum - null the last byte
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
+  data.data()[packet_default_channel_size - 1] = 0x00_b; // Bad checksum - null the last byte
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
@@ -207,8 +165,8 @@ TEST(ValidateFilter, drop_packet_ban_transport_source)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
-  data.data()[sizeof(packet01) - 1] = 0x00_b; // Bad checksum - null the last byte
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
+  data.data()[packet_default_channel_size - 1] = 0x00_b; // Bad checksum - null the last byte
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
@@ -253,8 +211,8 @@ TEST(ValidateFilter, drop_packet_ban_transport_destination)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
-  data.data()[sizeof(packet01) - 1] = 0x00_b; // Bad checksum - null the last byte
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
+  data.data()[packet_default_channel_size - 1] = 0x00_b; // Bad checksum - null the last byte
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
@@ -299,8 +257,8 @@ TEST(ValidateFilter, drop_packet_ban_peer_sender)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
-  data.data()[sizeof(packet01) - 1] = 0x00_b; // Bad checksum - null the last byte
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
+  data.data()[packet_default_channel_size - 1] = 0x00_b; // Bad checksum - null the last byte
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
@@ -345,8 +303,8 @@ TEST(ValidateFilter, drop_packet_ban_peer_recipient)
 
   // Copy packet data before parsing header
   auto data = pool.allocate();
-  ::memcpy(data.data(), packet01, sizeof(packet01));
-  data.data()[sizeof(packet01) - 1] = 0x00_b; // Bad checksum - null the last byte
+  ::memcpy(data.data(), packet_default_channel, packet_default_channel_size);
+  data.data()[packet_default_channel_size - 1] = 0x00_b; // Bad checksum - null the last byte
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
