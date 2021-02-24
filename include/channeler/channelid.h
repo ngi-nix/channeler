@@ -82,6 +82,13 @@ union CHANNELER_API channelid
   {
     return has_initiator() && has_responder();
   }
+
+  inline channelid create_partial() const
+  {
+    auto ret = *this;
+    ret.responder = uint16_t{0xF0F0};
+    return ret;
+  }
 };
 
 LIBERATE_MAKE_COMPARABLE(channelid)
