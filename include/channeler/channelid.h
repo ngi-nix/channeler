@@ -44,11 +44,14 @@ namespace channeler {
  */
 union CHANNELER_API channelid
 {
-  uint32_t full = 0xF0F0F0F0uL;
+  using full_type = uint32_t;
+  using half_type = uint16_t;
+
+  full_type full = full_type{0xF0F0F0F0uL};
   CHANNELER_ANONYMOUS struct {
-    uint16_t initiator;   // First (most significant) bits are set by the
-                          // initiating side.
-    uint16_t responder;   // The responding side fills in the rest.
+    half_type initiator;   // First (most significant) bits are set by the
+                           // initiating side.
+    half_type responder;   // The responding side fills in the rest.
   };
 
   // Behave like a value type
@@ -70,12 +73,12 @@ union CHANNELER_API channelid
   // Verification
   inline bool has_initiator() const
   {
-    return initiator != uint16_t{0xF0F0};
+    return initiator != half_type{0xF0F0};
   }
 
   inline bool has_responder() const
   {
-    return responder != uint16_t{0xF0F0};
+    return responder != half_type{0xF0F0};
   }
 
   inline bool is_complete() const
@@ -86,7 +89,7 @@ union CHANNELER_API channelid
   inline channelid create_partial() const
   {
     auto ret = *this;
-    ret.responder = uint16_t{0xF0F0};
+    ret.responder = half_type{0xF0F0};
     return ret;
   }
 };
