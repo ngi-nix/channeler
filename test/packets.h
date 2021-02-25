@@ -20,35 +20,12 @@
 #ifndef TEST_PACKETS_H
 #define TEST_PACKETS_H
 
-#include <cstring>
+#include "temp_buffer.h"
+#include "byte_suffix.h"
 
 #include <channeler/packet.h>
 
 namespace test {
-
-struct temp_buffer
-{
-  std::byte * buf;
-  size_t size;
-
-  inline temp_buffer(std::byte const * orig, size_t s)
-  {
-    size = s;
-    buf = new std::byte[size];
-    memcpy(buf, orig, size);
-  }
-
-  inline ~temp_buffer()
-  {
-    delete [] buf;
-  }
-};
-
-
-inline constexpr std::byte operator "" _b(unsigned long long arg) noexcept
-{
-  return static_cast<std::byte>(arg);
-}
 
 
 /**
