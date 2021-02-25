@@ -222,6 +222,7 @@ libsrc = [
   'lib' / 'packet.cpp',
   'lib' / 'peerid.cpp',
   'lib' / 'version.cpp',
+  'lib' / 'message.cpp',
 ]
 
 

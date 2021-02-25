@@ -25,14 +25,17 @@ if not meson.is_subproject()
   public_test_src = [
     'runner.cpp',
     'packets.cpp',
+    'messages.cpp',
     'public' / 'channelid.cpp',
     'public' / 'peerid.cpp',
     'public' / 'packet.cpp',
+    'public' / 'message.cpp',
   ]
 
   private_test_src = [
     'runner.cpp',
     'packets.cpp',
+    'messages.cpp',
     'private' / 'memory' / 'packet_block.cpp',
     'private' / 'memory' / 'packet_pool.cpp',
     'private' / 'memory' / 'packet_buffer.cpp',

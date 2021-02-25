@@ -82,6 +82,11 @@ CHANNELER_ERRDEF(ERR_INVALID_PIPE_EVENT,
     6,
     "An filter could not handle the event type passed to it.")
 
+CHANNELER_ERRDEF(ERR_INVALID_MESSAGE_TYPE,
+    7,
+    "Unknown message type was received.")
+
+
 CHANNELER_END_ERRORS
 
 
