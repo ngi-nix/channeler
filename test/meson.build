@@ -28,8 +28,9 @@ if not meson.is_subproject()
     'messages.cpp',
     'public' / 'channelid.cpp',
     'public' / 'peerid.cpp',
-    'public' / 'packet.cpp',
+    'public' / 'cookie.cpp',
     'public' / 'message.cpp',
+    'public' / 'packet.cpp',
   ]
 
   private_test_src = [

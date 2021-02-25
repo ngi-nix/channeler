@@ -21,6 +21,7 @@
 #define TEST_BYTE_SUFFIX_H
 
 #include <cstddef>
+#include <vector>
 
 namespace test {
 
@@ -29,6 +30,12 @@ inline constexpr std::byte operator "" _b(unsigned long long arg) noexcept
   return static_cast<std::byte>(arg);
 }
 
+
+inline std::vector<std::byte> operator""_b(char const * str, std::size_t len [[maybe_unused]]) noexcept
+{
+  auto start = reinterpret_cast<std::byte const *>(str);
+  return {start, start + len};
+}
 
 } // namespace test
 

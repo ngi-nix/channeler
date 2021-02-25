@@ -221,8 +221,9 @@ libsrc = [
   'lib' / 'error.cpp',
   'lib' / 'packet.cpp',
   'lib' / 'peerid.cpp',
-  'lib' / 'version.cpp',
   'lib' / 'message.cpp',
+  'lib' / 'cookie.cpp',
+  'lib' / 'version.cpp',
 ]
 
 
