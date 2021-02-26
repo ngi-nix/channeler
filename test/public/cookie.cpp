@@ -47,6 +47,10 @@ TEST(Cookie, initiator_cookie_calculation)
       p1, p2, id.initiator);
 
   ASSERT_NE(c1, cookie{});
+  ASSERT_TRUE(validate_cookie(c1, secret1.data(), secret1.size(),
+        p1, p2, id.initiator));
+  ASSERT_FALSE(validate_cookie(c1 + 1, secret1.data(), secret1.size(),
+        p1, p2, id.initiator));
 }
 
 
@@ -64,4 +68,9 @@ TEST(Cookie, responder_cookie_calculation)
       p1, p2, id);
 
   ASSERT_NE(c2, cookie{});
+
+  ASSERT_TRUE(validate_cookie(c2, secret2.data(), secret2.size(),
+        p1, p2, id));
+  ASSERT_FALSE(validate_cookie(c2 + 1, secret2.data(), secret2.size(),
+        p1, p2, id));
 }

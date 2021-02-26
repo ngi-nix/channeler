@@ -69,6 +69,32 @@ create_cookie_responder(
     channelid const & id);
 
 
+/**
+ * A very simple verification function.
+ */
+inline bool
+validate_cookie(cookie const & c,
+    std::byte const * secret, std::size_t secret_size,
+    peerid_wrapper const & initiator,
+    peerid_wrapper const & responder,
+    channelid::half_type initiator_part)
+{
+  return c == create_cookie_initiator(secret, secret_size, initiator,
+      responder, initiator_part);
+}
+
+inline bool
+validate_cookie(cookie const & c,
+    std::byte const * secret, std::size_t secret_size,
+    peerid_wrapper const & initiator,
+    peerid_wrapper const & responder,
+    channelid const & id)
+{
+  return c == create_cookie_responder(secret, secret_size, initiator,
+      responder, id);
+}
+
+
 } // namespace channeler
 
 
