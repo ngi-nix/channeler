@@ -25,6 +25,106 @@
 
 namespace test {
 
-// TODO
+std::byte const message_unknown[] = {
+  0x7f_b, // Nothing, but below one byte
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // junk
+};
+std::size_t const message_unknown_size = sizeof(message_unknown);
+
+
+
+std::byte const message_channel_new[] = {
+  0x0a_b, // MSG_CHANNEL_NEW
+
+  0xbe_b, 0xef_b, // Half channel ID
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+};
+std::size_t const message_channel_new_size = sizeof(message_channel_new);
+
+
+
+std::byte const message_channel_acknowledge[] = {
+  0x0b_b, // MSG_CHANNEL_ACKNOWLEDGE
+
+  0xbe_b, 0xef_b, 0xd0_b, 0x0d_b, // Channel ID
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+};
+std::size_t const message_channel_acknowledge_size = sizeof(message_channel_acknowledge);
+
+
+
+std::byte const message_channel_finalize[] = {
+  0x0c_b, // MSG_CHANNEL_FINALIZE
+
+  0xbe_b, 0xef_b, 0xd0_b, 0x0d_b, // Channel ID
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+
+  0x00_b, 0x00_b, // Capabilities
+};
+std::size_t const message_channel_finalize_size = sizeof(message_channel_finalize);
+
+
+
+std::byte const message_channel_cookie[] = {
+  0x0d_b, // MSG_CHANNEL_COOKIE
+
+  // Channel ID is in header
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+
+  0x00_b, 0x00_b, // Capabilities
+};
+std::size_t const message_channel_cookie_size = sizeof(message_channel_cookie);
+
+
+
+
+std::byte const message_data[] = {
+  0x14_b, // MSG_DATA
+
+  0x08_b, // *Message* size
+
+  // Payload
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, 0x00_b, 0x00_b,
+};
+std::size_t const message_data_size = sizeof(message_data);
+
+
+
+std::byte const message_block[] = {
+  0x14_b, // MSG_DATA
+
+  0x08_b, // *Message* size
+
+  // Payload
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, 0x00_b, 0x00_b,
+
+  // ---
+  0x0a_b, // MSG_CHANNEL_NEW
+
+  0xbe_b, 0xef_b, // Half channel ID
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+
+  // ---
+  0x0d_b, // MSG_CHANNEL_COOKIE
+
+  // Channel ID is in header
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+
+  0x00_b, 0x00_b, // Capabilities
+
+  // ---
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // junk
+};
+std::size_t const message_block_size = sizeof(message_block);
+
+
+
 
 } // namespace test

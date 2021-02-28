@@ -30,22 +30,27 @@ namespace test {
 /**
  * Message definitions
  */
-#if 0
-extern std::byte const packet_default_channel_trailing_bytes[];
-extern std::size_t const packet_default_channel_trailing_bytes_size;
+extern std::byte const message_unknown[];
+extern std::size_t const message_unknown_size;
 
-extern std::byte const packet_default_channel[];
-extern std::size_t const packet_default_channel_size;
+extern std::byte const message_channel_new[];
+extern std::size_t const message_channel_new_size;
 
-extern std::byte const packet_partial_channelid_initiator[];
-extern std::size_t const packet_partial_channelid_initiator_size;
+extern std::byte const message_channel_acknowledge[];
+extern std::size_t const message_channel_acknowledge_size;
 
-extern std::byte const packet_partial_channelid_responder[];
-extern std::size_t const packet_partial_channelid_responder_size;
+extern std::byte const message_channel_finalize[];
+extern std::size_t const message_channel_finalize_size;
 
-extern std::byte const packet_regular_channelid[];
-extern std::size_t const packet_regular_channelid_size;
-#endif
+extern std::byte const message_channel_cookie[];
+extern std::size_t const message_channel_cookie_size;
+
+extern std::byte const message_data[];
+extern std::size_t const message_data_size;
+
+// A block of several messages
+extern std::byte const message_block[];
+extern std::size_t const message_block_size;
 
 } // namespace test
 

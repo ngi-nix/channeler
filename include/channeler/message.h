@@ -26,8 +26,14 @@
 
 #include <channeler.h>
 
+#include <iostream> // FIXME
+
 #include <liberate/types.h>
 #include <liberate/serialization/varint.h>
+
+#include <channeler/channelid.h>
+#include <channeler/capabilities.h>
+#include <channeler/cookie.h>
 
 namespace channeler {
 
@@ -82,23 +88,238 @@ enum message_type : message_type_base
 struct message_base
 {
   // Message metadata
-  message_type const  type;
+  message_type const  type = MSG_UNKNOWN;
 
   // Buffer
-  std::byte *         buffer;
-  std::size_t         buffer_size;
+  std::byte const *   buffer = nullptr;
+  std::size_t         buffer_size = 0;
 
   // Payload
-  std::byte *         payload;
-  std::size_t         payload_size;
+  std::byte const *   payload = nullptr;
+  std::size_t         payload_size = 0;
 };
 
 struct message_wrapper : public message_base
 {
-  message_wrapper(std::byte * buf, std::size_t max, bool validate_now = true);
+  message_wrapper(std::byte const * buf, std::size_t max, bool validate_now = true);
 
   std::pair<error_t, std::string>
   validate(std::size_t max);
+};
+
+
+
+/**
+ * Messages
+ */
+struct message_wrapper_channel_new
+  : public message_wrapper
+{
+  channelid::half_type  initiator_part = DEFAULT_CHANNELID.initiator;
+  cookie                cookie1 = {};
+
+  static std::unique_ptr<message_wrapper>
+  from_wrapper(message_wrapper const & wrap);
+private:
+  explicit message_wrapper_channel_new(message_wrapper const & wrap);
+};
+
+
+struct message_wrapper_channel_acknowledge
+  : public message_wrapper
+{
+  channelid       id = DEFAULT_CHANNELID;
+  cookie          cookie2 = {};
+
+  static std::unique_ptr<message_wrapper>
+  from_wrapper(message_wrapper const & wrap);
+private:
+  explicit message_wrapper_channel_acknowledge(message_wrapper const & wrap);
+};
+
+
+struct message_wrapper_channel_finalize
+  : public message_wrapper
+{
+  channelid       id = DEFAULT_CHANNELID;
+  cookie          cookie2 = {};
+  capabilities_t  capabilities = {};
+
+  static std::unique_ptr<message_wrapper>
+  from_wrapper(message_wrapper const & wrap);
+private:
+  explicit message_wrapper_channel_finalize(message_wrapper const & wrap);
+};
+
+
+struct message_wrapper_channel_cookie
+  : public message_wrapper
+{
+  cookie          either_cookie = {};
+  capabilities_t  capabilities = {};
+
+  static std::unique_ptr<message_wrapper>
+  from_wrapper(message_wrapper const & wrap);
+private:
+  explicit message_wrapper_channel_cookie(message_wrapper const & wrap);
+};
+
+
+struct message_data : public message_wrapper {};
+
+
+
+/**
+ * For simplicity's sake, we provide a factory function that returns a
+ * message_wrapper pointer. The message's buffer size represents the number
+ * of bytes used from the input buffer.
+ */
+std::unique_ptr<message_wrapper>
+parse_message(std::byte const * buffer, std::size_t size);
+
+
+
+/**
+ * Provide an iterator interface for messages.
+ */
+struct messages
+{
+  using value_type = std::unique_ptr<message_wrapper>;
+
+  struct iterator
+  {
+    inline value_type operator*() const
+    {
+      if (m_offset >= m_messages.m_size) {
+        return {};
+      }
+      auto msg = parse_message(
+        m_messages.m_buffer + m_offset,
+        m_messages.m_size - m_offset
+      );
+      if (msg) {
+        return msg;
+      }
+      return {};
+    }
+
+    inline value_type operator->() const
+    {
+      return this->operator*();
+    }
+
+
+    inline iterator & operator++()
+    {
+      // FIXME:
+      // - remaining() also needs a tmp message
+      // - better:
+      //    - parse header separately from message
+      //    - keep it as a iterator member
+      //    - use the parsed size there instead of a temp
+      //    - then on dereferencing create a new message based on the
+      //      pre-parsed header
+      //
+      auto msg = parse_message(
+          m_messages.m_buffer + m_offset,
+          m_messages.m_size - m_offset
+      );
+      if (msg) {
+        m_offset += msg->buffer_size;
+      }
+      return *this;
+    }
+
+    inline iterator operator++(int) // postfix
+    {
+      iterator ret{*this};
+      ++ret;
+      return ret;
+    }
+
+
+    inline std::size_t remaining() const
+    {
+      // FIXME see above
+      auto msg = parse_message(
+          m_messages.m_buffer + m_offset,
+          m_messages.m_size - m_offset
+      );
+      std::size_t remain = m_messages.m_size - m_offset;
+      if (msg) {
+        remain -= msg->buffer_size;
+      }
+
+      return remain;
+    }
+
+
+    inline bool operator==(iterator const & other) const
+    {
+      return (**this) == (*other);
+    }
+
+    inline bool operator!=(iterator const & other) const
+    {
+      return (**this) != (*other);
+    }
+
+  private:
+    friend struct messages;
+
+    inline iterator(messages const & msg, std::size_t offset)
+      : m_messages{msg}
+      , m_offset{offset}
+    {
+    }
+
+    messages const &  m_messages;
+    std::size_t       m_offset;
+  };
+
+  using const_iterator = iterator const;
+
+  inline messages(std::byte const * buffer, std::size_t size)
+    : m_buffer{buffer}
+    , m_size{size}
+  {
+  }
+
+  inline iterator begin()
+  {
+    return {*this, 0};
+  }
+
+  inline const_iterator begin() const
+  {
+    return {*this, 0};
+  }
+
+  inline iterator end()
+  {
+    return {*this, m_size};
+  }
+
+  inline const_iterator end() const
+  {
+    return {*this, m_size};
+  }
+
+  inline bool operator==(messages const & other) const
+  {
+    return m_buffer == other.m_buffer &&
+      m_size == other.m_size;
+  }
+
+  inline bool operator!=(messages const & other) const
+  {
+    return m_buffer != other.m_buffer ||
+      m_size != other.m_size;
+  }
+
+
+  std::byte const * m_buffer;
+  std::size_t       m_size;
 };
 
 
