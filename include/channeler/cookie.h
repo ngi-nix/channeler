@@ -45,6 +45,7 @@ namespace channeler {
  *     a crypto library just yet.
  */
 using cookie = liberate::checksum::crc32_checksum;
+using cookie_serialize = liberate::checksum::crc32_serialize;
 
 /**
  * We're using two cookies: one in the first part of the handshake, and one
