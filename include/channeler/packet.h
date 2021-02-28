@@ -190,7 +190,7 @@ struct private_header_layout
 struct footer_layout
 {
   // Footer offset is negative.
-  static constexpr ssize_t FOOT_OFFS_CHECKSUM = -sizeof(uint32_t); // CRC32
+  static constexpr ssize_t FOOT_OFFS_CHECKSUM = -sizeof(liberate::checksum::crc32_serialize); // CRC32
 
   static constexpr size_t FOOT_SIZE = -1 * FOOT_OFFS_CHECKSUM;
 };
