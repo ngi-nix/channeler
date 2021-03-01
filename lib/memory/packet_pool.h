@@ -121,14 +121,15 @@ public:
       return m_impl->block_slot.size();
     }
 
+    inline std::size_t use_count() const
+    {
+      return m_impl.use_count();
+    }
 
   private:
     friend class packet_pool;
 
-    inline slot()
-      : m_impl{}
-    {
-    }
+    inline slot() = default;
 
     inline slot(packet_pool & pool, block_entry * block,
         typename block_type::slot const & bs)
