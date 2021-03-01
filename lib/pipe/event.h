@@ -45,6 +45,7 @@ enum event_type : uint_fast16_t
   // event type.
   ET_DECRYPTED_PACKET,
   ET_ENQUEUED_PACKET,
+  ET_MESSAGE,
 };
 
 
@@ -53,7 +54,14 @@ enum event_type : uint_fast16_t
  */
 struct event
 {
-  event_type const type = ET_UNKNOWN;
+  event_type const type;
+
+  inline event(event_type t = ET_UNKNOWN)
+    : type{t}
+  {
+  }
+
+  virtual ~event() = default;
 };
 
 
@@ -96,6 +104,8 @@ struct raw_buffer_event
     , data{slot}
   {
   }
+
+  virtual ~raw_buffer_event() = default;
 };
 
 /**
@@ -126,6 +136,9 @@ struct parsed_header_event
     // Explicitly override the type
     *const_cast<event_type *>(&(this->type)) = ET_PARSED_HEADER;
   }
+
+
+  virtual ~parsed_header_event() = default;
 };
 
 
@@ -158,6 +171,9 @@ struct decrypted_packet_event
     // Explicitly override the type
     *const_cast<event_type *>(&(this->type)) = ET_DECRYPTED_PACKET;
   }
+
+
+  virtual ~decrypted_packet_event() = default;
 };
 
 
@@ -193,6 +209,46 @@ struct enqueued_packet_event
     // Explicitly override the type
     *const_cast<event_type *>(&(this->type)) = ET_ENQUEUED_PACKET;
   }
+
+
+  virtual ~enqueued_packet_event() = default;
+};
+
+
+/**
+ * Message events extend the enqueued_packet_event by a message_wrapper
+ */
+template <
+  typename addressT,
+  std::size_t POOL_BLOCK_SIZE,
+  typename channelT
+>
+struct message_event
+  : public enqueued_packet_event<addressT, POOL_BLOCK_SIZE, channelT>
+{
+  // *** Types
+  using super_t = enqueued_packet_event<addressT, POOL_BLOCK_SIZE, channelT>;
+  using message_type = typename messages::value_type;
+
+  // *** Data members
+  message_type message;
+
+  // *** Constructor
+  inline message_event(addressT const & source,
+      addressT const & destination,
+      ::channeler::packet_wrapper const & pkt,
+      typename super_t::slot_type const & slot,
+      typename super_t::channel_set::channel_ptr const & ch,
+      message_type && msg)
+    : super_t{source, destination, pkt, slot, ch}
+    , message{std::move(msg)}
+  {
+    // Explicitly override the type
+    *const_cast<event_type *>(&(this->type)) = ET_MESSAGE;
+  }
+
+
+  virtual ~message_event() = default;
 };
 
 
