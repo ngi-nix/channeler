@@ -57,9 +57,9 @@ struct event
 };
 
 
-// TODO the input events of filters should be constructed from sharable
-// templates, i.e. all filters accepting ET_DECRYPTED_PACKET can share
-// code here.
+// TODO pretty much all of the events carrying packet data can be merged into
+//      one class, and have just the type change & asserted in each filter.
+//      timeouts, etc. would need another class.
 
 
 /**
