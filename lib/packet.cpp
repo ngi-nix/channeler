@@ -20,7 +20,6 @@
 #include <build-config.h>
 
 #include <cstring>
-#include <iostream> // FIXME
 
 #include <channeler/packet.h>
 

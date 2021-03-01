@@ -108,5 +108,35 @@ TEST(PacketWrapper, copy)
 
 
 
-// TODO
-// - message iterations (later)
+TEST(PacketWrapper, message_iteration)
+{
+  temp_buffer data{packet_with_messages, packet_with_messages_size};
+
+  channeler::packet_wrapper pkt{data.buf, data.size};
+
+  // We have a payload of 26 Bytes
+  ASSERT_EQ(pkt.payload_size(), 26);
+
+  // Iterate over messages and count up message sizes
+  std::size_t sum = 0;
+  for (auto msg : pkt.get_messages()) {
+    sum += msg->buffer_size;
+  }
+  ASSERT_LT(sum, pkt.payload_size());
+  auto diff = pkt.payload_size() - sum;
+  ASSERT_EQ(4, diff); // The payload is 4 Bytes larger than the messages
+
+  // Make a copy of the messages, so we don't need to parse over and over.
+  std::vector<channeler::messages::value_type> messages{pkt.get_messages().begin(),
+    pkt.get_messages().end()};
+  ASSERT_EQ(3, messages.size());
+
+  // Need reference, because of unique_ptr
+  sum = 0;
+  for (auto & msg : messages) {
+    sum += msg->buffer_size;
+  }
+  ASSERT_LT(sum, pkt.payload_size());
+  diff = pkt.payload_size() - sum;
+  ASSERT_EQ(4, diff); // The payload is 4 Bytes larger than the messages
+}

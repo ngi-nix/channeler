@@ -229,6 +229,70 @@ std::size_t const packet_regular_channelid_size = sizeof(packet_regular_channeli
 
 
 
+std::byte const packet_with_messages[] = {
+  // **** public header
+  // Proto
+  0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
+
+  // Sender
+  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
+  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x0a_b, 0x11_b, 0xc3_b,
+
+  // Recipient
+  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x00_b, 0x00_b,
+  0x00_b, 0x00_b, 0x00_b, 0x00_b,  0x00_b, 0x00_b, 0x0b_b, 0x0b_b,
+
+  // Channel identifier
+  0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
+
+  // Flags
+  0xa0_b, 0x0a_b,
+
+  // Packet size
+  0x00_b, 0x4e_b,
+
+  // **** private header
+  // Sequence number - a random one is fine
+  0x01_b, 0xfa_b,
+
+  // Payload size - no payload
+  0x00_b, 0x1a_b,
+ 
+  // **** payload
+  0x14_b, // MSG_DATA
+
+  0x08_b, // *Message* size
+
+  // Payload
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, 0x00_b, 0x00_b,
+
+  // ---
+  0x0a_b, // MSG_CHANNEL_NEW
+
+  0xbe_b, 0xef_b, // Half channel ID
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+
+  // ---
+  0x0d_b, // MSG_CHANNEL_COOKIE
+
+  // Channel ID is in header
+
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+
+  0x00_b, 0x00_b, // Capabilities
+
+  // ---
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // junk
+
+  // **** footer
+  // Checksum
+  0x92_b, 0x2d_b, 0xfe_b, 0xb6_b,
+};
+std::size_t const packet_with_messages_size = sizeof(packet_with_messages);
+
+
+
 
 namespace {
 
@@ -284,5 +348,10 @@ TEST(TestPacket, validity)
   ASSERT_TRUE((validate_packet(
           NAMEOF(packet_regular_channelid),
           packet_regular_channelid,
+          true)));
+
+  ASSERT_TRUE((validate_packet(
+          NAMEOF(packet_with_messages),
+          packet_with_messages,
           true)));
 }

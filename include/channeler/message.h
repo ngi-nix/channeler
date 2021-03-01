@@ -186,7 +186,13 @@ struct messages
 {
   using value_type = std::unique_ptr<message_wrapper>;
 
-  struct iterator
+  struct iterator : public std::iterator<
+    std::input_iterator_tag,   // iterator_category
+    value_type,                // value_type
+    long,                      // difference_type
+    value_type const *,        // pointer
+    value_type const &         // reference
+  >
   {
     inline value_type operator*() const
     {
@@ -201,11 +207,6 @@ struct messages
         return msg;
       }
       return {};
-    }
-
-    inline value_type operator->() const
-    {
-      return this->operator*();
     }
 
 

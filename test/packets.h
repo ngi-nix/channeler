@@ -46,6 +46,9 @@ extern std::size_t const packet_partial_channelid_responder_size;
 extern std::byte const packet_regular_channelid[];
 extern std::size_t const packet_regular_channelid_size;
 
+extern std::byte const packet_with_messages[];
+extern std::size_t const packet_with_messages_size;
+
 } // namespace test
 
 #endif // guard

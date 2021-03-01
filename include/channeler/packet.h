@@ -35,6 +35,7 @@
 #include <channeler/protoid.h>
 #include <channeler/peerid.h>
 #include <channeler/channelid.h>
+#include <channeler/message.h>
 
 namespace channeler {
 
@@ -364,6 +365,15 @@ public:
   inline liberate::checksum::crc32_checksum & checksum()
   {
     return m_footer.checksum;
+  }
+
+
+  /**
+   * Message parsing
+   */
+  inline messages get_messages() const
+  {
+    return messages{payload(), payload_size()};
   }
 
 
