@@ -150,6 +150,7 @@ message_wrapper_channel_new::from_wrapper(message_wrapper const & wrap)
   auto used = liberate::serialization::deserialize_int(ptr->initiator_part,
       offset, size);
   if (used != sizeof(ptr->initiator_part)) {
+    delete ptr;
     return {};
   }
   offset += used;
@@ -160,6 +161,7 @@ message_wrapper_channel_new::from_wrapper(message_wrapper const & wrap)
   used = liberate::serialization::deserialize_int(s,
       offset, size);
   if (used != sizeof(s)) {
+    delete ptr;
     return {};
   }
   ptr->cookie1 = s;
@@ -169,6 +171,7 @@ message_wrapper_channel_new::from_wrapper(message_wrapper const & wrap)
 
   if (size > 0) {
     // We didn't consume the entire payload
+    delete ptr;
     return {};
   }
 
@@ -197,6 +200,7 @@ message_wrapper_channel_acknowledge::from_wrapper(message_wrapper const & wrap)
   auto used = liberate::serialization::deserialize_int(ptr->id.full,
       offset, size);
   if (used != sizeof(ptr->id.full)) {
+    delete ptr;
     return {};
   }
   offset += used;
@@ -207,6 +211,7 @@ message_wrapper_channel_acknowledge::from_wrapper(message_wrapper const & wrap)
   used = liberate::serialization::deserialize_int(s,
       offset, size);
   if (used != sizeof(s)) {
+    delete ptr;
     return {};
   }
   ptr->cookie2 = s;
@@ -216,6 +221,7 @@ message_wrapper_channel_acknowledge::from_wrapper(message_wrapper const & wrap)
 
   if (size > 0) {
     // We didn't consume the entire payload
+    delete ptr;
     return {};
   }
 
@@ -244,6 +250,7 @@ message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
   auto used = liberate::serialization::deserialize_int(ptr->id.full,
       offset, size);
   if (used != sizeof(ptr->id.full)) {
+    delete ptr;
     return {};
   }
   offset += used;
@@ -254,6 +261,7 @@ message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
   used = liberate::serialization::deserialize_int(s,
       offset, size);
   if (used != sizeof(s)) {
+    delete ptr;
     return {};
   }
   ptr->cookie2 = s;
@@ -266,6 +274,7 @@ message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
   used = liberate::serialization::deserialize_int(bits,
       offset, size);
   if (used != sizeof(bits)) {
+    delete ptr;
     return {};
   }
   ptr->capabilities = bits;
@@ -276,6 +285,7 @@ message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
 
   if (size > 0) {
     // We didn't consume the entire payload
+    delete ptr;
     return {};
   }
 
@@ -306,6 +316,7 @@ message_wrapper_channel_cookie::from_wrapper(message_wrapper const & wrap)
   auto used = liberate::serialization::deserialize_int(s,
       offset, size);
   if (used != sizeof(s)) {
+    delete ptr;
     return {};
   }
   ptr->either_cookie = s;
@@ -318,6 +329,7 @@ message_wrapper_channel_cookie::from_wrapper(message_wrapper const & wrap)
   used = liberate::serialization::deserialize_int(bits,
       offset, size);
   if (used != sizeof(bits)) {
+    delete ptr;
     return {};
   }
   ptr->capabilities = bits;
@@ -328,6 +340,7 @@ message_wrapper_channel_cookie::from_wrapper(message_wrapper const & wrap)
 
   if (size > 0) {
     // We didn't consume the entire payload
+    delete ptr;
     return {};
   }
 
