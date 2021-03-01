@@ -372,15 +372,6 @@ packet_wrapper::copy() const
 
 
 
-packet
-packet_wrapper::copy_packet() const
-{
-  return packet{buffer(), m_public_header.packet_size};
-}
-
-
-
-
 liberate::checksum::crc32_checksum
 packet_wrapper::calculate_checksum() const
 {
@@ -454,34 +445,6 @@ packet_wrapper::is_less_than(packet_wrapper const & other) const
   }
 
   return false;
-}
-
-
-
-/*****************************************************************************
- * packet
- */
-packet::packet(size_t buffer_size)
-  : packet_wrapper{new std::byte[buffer_size], buffer_size}
-  , m_ptr{m_buffer}
-{
-}
-
-
-
-packet::packet(std::byte const * input_buffer, size_t buffer_size,
-      bool validate_now /* = true */)
-  : packet_wrapper{new std::byte[buffer_size], buffer_size, false}
-  , m_ptr{m_buffer}
-{
-  ::memcpy(m_buffer, input_buffer, buffer_size);
-
-  if (validate_now) {
-    auto err = validate();
-    if (err.first != ERR_SUCCESS) {
-      throw exception{err.first, err.second};
-    }
-  }
 }
 
 

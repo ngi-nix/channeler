@@ -239,12 +239,6 @@ struct CHANNELER_API footer_fields
 
 
 /**
- * Forward declaration.
- */
-class CHANNELER_API packet;
-
-
-/**
  * Packet wrapper - initialized with a byte buffer, offers a representation
  * of the packet header fields and messages.
  *
@@ -438,7 +432,6 @@ public:
    * that.
    */
   std::unique_ptr<std::byte[]> copy() const;
-  packet copy_packet() const;
 
   /**
    * Calculate and validate checksum
@@ -461,31 +454,6 @@ public:
 
   bool is_equal_to(packet_wrapper const & other) const;
   bool is_less_than(packet_wrapper const & other) const;
-};
-
-
-/**
- * A packet is a packet_wrapper that manages an internal packet buffer.
- */
-class CHANNELER_API packet
-  : public packet_wrapper
-{
-public:
-  /**
-   * Construct a packet, and allocate a buffer with the given size for it.
-   */
-  packet(size_t buffer_size);
-
-  /**
-   * Construct a packet, allocate a buffer, and fill it with data from a
-   * given source buffer.
-   */
-  packet(std::byte const * input_buffer, size_t buffer_size,
-      bool validate_now = true);
-
-
-private:
-  std::shared_ptr<std::byte[]> m_ptr;
 };
 
 
