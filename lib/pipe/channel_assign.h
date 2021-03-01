@@ -131,6 +131,17 @@ struct channel_assign_filter
             in->transport.destination, in->packet);
       }
     }
+    else {
+      // Place the packet in a buffer. We already have memory from the pool, so
+      // this is mostly about buffer management. If this fails because the
+      // buffer is full, we need to drop the packet.
+      auto err = ptr->buffer_push(in->packet, in->data);
+      if (ERR_SUCCESS != err) {
+        // TODO: in future versions, we'll need to return flow control information
+        //       to the sender.
+        return {};
+      }
+    }
 
     // Need to construct a new event.
     auto next = std::make_unique<next_eventT>(

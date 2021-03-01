@@ -30,58 +30,9 @@
 #include <set>
 
 #include "packet_block.h"
+#include "../lock_policy.h"
 
 namespace channeler::memory {
-
-/**
- * Since we want the packet_pool (below) to serialize access only if necessary,
- * we provide a null_lock_policy that does nothing, and use that by default.
- */
-struct null_lock_policy
-{
-  inline void lock() {}
-  inline void unlock() {}
-};
-
-namespace {
-
-// Internal guard class for the lock type
-template <typename lockT>
-struct guard
-{
-  inline guard(lockT * lock)
-    : m_lock(lock)
-  {
-    if (m_lock) {
-      m_lock->lock();
-    }
-  }
-
-  inline ~guard()
-  {
-    if (m_lock) {
-      m_lock->unlock();
-    }
-  }
-
-  lockT * m_lock;
-};
-
-// Specalization of guard for when lockT is the null_lock_policy, because we
-// can optimize for space and branches here.
-template <>
-struct guard<null_lock_policy>
-{
-  inline guard(null_lock_policy *)
-  {
-  }
-
-  inline ~guard()
-  {
-  }
-};
-
-} // anonymous namespace
 
 
 /**

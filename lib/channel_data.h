@@ -28,6 +28,8 @@
 
 #include <channeler/channelid.h>
 
+#include "memory/packet_buffer.h"
+
 namespace channeler {
 
 /**
@@ -36,14 +38,34 @@ namespace channeler {
  *
  * TODO this is expected to chane a lot.
  */
+template <
+  std::size_t POOL_BLOCK_SIZE,
+  typename lock_policyT = null_lock_policy
+>
 struct channel_data
 {
-  inline channel_data(channelid const & id)
+  using buffer_type = memory::packet_buffer<POOL_BLOCK_SIZE, lock_policyT>;
+  using slot_type = typename buffer_type::pool_type::slot;
+
+  inline channel_data(channelid const & id, std::size_t packet_size,
+      lock_policyT * lock = nullptr)
     : m_id{id}
+    , m_lock{lock}
+    , m_buffer{packet_size, m_lock}
   {
   }
 
-  channelid m_id;
+
+  inline error_t buffer_push(packet_wrapper const & packet, slot_type slot)
+  {
+    return m_buffer.push(packet, slot);
+  }
+
+  // TODO pop for reading
+
+  channelid       m_id;
+  lock_policyT *  m_lock;
+  buffer_type     m_buffer;
 };
 
 } // namespace channeler

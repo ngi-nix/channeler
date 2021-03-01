@@ -19,6 +19,7 @@
  **/
 
 #include "../lib/pipe/channel_assign.h"
+#include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
 
@@ -36,20 +37,10 @@ std::size_t PACKET_SIZE = packet_default_channel_size;
 using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
 
-struct test_channel
-{
-  inline test_channel(channeler::channelid const & id)
-    : m_id{id}
-  {
-  }
-
-  channeler::channelid m_id;
-};
-
-
 struct next
 {
-  using input_event = channeler::pipe::enqueued_packet_event<address_t, POOL_BLOCK_SIZE, test_channel>;
+  using channel_data_t = channeler::channel_data<POOL_BLOCK_SIZE>;
+  using input_event = channeler::pipe::enqueued_packet_event<address_t, POOL_BLOCK_SIZE, channel_data_t>;
 
   inline channeler::pipe::action_list_type consume(std::unique_ptr<channeler::pipe::event> event)
   {
@@ -67,10 +58,10 @@ using simple_filter_t = channeler::pipe::channel_assign_filter<
   POOL_BLOCK_SIZE,
   next,
   next::input_event,
-  test_channel
+  next::channel_data_t
 >;
 
-using channel_set = channeler::channels<test_channel>;
+using channel_set = channeler::channels<next::channel_data_t>;
 
 
 } // anonymous namespace
@@ -82,7 +73,7 @@ TEST(ChannelAssignFilter, throw_on_invalid_event)
   using namespace channeler::pipe;
 
   next n;
-  channel_set chs;
+  channel_set chs{42};
   simple_filter_t filter{&n, &chs};
 
   // Create a default event; this should not be handled.
@@ -107,7 +98,7 @@ TEST(ChannelAssignFilter, pass_packet_default_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs;
+  channel_set chs{42};
   simple_filter_t filter{&n, &chs};
 
   // No data added to event.
@@ -138,7 +129,7 @@ TEST(ChannelAssignFilter, drop_packet_unknown_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs;
+  channel_set chs{42};
   simple_filter_t filter{&n, &chs};
 
   // No data added to event.
@@ -163,7 +154,7 @@ TEST(ChannelAssignFilter, pass_packet_known_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs;
+  channel_set chs{42};
   simple_filter_t filter{&n, &chs};
 
   // Before consuming the packet, make sure that the channel is already
@@ -195,7 +186,7 @@ TEST(ChannelAssignFilter, pass_packet_pending_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs;
+  channel_set chs{42};
   simple_filter_t filter{&n, &chs};
 
   // Before consuming the packet, make sure that the channel is already

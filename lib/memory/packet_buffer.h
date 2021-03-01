@@ -26,7 +26,12 @@
 
 #include <channeler.h>
 
+#include <list>
+
+#include <iostream> // FIXME
+
 #include "packet_pool.h"
+#include "../lock_policy.h"
 
 #include <channeler/packet.h>
 
@@ -70,11 +75,12 @@ class packet_buffer
 {
 public:
   using pool_type = packet_pool<POOL_BLOCK_SIZE, lock_policyT>;
+  using slot_type = typename pool_type::slot;
 
   struct buffer_entry
   {
-    sequence_no_t             sequence_no;
-    typename pool_type::slot  data;
+    packet_wrapper  packet;
+    slot_type       data;
   };
 
   // TODO also take pool?
@@ -84,8 +90,22 @@ public:
   {
   }
 
+
+  inline error_t push(packet_wrapper const & packet, slot_type slot)
+  {
+    buffer_entry entry{packet, slot};
+    m_buffer.push_back(entry);
+    return ERR_SUCCESS;
+  }
+
+  // TODO pop for reading
+
 private:
 
+  // TODO this is an unbounded FIFO. A real implementation must provide
+  // a bounded FIFO, implement loss behaviour on pop(), etc.
+  using list_t = std::list<buffer_entry>;
+  list_t          m_buffer;
 
   // Packet size
   std::size_t     m_packet_size;

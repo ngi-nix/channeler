@@ -58,6 +58,11 @@ class channels
 public:
   using channel_ptr = std::shared_ptr<channelT>;
 
+  inline channels(std::size_t packet_size)
+    : m_packet_size(packet_size)
+  {
+  }
+
   inline bool has_channel(channelid const & id) const
   {
     return has_established_channel(id) || has_pending_channel(id);
@@ -90,7 +95,8 @@ public:
         return ERR_SUCCESS;
       }
 
-      m_established[id] = std::make_shared<channelT>(id);
+      // TODO lock policy pointer
+      m_established[id] = std::make_shared<channelT>(id, m_packet_size);
       return ERR_SUCCESS;
     }
 
@@ -136,7 +142,8 @@ public:
       m_pending.erase(iter2);
     }
 
-    m_established[id] = std::make_shared<channelT>(id);
+    // TODO lock policy pointer
+    m_established[id] = std::make_shared<channelT>(id, m_packet_size);
 
     return ERR_SUCCESS;
   }
@@ -167,6 +174,9 @@ private:
   // instances.
   using channel_map_t = std::unordered_map<channelid, channel_ptr>;
   channel_map_t m_established;
+
+  // Packet size
+  std::size_t m_packet_size;
 };
 
 } // namespace channeler

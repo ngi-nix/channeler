@@ -172,7 +172,7 @@ message_wrapper_channel_new::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::move(std::unique_ptr<message_wrapper>(ptr));
+  return std::unique_ptr<message_wrapper>(ptr);
 }
 
 
@@ -219,7 +219,7 @@ message_wrapper_channel_acknowledge::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::move(std::unique_ptr<message_wrapper>(ptr));
+  return std::unique_ptr<message_wrapper>(ptr);
 }
 
 
@@ -279,7 +279,7 @@ message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::move(std::unique_ptr<message_wrapper>(ptr));
+  return std::unique_ptr<message_wrapper>(ptr);
 }
 
 
@@ -331,7 +331,7 @@ message_wrapper_channel_cookie::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::move(std::unique_ptr<message_wrapper>(ptr));
+  return std::unique_ptr<message_wrapper>(ptr);
 }
 
 
@@ -358,20 +358,20 @@ parse_message(std::byte const * buffer, std::size_t size)
 
   switch (wrap.type) {
     case MSG_CHANNEL_NEW:
-      return std::move(message_wrapper_channel_new::from_wrapper(wrap));
+      return message_wrapper_channel_new::from_wrapper(wrap);
 
     case MSG_CHANNEL_ACKNOWLEDGE:
-      return std::move(message_wrapper_channel_acknowledge::from_wrapper(wrap));
+      return message_wrapper_channel_acknowledge::from_wrapper(wrap);
 
     case MSG_CHANNEL_FINALIZE:
-      return std::move(message_wrapper_channel_finalize::from_wrapper(wrap));
+      return message_wrapper_channel_finalize::from_wrapper(wrap);
 
     case MSG_CHANNEL_COOKIE:
-      return std::move(message_wrapper_channel_cookie::from_wrapper(wrap));
+      return message_wrapper_channel_cookie::from_wrapper(wrap);
 
     case MSG_DATA:
       // Must make copy
-      return std::move(std::make_unique<message_wrapper>(wrap));
+      return std::make_unique<message_wrapper>(wrap);
 
     default:
       break;
