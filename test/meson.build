@@ -45,6 +45,7 @@ if not meson.is_subproject()
     'private' / 'pipe' / 'validate.cpp',
     'private' / 'pipe' / 'channel_assign.cpp',
     'private' / 'pipe' / 'message_parsing.cpp',
+    'private' / 'fsm' / 'registry.cpp',
     'private' / 'channels.cpp',
   ]
 
