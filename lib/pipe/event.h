@@ -26,7 +26,11 @@
 
 #include <channeler.h>
 
+#include <list>
+#include <memory>
+
 #include "../channels.h"
+#include "../memory/packet_pool.h"
 
 #include <channeler/packet.h>
 
@@ -63,6 +67,9 @@ struct event
 
   virtual ~event() = default;
 };
+
+// Event list type
+using event_list_type = std::list<std::shared_ptr<event>>;
 
 
 // TODO pretty much all of the events carrying packet data can be merged into
