@@ -26,7 +26,7 @@
 
 #include <channeler.h>
 
-#include <iostream> // FIXME
+#include <vector>
 
 #include <liberate/types.h>
 #include <liberate/serialization/varint.h>
