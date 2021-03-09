@@ -49,7 +49,9 @@ enum event_type : uint_fast16_t
   // event type.
   ET_DECRYPTED_PACKET,
   ET_ENQUEUED_PACKET,
-  ET_MESSAGE,
+  ET_MESSAGE, // FIXME up til here incoming only; maybe we disambiguate at some point?
+
+  ET_MESSAGE_OUT,
 };
 
 
@@ -256,6 +258,41 @@ struct message_event
 
 
   virtual ~message_event() = default;
+};
+
+
+/**
+ * Outgoing messages
+ */
+template <typename addressT>
+struct message_out_event
+  : public event
+{
+  // *** Types
+  using message_type = typename messages::value_type;
+
+  // *** Data members
+  peerid        sender;
+  peerid        recipient;
+  channelid     channel;
+  message_type  message;
+
+  // *** Constructor
+  inline message_out_event(
+      peerid const & _sender,
+      peerid const & _recipient,
+      channelid const & _channel,
+      message_type && msg)
+    : event{ET_MESSAGE_OUT}
+    , sender{_sender}
+    , recipient{_recipient}
+    , channel{_channel}
+    , message{std::move(msg)}
+  {
+  }
+
+
+  virtual ~message_out_event() = default;
 };
 
 
