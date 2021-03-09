@@ -187,23 +187,4 @@ TEST(FSMChannelResponder, process_msg_channel_finalize)
   // We need to have the channel with the given channel identifier in the set
   // now.
   ASSERT_TRUE(chs.has_established_channel(expected_channel));
-#if 0
-  auto res = *events.begin();
-  ASSERT_EQ(ET_MESSAGE_OUT, res->type);
-  auto converted = reinterpret_cast<message_out_event<int> *>(res.get());
-
-  // The acknowledge message needs to swap sender and recipient, and be sent on
-  // the deault channel.
-  ASSERT_EQ(MSG_CHANNEL_ACKNOWLEDGE, converted->message->type);
-  auto convmsg = reinterpret_cast<channeler::message_channel_acknowledge *>(converted->message.get());
-  ASSERT_EQ(converted->sender, pkt.recipient());
-  ASSERT_EQ(converted->recipient, pkt.sender());
-  ASSERT_EQ(converted->channel, pkt.channel());
-
-  // Check the cookie.
-  auto secret = fsm_t::secret_type{};
-  auto cookie = create_cookie_responder(secret.data(), secret.size(),
-        pkt.sender(), pkt.recipient(), convmsg->id);
-  ASSERT_EQ(cookie, convmsg->cookie2);
-#endif
 }
