@@ -143,4 +143,22 @@ peerid::peerid(char const * buf, size_t bufsize)
 }
 
 
+
+peerid::peerid(peerid const & other)
+  : peerid_wrapper{buffer, PEERID_SIZE_BYTES}
+{
+  ::memcpy(buffer, other.buffer, PEERID_SIZE_BYTES);
+}
+
+
+
+peerid &
+peerid::operator=(peerid const & other)
+{
+  ::memcpy(buffer, other.buffer, PEERID_SIZE_BYTES);
+  return *this;
+}
+
+
+
 } // namespace channeler

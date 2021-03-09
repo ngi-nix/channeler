@@ -94,6 +94,9 @@ struct CHANNELER_API peerid
   // Copy peer identifier from a buffer
   peerid(std::byte const * buf, size_t bufsize);
   peerid(char const * buf, size_t bufsize);
+
+  peerid(peerid const &);
+  peerid & operator=(peerid const &);
 };
 
 
