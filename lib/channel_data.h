@@ -36,7 +36,7 @@ namespace channeler {
  * This data structure holds internal channel information, such as the
  * channel's buffers.
  *
- * TODO this is expected to chane a lot.
+ * TODO this is expected to change a lot.
  */
 template <
   std::size_t POOL_BLOCK_SIZE,
@@ -62,6 +62,12 @@ struct channel_data
   }
 
   // TODO pop for reading
+
+  inline bool has_outgoing_data_pending() const
+  {
+    return false;
+  }
+
 
   channelid       m_id;
   lock_policyT *  m_lock;
