@@ -37,11 +37,13 @@ assert_message(temp_buffer const & buf,
     std::size_t type_bytes,
     std::size_t length_bytes)
 {
-  ASSERT_NO_THROW((channeler::message_wrapper{buf.buf, buf.size}));
+  ASSERT_NO_THROW((channeler::message{buf.buf, buf.size}));
 
   // Validate later
-  channeler::message_wrapper msg{buf.buf, buf.size, false};
-  auto err = msg.validate(buf.size);
+  channeler::message msg{buf.buf, buf.size, false};
+  ASSERT_EQ(msg.buffer, buf.buf);
+  ASSERT_EQ(msg.input_size, buf.size);
+  auto err = msg.parse();
   ASSERT_EQ(err.first, channeler::ERR_SUCCESS);
 
   // Payload should start one byte after the buffer.
@@ -73,6 +75,20 @@ assert_single_byte_type_fixed_size_message(temp_buffer const & buf,
 }
 
 
+
+inline void
+assert_serialization_ok(std::unique_ptr<channeler::message> const & msg, temp_buffer const & buf)
+{
+  auto res = serialize_message(msg);
+  ASSERT_EQ(res.size(), buf.size);
+
+  for (std::size_t i = 0 ; i < buf.size ; ++i) {
+    // std::cout << "compare index: " << i << std::endl;
+    ASSERT_EQ(res[i], buf.buf[i]);
+  }
+}
+
+
 } // anonymous namespace
 
 TEST(Message, fail_parse_unknown)
@@ -80,18 +96,18 @@ TEST(Message, fail_parse_unknown)
   temp_buffer b{message_unknown, message_unknown_size};
 
   // Exception
-  ASSERT_THROW((channeler::message_wrapper{b.buf, b.size}),
+  ASSERT_THROW((channeler::message{b.buf, b.size}),
       channeler::exception);
 
   // Error code
-  channeler::message_wrapper msg{b.buf, b.size, false};
-  auto err = msg.validate(b.size);
+  channeler::message msg{b.buf, b.size, false};
+  auto err = msg.parse();
   ASSERT_EQ(err.first, channeler::ERR_INVALID_MESSAGE_TYPE);
 }
 
 
 
-TEST(Message, parse_channel_new)
+TEST(Message, parse_and_serialize_channel_new)
 {
   temp_buffer b{message_channel_new, message_channel_new_size};
 
@@ -101,14 +117,17 @@ TEST(Message, parse_channel_new)
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_NEW);
 
-  auto ptr = reinterpret_cast<channeler::message_wrapper_channel_new *>(msg.get());
+  auto ptr = reinterpret_cast<channeler::message_channel_new *>(msg.get());
   ASSERT_EQ(0xbeef, ptr->initiator_part);
   ASSERT_EQ(0xbeefb4be, ptr->cookie1);
+
+  // Serialize
+  assert_serialization_ok(msg, b);
 }
 
 
 
-TEST(Message, parse_channel_acknowledge)
+TEST(Message, parse_and_serialize_channel_acknowledge)
 {
   temp_buffer b{message_channel_acknowledge, message_channel_acknowledge_size};
 
@@ -118,14 +137,17 @@ TEST(Message, parse_channel_acknowledge)
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_ACKNOWLEDGE);
 
-  auto ptr = reinterpret_cast<channeler::message_wrapper_channel_acknowledge *>(msg.get());
+  auto ptr = reinterpret_cast<channeler::message_channel_acknowledge *>(msg.get());
   ASSERT_EQ(0xbeefd00d, ptr->id.full);
   ASSERT_EQ(0xbeefb4be, ptr->cookie2);
+
+  // Serialize
+  assert_serialization_ok(msg, b);
 }
 
 
 
-TEST(Message, parse_channel_finalize)
+TEST(Message, parse_and_serialize_channel_finalize)
 {
   temp_buffer b{message_channel_finalize, message_channel_finalize_size};
 
@@ -135,15 +157,18 @@ TEST(Message, parse_channel_finalize)
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_FINALIZE);
 
-  auto ptr = reinterpret_cast<channeler::message_wrapper_channel_finalize *>(msg.get());
+  auto ptr = reinterpret_cast<channeler::message_channel_finalize *>(msg.get());
   ASSERT_EQ(0xbeefd00d, ptr->id.full);
   ASSERT_EQ(0xbeefb4be, ptr->cookie2);
   ASSERT_TRUE(ptr->capabilities.none());
+
+  // Serialize
+  assert_serialization_ok(msg, b);
 }
 
 
 
-TEST(Message, parse_channel_cookie)
+TEST(Message, parse_and_serialize_channel_cookie)
 {
   temp_buffer b{message_channel_cookie, message_channel_cookie_size};
 
@@ -153,21 +178,29 @@ TEST(Message, parse_channel_cookie)
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_COOKIE);
 
-  auto ptr = reinterpret_cast<channeler::message_wrapper_channel_cookie *>(msg.get());
+  auto ptr = reinterpret_cast<channeler::message_channel_cookie *>(msg.get());
   ASSERT_EQ(0xbeefb4be, ptr->either_cookie);
   ASSERT_TRUE(ptr->capabilities.none());
+
+  // Serialize
+  assert_serialization_ok(msg, b);
 }
 
 
 
-TEST(Message, parse_data)
+TEST(Message, parse_and_serialize_data)
 {
   temp_buffer b{message_data, message_data_size};
 
   assert_single_byte_type_variable_size_message(b, channeler::MSG_DATA,
       1);
 
-  // Nothing more to do here
+  auto msg = channeler::parse_message(b.buf, b.size);
+  ASSERT_TRUE(msg);
+  ASSERT_EQ(msg->type, channeler::MSG_DATA);
+
+  // Serialize
+  assert_serialization_ok(msg, b);
 }
 
 

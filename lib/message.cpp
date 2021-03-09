@@ -32,10 +32,29 @@
 
 namespace channeler {
 
+
 namespace {
 
-inline ssize_t
-payload_size_of_message(message_type_base const type)
+std::size_t
+serialize_header(std::byte * buf, std::size_t max, message const & msg)
+{
+  // We know the message type, and need to serialize it.
+  liberate::types::varint type = static_cast<liberate::types::varint>(msg.type);
+  auto used = liberate::serialization::serialize_varint(buf, max, type);
+  if (used <= 0) {
+    return 0;
+  }
+
+  // TODO size?
+
+  return used;
+}
+
+
+} // anonymous namespace
+
+ssize_t
+message_payload_size(message_type_base type)
 {
   // TODO extending this is error-prone, which is also a good reason for
   //      registering known message types
@@ -71,18 +90,17 @@ payload_size_of_message(message_type_base const type)
   }
 }
 
-} // anonymous namespace
-
 
 /**
- * message_wrapper
+ * message
  */
-message_wrapper::message_wrapper(std::byte const * buf, std::size_t max,
-    bool validate_now /* = true */)
-  : message_base{MSG_UNKNOWN, buf, 0, nullptr, 0}
+message::message(std::byte const * buf, std::size_t max,
+    bool parse_now /* = true */)
+  : buffer{buf}
+  , input_size{max}
 {
-  if (validate_now) {
-    auto err = validate(max);
+  if (parse_now) {
+    auto err = parse();
     if (err.first != ERR_SUCCESS) {
       throw exception{err.first, err.second};
     }
@@ -92,17 +110,17 @@ message_wrapper::message_wrapper(std::byte const * buf, std::size_t max,
 
 
 std::pair<error_t, std::string>
-message_wrapper::validate(std::size_t max)
+message::parse()
 {
   // Extract the type, and ensure it is known.
   liberate::types::varint tmp;
-  auto used = liberate::serialization::deserialize_varint(tmp, buffer, max);
+  auto used = liberate::serialization::deserialize_varint(tmp, buffer, input_size);
   if (!used) {
     return {ERR_DECODE, "Could not decode message type"};
   }
 
   message_type_base the_type = static_cast<message_type_base>(tmp);
-  ssize_t fixed_size = payload_size_of_message(the_type);
+  ssize_t fixed_size = message_payload_size(the_type);
   if (fixed_size == -2) {
     return {ERR_INVALID_MESSAGE_TYPE, "The message type encoded in the buffer is unsupported."};
   }
@@ -111,22 +129,22 @@ message_wrapper::validate(std::size_t max)
   // For fixed message types, we can just use the known message size.
   if (fixed_size >= 0) {
     // The size can be applied to the buffer already.
-    if (static_cast<std::size_t>(fixed_size) > max) {
+    if (static_cast<std::size_t>(fixed_size) > input_size) {
       return {ERR_INSUFFICIENT_BUFFER_SIZE, "The message type requires a bigger input buffer."};
     }
-    buffer_size = fixed_size + used;
-    payload = buffer + used;
-    payload_size = buffer_size - used;
+    *const_cast<std::size_t *>(&buffer_size) = fixed_size + used;
+    *const_cast<std::byte const **>(&payload) = buffer + used;
+    *const_cast<std::size_t *>(&payload_size) = buffer_size - used;
   }
   else {
     // Variable length messages have the size included as a varint
-    auto used2 = liberate::serialization::deserialize_varint(tmp, buffer + used, max - used);
+    auto used2 = liberate::serialization::deserialize_varint(tmp, buffer + used, input_size - used);
     if (!used2) {
       return {ERR_DECODE, "Could not decode message length"};
     }
-    buffer_size = static_cast<std::size_t>(tmp);
-    payload = buffer + used + used2;
-    payload_size = buffer_size - used - used2;
+    *const_cast<std::size_t *>(&buffer_size) = static_cast<std::size_t>(tmp);
+    *const_cast<std::byte const **>(&payload) = buffer + used + used2;
+    *const_cast<std::size_t *>(&payload_size) = buffer_size - used - used2;
   }
 
   // Payload processing is part of subtypes, and not happening here.
@@ -136,13 +154,14 @@ message_wrapper::validate(std::size_t max)
 
 
 
+
 /**
- * message_wrapper_channel_new
+ * message_channel_new
  */
-std::unique_ptr<message_wrapper>
-message_wrapper_channel_new::from_wrapper(message_wrapper const & wrap)
+std::unique_ptr<message>
+message_channel_new::extract_features(message const & wrap)
 {
-  auto * ptr = new message_wrapper_channel_new{wrap};
+  auto * ptr = new message_channel_new{wrap};
   std::byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
@@ -175,24 +194,69 @@ message_wrapper_channel_new::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::unique_ptr<message_wrapper>(ptr);
+  return std::unique_ptr<message>(ptr);
 }
 
 
-message_wrapper_channel_new::message_wrapper_channel_new(message_wrapper const & wrap)
-  : message_wrapper{wrap}
+
+message_channel_new::message_channel_new(message const & wrap)
+  : message{wrap}
 {
+}
+
+
+
+std::vector<std::byte>
+message_channel_new::serialize(message_channel_new const & msg)
+{
+  // We know the buffer size, as it's fixed.
+  std::vector<std::byte> res;
+  res.resize(msg.buffer_size);
+  std::size_t remaining = msg.buffer_size;
+  std::byte * offset = &res[0];
+
+  // Serialize message header
+  auto used = serialize_header(offset, remaining, msg);
+  if (used <= 0) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the half id.
+  used = liberate::serialization::serialize_int(offset, remaining,
+      msg.initiator_part);
+  if (used != sizeof(msg.initiator_part)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the cookie
+  cookie_serialize tmp = msg.cookie1;
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp);
+  if (used != sizeof(tmp)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  if (remaining != 0) {
+    return {};
+  }
+  return res;
 }
 
 
 
 /**
- * message_wrapper_channel_acknowledge
+ * message_channel_acknowledge
  */
-std::unique_ptr<message_wrapper>
-message_wrapper_channel_acknowledge::from_wrapper(message_wrapper const & wrap)
+std::unique_ptr<message>
+message_channel_acknowledge::extract_features(message const & wrap)
 {
-  auto * ptr = new message_wrapper_channel_acknowledge{wrap};
+  auto * ptr = new message_channel_acknowledge{wrap};
   std::byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
@@ -225,24 +289,69 @@ message_wrapper_channel_acknowledge::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::unique_ptr<message_wrapper>(ptr);
+  return std::unique_ptr<message>(ptr);
 }
 
 
-message_wrapper_channel_acknowledge::message_wrapper_channel_acknowledge(message_wrapper const & wrap)
-  : message_wrapper{wrap}
+
+message_channel_acknowledge::message_channel_acknowledge(message const & wrap)
+  : message{wrap}
 {
+}
+
+
+
+std::vector<std::byte>
+message_channel_acknowledge::serialize(message_channel_acknowledge const & msg)
+{
+  // We know the buffer size, as it's fixed.
+  std::vector<std::byte> res;
+  res.resize(msg.buffer_size);
+  std::size_t remaining = msg.buffer_size;
+  std::byte * offset = &res[0];
+
+  // Serialize message header
+  auto used = serialize_header(offset, remaining, msg);
+  if (used <= 0) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the full id.
+  used = liberate::serialization::serialize_int(offset, remaining,
+      msg.id.full);
+  if (used != sizeof(msg.id.full)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the cookie
+  cookie_serialize tmp = msg.cookie2;
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp);
+  if (used != sizeof(tmp)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  if (remaining != 0) {
+    return {};
+  }
+  return res;
 }
 
 
 
 /**
- * message_wrapper_channel_finalize
+ * message_channel_finalize
  */
-std::unique_ptr<message_wrapper>
-message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
+std::unique_ptr<message>
+message_channel_finalize::extract_features(message const & wrap)
 {
-  auto * ptr = new message_wrapper_channel_finalize{wrap};
+  auto * ptr = new message_channel_finalize{wrap};
   std::byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
@@ -289,25 +398,79 @@ message_wrapper_channel_finalize::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::unique_ptr<message_wrapper>(ptr);
+  return std::unique_ptr<message>(ptr);
 }
 
 
-message_wrapper_channel_finalize::message_wrapper_channel_finalize(message_wrapper const & wrap)
-  : message_wrapper{wrap}
+
+message_channel_finalize::message_channel_finalize(message const & wrap)
+  : message{wrap}
 {
 }
 
+
+
+std::vector<std::byte>
+message_channel_finalize::serialize(message_channel_finalize const & msg)
+{
+  // We know the buffer size, as it's fixed.
+  std::vector<std::byte> res;
+  res.resize(msg.buffer_size);
+  std::size_t remaining = msg.buffer_size;
+  std::byte * offset = &res[0];
+
+  // Serialize message header
+  auto used = serialize_header(offset, remaining, msg);
+  if (used <= 0) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the full id.
+  used = liberate::serialization::serialize_int(offset, remaining,
+      msg.id.full);
+  if (used != sizeof(msg.id.full)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the cookie
+  cookie_serialize tmp = msg.cookie2;
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp);
+  if (used != sizeof(tmp)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Capabilities
+  capability_bits_t tmp2 = msg.capabilities.to_ullong();
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp2);
+  if (used != sizeof(tmp2)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  if (remaining != 0) {
+    return {};
+  }
+  return res;
+}
 
 
 
 /**
- * message_wrapper_channel_cookie
+ * message_channel_cookie
  */
-std::unique_ptr<message_wrapper>
-message_wrapper_channel_cookie::from_wrapper(message_wrapper const & wrap)
+std::unique_ptr<message>
+message_channel_cookie::extract_features(message const & wrap)
 {
-  auto * ptr = new message_wrapper_channel_cookie{wrap};
+  auto * ptr = new message_channel_cookie{wrap};
   std::byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
@@ -344,53 +507,134 @@ message_wrapper_channel_cookie::from_wrapper(message_wrapper const & wrap)
     return {};
   }
 
-  return std::unique_ptr<message_wrapper>(ptr);
+  return std::unique_ptr<message>(ptr);
 }
 
 
-message_wrapper_channel_cookie::message_wrapper_channel_cookie(message_wrapper const & wrap)
-  : message_wrapper{wrap}
+
+message_channel_cookie::message_channel_cookie(message const & wrap)
+  : message{wrap}
 {
 }
+
+
+
+std::vector<std::byte>
+message_channel_cookie::serialize(message_channel_cookie const & msg)
+{
+  // We know the buffer size, as it's fixed.
+  std::vector<std::byte> res;
+  res.resize(msg.buffer_size);
+  std::size_t remaining = msg.buffer_size;
+  std::byte * offset = &res[0];
+
+  // Serialize message header
+  auto used = serialize_header(offset, remaining, msg);
+  if (used <= 0) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize the cookie
+  cookie_serialize tmp = msg.either_cookie;
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp);
+  if (used != sizeof(tmp)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  // Capabilities
+  capability_bits_t tmp2 = msg.capabilities.to_ullong();
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp2);
+  if (used != sizeof(tmp2)) {
+    return {};
+  }
+  offset += used;
+  remaining -= used;
+
+  if (remaining != 0) {
+    return {};
+  }
+  return res;
+}
+
 
 
 /**
- * parse_message
+ * Parse/serialize
  */
-std::unique_ptr<message_wrapper>
-parse_message(std::byte const * buffer, std::size_t size)
+std::unique_ptr<message>
+extract_message_features(message const & msg)
 {
-  message_wrapper wrap{buffer, size, false};
-  auto err = wrap.validate(size);
-  if (ERR_SUCCESS != err.first) {
-    return {};
-  }
-
   // TODO *especially* this screams for some kind of registry for factory
   //      functions per type.
 
-  switch (wrap.type) {
+  switch (msg.type) {
     case MSG_CHANNEL_NEW:
-      return message_wrapper_channel_new::from_wrapper(wrap);
+      return message_channel_new::extract_features(msg);
 
     case MSG_CHANNEL_ACKNOWLEDGE:
-      return message_wrapper_channel_acknowledge::from_wrapper(wrap);
+      return message_channel_acknowledge::extract_features(msg);
 
     case MSG_CHANNEL_FINALIZE:
-      return message_wrapper_channel_finalize::from_wrapper(wrap);
+      return message_channel_finalize::extract_features(msg);
 
     case MSG_CHANNEL_COOKIE:
-      return message_wrapper_channel_cookie::from_wrapper(wrap);
+      return message_channel_cookie::extract_features(msg);
 
     case MSG_DATA:
       // Must make copy
-      return std::make_unique<message_wrapper>(wrap);
+      return std::make_unique<message>(msg);
 
     default:
       break;
   }
 
   // Unable to parse anything
+  return {};
+}
+
+
+std::vector<std::byte>
+serialize_message(message const & msg)
+{
+  // TODO *especially* this screams for some kind of registry for factory
+  //      functions per type.
+
+  switch (msg.type) {
+    case MSG_CHANNEL_NEW:
+      return message_channel_new::serialize(
+          *reinterpret_cast<message_channel_new const *>(&msg)
+      );
+
+    case MSG_CHANNEL_ACKNOWLEDGE:
+      return message_channel_acknowledge::serialize(
+          *reinterpret_cast<message_channel_acknowledge const *>(&msg)
+      );
+
+    case MSG_CHANNEL_FINALIZE:
+      return message_channel_finalize::serialize(
+          *reinterpret_cast<message_channel_finalize const *>(&msg)
+      );
+
+    case MSG_CHANNEL_COOKIE:
+      return message_channel_cookie::serialize(
+          *reinterpret_cast<message_channel_cookie const *>(&msg)
+      );
+
+    case MSG_DATA:
+      // Must make copy
+      return {msg.buffer, msg.buffer + msg.buffer_size};
+
+    default:
+      break;
+  }
+
+  // Unable to produce anything
   return {};
 }
 

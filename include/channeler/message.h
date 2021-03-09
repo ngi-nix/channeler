@@ -69,7 +69,7 @@ enum message_type : message_type_base
 
 
 /**
- * Analogous to packet_wrapper and packet, we define the message_wrapper class
+ * Analogous to packet_wrapper and packet, we define the message class
  * as just taking a buffer and providing an interface for messages. At the same
  * time, the message class also manages an internal buffer.
  *
@@ -82,100 +82,176 @@ enum message_type : message_type_base
  * packet_wrapper.
  *
  * Lastly, it's up to the caller to construct message classes that give easier
- * access to the payload from a message_base. All we are concerned with here
+ * access to the payload from a message. All we are concerned with here
  * are the delineation between one message and another in an input buffer.
  */
-struct message_base
+struct message
 {
   // Message metadata
-  message_type const  type = MSG_UNKNOWN;
+  message_type const      type = MSG_UNKNOWN;
 
   // Buffer
-  std::byte const *   buffer = nullptr;
-  std::size_t         buffer_size = 0;
+  std::byte const * const buffer = nullptr;
+  std::size_t const       input_size = 0;
+  std::size_t const       buffer_size = 0;
 
   // Payload
-  std::byte const *   payload = nullptr;
-  std::size_t         payload_size = 0;
-};
+  std::byte const * const payload = nullptr;
+  std::size_t const       payload_size = 0;
 
-struct message_wrapper : public message_base
-{
-  message_wrapper(std::byte const * buf, std::size_t max, bool validate_now = true);
+  /**
+   * Constructor parses the input buffer, and fills the basic fields
+   * above.
+   */
+  message(std::byte const * buf, std::size_t max, bool parse_now = true);
 
+  virtual ~message() = default;
+
+  /**
+   * For delayed parsing/validation
+   */
   std::pair<error_t, std::string>
-  validate(std::size_t max);
+  parse();
 };
+
+
+
+/**
+ * For parsing purposes, we need to know the payload size of message types.
+ * The result can either be a byte value, -1 for a variable sized message, or
+ * -2 if the type is unknown.
+ *
+ * Variable sized messages have a payload size following the message type in
+ * their serialization.
+ *
+ * TODO this will become part of a registry later
+ */
+ssize_t message_payload_size(message_type_base type);
+
+
+/**
+ * For extracting more message data, we use a factory approach that takes a
+ * message and constructs a new message subtype from it. That has to
+ * then be returned as a unique_ptr for handling owneship well.
+ *
+ * The parse_message() function takes this from a raw input buffer, and returns
+ * an empty pointer on failure.
+ *
+ * TODO this will become part of a registry later
+ */
+std::unique_ptr<message>
+extract_message_features(message const & msg);
+
+inline std::unique_ptr<message>
+parse_message(std::byte const * buffer, std::size_t size)
+{
+  message msg{buffer, size, false};
+  auto err = msg.parse();
+  if (ERR_SUCCESS != err.first) {
+    return {};
+  }
+
+  return extract_message_features(msg);
+}
+
+
+/**
+ * For assembling messages, it gets very complicated if we want to use pre-
+ * allocated memory already associated with e.g. a packet buffer, because we
+ * don't necessarily know how to pack messages together into a packet when
+ * the message is being constructed. So we return a byte vector here with
+ * the message's basic data.
+ *
+ * TODO also this will move into the registry
+ */
+std::vector<std::byte>
+serialize_message(message const & msg);
+
+inline std::vector<std::byte>
+serialize_message(std::unique_ptr<message> const & msg)
+{
+  if (!msg) {
+    return {};
+  }
+  return serialize_message(*msg);
+}
 
 
 
 /**
  * Messages
  */
-struct message_wrapper_channel_new
-  : public message_wrapper
+struct message_channel_new
+  : public message
 {
   channelid::half_type  initiator_part = DEFAULT_CHANNELID.initiator;
   cookie                cookie1 = {};
 
-  static std::unique_ptr<message_wrapper>
-  from_wrapper(message_wrapper const & wrap);
+  static std::unique_ptr<message>
+  extract_features(message const & wrap);
+
+  static std::vector<std::byte>
+  serialize(message_channel_new const & msg);
+
 private:
-  explicit message_wrapper_channel_new(message_wrapper const & wrap);
+  explicit message_channel_new(message const & wrap);
 };
 
 
-struct message_wrapper_channel_acknowledge
-  : public message_wrapper
+struct message_channel_acknowledge
+  : public message
 {
   channelid       id = DEFAULT_CHANNELID;
   cookie          cookie2 = {};
 
-  static std::unique_ptr<message_wrapper>
-  from_wrapper(message_wrapper const & wrap);
+  static std::unique_ptr<message>
+  extract_features(message const & wrap);
+
+  static std::vector<std::byte>
+  serialize(message_channel_acknowledge const & msg);
+
 private:
-  explicit message_wrapper_channel_acknowledge(message_wrapper const & wrap);
+  explicit message_channel_acknowledge(message const & wrap);
 };
 
 
-struct message_wrapper_channel_finalize
-  : public message_wrapper
+struct message_channel_finalize
+  : public message
 {
   channelid       id = DEFAULT_CHANNELID;
   cookie          cookie2 = {};
   capabilities_t  capabilities = {};
 
-  static std::unique_ptr<message_wrapper>
-  from_wrapper(message_wrapper const & wrap);
+  static std::unique_ptr<message>
+  extract_features(message const & wrap);
+
+  static std::vector<std::byte>
+  serialize(message_channel_finalize const & msg);
+
 private:
-  explicit message_wrapper_channel_finalize(message_wrapper const & wrap);
+  explicit message_channel_finalize(message const & wrap);
 };
 
 
-struct message_wrapper_channel_cookie
-  : public message_wrapper
+struct message_channel_cookie
+  : public message
 {
   cookie          either_cookie = {};
   capabilities_t  capabilities = {};
 
-  static std::unique_ptr<message_wrapper>
-  from_wrapper(message_wrapper const & wrap);
+  static std::unique_ptr<message>
+  extract_features(message const & wrap);
+
+  static std::vector<std::byte>
+  serialize(message_channel_cookie const & msg);
+
 private:
-  explicit message_wrapper_channel_cookie(message_wrapper const & wrap);
+  explicit message_channel_cookie(message const & wrap);
 };
 
 
-struct message_data : public message_wrapper {};
+struct message_data : public message {};
 
-
-
-/**
- * For simplicity's sake, we provide a factory function that returns a
- * message_wrapper pointer. The message's buffer size represents the number
- * of bytes used from the input buffer.
- */
-std::unique_ptr<message_wrapper>
-parse_message(std::byte const * buffer, std::size_t size);
 
 
 
@@ -184,7 +260,7 @@ parse_message(std::byte const * buffer, std::size_t size);
  */
 struct messages
 {
-  using value_type = std::unique_ptr<message_wrapper>;
+  using value_type = std::unique_ptr<message>;
 
   struct iterator : public std::iterator<
     std::input_iterator_tag,   // iterator_category
