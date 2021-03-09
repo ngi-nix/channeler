@@ -125,18 +125,4 @@ TEST(PacketWrapper, message_iteration)
   ASSERT_LT(sum, pkt.payload_size());
   auto diff = pkt.payload_size() - sum;
   ASSERT_EQ(4, diff); // The payload is 4 Bytes larger than the messages
-
-  // Make a copy of the messages, so we don't need to parse over and over.
-  std::vector<channeler::messages::value_type> messages{pkt.get_messages().begin(),
-    pkt.get_messages().end()};
-  ASSERT_EQ(3, messages.size());
-
-  // Need reference, because of unique_ptr
-  sum = 0;
-  for (auto & msg : messages) {
-    sum += msg->buffer_size;
-  }
-  ASSERT_LT(sum, pkt.payload_size());
-  diff = pkt.payload_size() - sum;
-  ASSERT_EQ(4, diff); // The payload is 4 Bytes larger than the messages
 }
