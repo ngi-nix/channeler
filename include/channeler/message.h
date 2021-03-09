@@ -112,6 +112,12 @@ struct message
    */
   std::pair<error_t, std::string>
   parse();
+
+protected:
+  inline message(message_type t)
+    : type{t}
+  {
+  }
 };
 
 
@@ -203,6 +209,14 @@ struct message_channel_acknowledge
 {
   channelid       id = DEFAULT_CHANNELID;
   cookie          cookie2 = {};
+
+  inline message_channel_acknowledge(channelid const & _id,
+      cookie const & _cookie2)
+    : message{MSG_CHANNEL_ACKNOWLEDGE}
+    , id{_id}
+    , cookie2{_cookie2}
+  {
+  }
 
   static std::unique_ptr<message>
   extract_features(message const & wrap);

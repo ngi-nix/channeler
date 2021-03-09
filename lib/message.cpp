@@ -19,8 +19,6 @@
  **/
 #include <build-config.h>
 
-#include <iostream> // FIXME
-
 #include <channeler/message.h>
 
 #include <channeler/channelid.h>

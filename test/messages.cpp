@@ -61,7 +61,7 @@ std::byte const message_channel_finalize[] = {
 
   0xbe_b, 0xef_b, 0xd0_b, 0x0d_b, // Channel ID
 
-  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+  0x39_b, 0x87_b, 0x88_b, 0x6e_b, // crc32 (cookie); used in FSM for channel responder
 
   0x00_b, 0x00_b, // Capabilities
 };

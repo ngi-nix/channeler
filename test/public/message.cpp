@@ -159,7 +159,7 @@ TEST(Message, parse_and_serialize_channel_finalize)
 
   auto ptr = reinterpret_cast<channeler::message_channel_finalize *>(msg.get());
   ASSERT_EQ(0xbeefd00d, ptr->id.full);
-  ASSERT_EQ(0xbeefb4be, ptr->cookie2);
+  ASSERT_EQ(0x3987886e, ptr->cookie2);
   ASSERT_TRUE(ptr->capabilities.none());
 
   // Serialize
