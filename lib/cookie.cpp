@@ -80,8 +80,10 @@ create_cookie_responder(
 
   // First the secret
   std::byte * offs = &buf[0];
-  ::memcpy(offs, secret, secret_size);
-  offs += secret_size;
+  if (secret_size > 0) {
+    ::memcpy(offs, secret, secret_size);
+    offs += secret_size;
+  }
 
   // Initiator and responder peer id
   ::memcpy(offs, initiator.raw, initiator.size());
