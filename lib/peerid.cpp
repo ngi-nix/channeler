@@ -25,12 +25,11 @@
 #include <cstring>
 
 #include <stdexcept>
-#include <random>
-#include <limits>
-#include <chrono>
 
 #include <liberate/string/hexencode.h>
 #include <liberate/cpp/hash.h>
+
+#include "support/random_bits.h"
 
 namespace channeler {
 
@@ -89,17 +88,10 @@ peerid_wrapper::copy() const
 peerid::peerid()
   : peerid_wrapper{buffer, PEERID_SIZE_BYTES}
 {
-  // XXX When we have a crypto library, this should no longer be necessary.
-  //     For one thing, we probably don't want random peerids any longer, but
-  //     for another, we can also use a secure random generator.
-  auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::default_random_engine generator(seed);
-  std::uniform_int_distribution<unsigned char> distribution(0,
-      std::numeric_limits<unsigned char>::max());
-
+  support::random_bits<unsigned char> rng;
   std::byte * offset = buffer;
   while (offset < buffer + PEERID_SIZE_BYTES) {
-    *offset = static_cast<std::byte>(distribution(generator));
+    *offset = static_cast<std::byte>(rng.get());
     ++offset;
   }
 }

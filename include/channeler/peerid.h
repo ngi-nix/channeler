@@ -27,6 +27,8 @@
 #include <channeler.h>
 
 #include <cstddef>
+#include <ostream>
+#include <iomanip>
 
 #include <liberate/cpp/operators/comparison.h>
 #include <liberate/cpp/hash.h>
@@ -80,6 +82,26 @@ struct CHANNELER_API peerid_wrapper
 
 
 /**
+ * Output operator
+ */
+inline std::ostream &
+operator<<(std::ostream & os, peerid_wrapper const & id)
+{
+  os
+    << std::hex
+    << "<pid/";
+  for (size_t idx = 0 ; idx < id.size() ; ++idx) {
+    os << std::setw(2) << std::setfill('0')
+      << static_cast<uint16_t>(id.raw[idx]);
+  }
+  os << ">" << std::dec;
+  return os;
+}
+
+
+
+
+/**
  * By contrast, this class manages a buffer for a peer identifier. It shares
  * most of its implementation with peerid_wrapper.
  */
@@ -98,6 +120,7 @@ struct CHANNELER_API peerid
   peerid(peerid const &);
   peerid & operator=(peerid const &);
 };
+
 
 
 } // namespace channeler
