@@ -197,7 +197,7 @@ struct fsm_channel_responder
 
     // Since we're responding to the MSG_CHANNEL_NEW, the packet sender is
     // the initiator, and the recipient (us) is the responder.
-    auto cookie = create_cookie_responder(secret.data(), secret.size(),
+    auto cookie2 = create_cookie_responder(secret.data(), secret.size(),
         packet.sender(), packet.recipient(), full_id);
 
     // Construct message. If we have channel information for this channel,
@@ -209,8 +209,8 @@ struct fsm_channel_responder
     }
     else {
       // MSG_CHANNEL_ACKNOWLEDGE
-      auto response = std::make_unique<message_channel_acknowledge>(full_id, cookie);
-      auto ev = std::make_shared<channeler::pipe::message_out_event<addressT>>(
+      auto response = std::make_unique<message_channel_acknowledge>(full_id, msg->cookie1, cookie2);
+      auto ev = std::make_shared<channeler::pipe::message_out_event>(
             packet.recipient().copy(), packet.sender().copy(),
             packet.channel(), // XXX should be DEFAULT_CHANNELID
             std::move(response)
