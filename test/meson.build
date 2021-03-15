@@ -40,6 +40,8 @@ if not meson.is_subproject()
     'private' / 'memory' / 'packet_block.cpp',
     'private' / 'memory' / 'packet_pool.cpp',
     'private' / 'memory' / 'packet_buffer.cpp',
+    'private' / 'support' / 'timeouts.cpp',
+    'private' / 'support' / 'exponential_backoff.cpp',
     'private' / 'pipe' / 'de_envelope.cpp',
     'private' / 'pipe' / 'route.cpp',
     'private' / 'pipe' / 'validate.cpp',
@@ -47,6 +49,7 @@ if not meson.is_subproject()
     'private' / 'pipe' / 'message_parsing.cpp',
     'private' / 'fsm' / 'registry.cpp',
     'private' / 'fsm' / 'channel_responder.cpp',
+    'private' / 'fsm' / 'channel_initiator.cpp',
     'private' / 'channels.cpp',
   ]
 

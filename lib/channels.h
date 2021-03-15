@@ -78,6 +78,11 @@ public:
   {
   }
 
+  inline bool has_channel(channelid::half_type const & id) const
+  {
+    return has_established_channel(id) || has_pending_channel(id);
+  }
+
   inline bool has_channel(channelid const & id) const
   {
     return has_established_channel(id) || has_pending_channel(id);
@@ -99,6 +104,12 @@ public:
     return true;
   }
 
+  inline bool has_established_channel(channelid::half_type const & initiator) const
+  {
+    return m_established.end() != m_established.find(initiator);
+  }
+
+
   inline bool has_pending_channel(channelid const & id) const
   {
     // Just consider the initiator part here.
@@ -113,6 +124,7 @@ public:
 
   inline void drop_pending_channel(channelid::half_type const & initiator)
   {
+    // TODO we can use remove() for that
     m_pending.erase(initiator);
   }
 
@@ -157,7 +169,7 @@ public:
     if (id.has_initiator()) {
       // This is pending, so we can just overwrite existing identifiers. It
       // makes no difference.
-      m_pending.insert(id.initiator);
+      m_pending[id.initiator] = std::make_shared<channelT>(id, m_packet_size);
       return ERR_SUCCESS;
     }
 
@@ -216,7 +228,46 @@ public:
         return iter->second.data;
       }
     }
+
+    return get(id.initiator);
+  }
+
+  inline channel_ptr get(channelid::half_type const & initiator) const
+  {
+    auto piter = m_pending.find(initiator);
+    if (piter != m_pending.end()) {
+      return piter->second;
+    }
     return {};
+  }
+
+
+  /**
+   * Create a new pending channel identifier not currently in the set.
+   */
+  inline channelid::half_type new_pending_channel()
+  {
+    channelid id;
+    do {
+      id = create_new_channelid();
+    } while (has_channel(id));
+
+    // We don't have this channel, so add it.
+    add(id);
+    return id.initiator;
+  }
+
+
+  inline void remove(channelid const & id)
+  {
+    m_pending.erase(id.initiator);
+    m_established.erase(id.initiator);
+  }
+
+  inline void remove(channelid::half_type const & initiator)
+  {
+    m_pending.erase(initiator);
+    m_established.erase(initiator);
   }
 
 private:
@@ -224,8 +275,8 @@ private:
   // TODO: Should we address timeouts of pending channels here? Probably
   //       better in the channel state machine, but that would require
   //       a channel instance.
-  using id_set_t = std::unordered_set<channelid::half_type>;
-  id_set_t      m_pending;
+  using pending_channel_map_t = std::unordered_map<channelid::half_type, channel_ptr>;
+  pending_channel_map_t      m_pending;
 
   // For established channels, we also need to keep a set of channel
   // instances.
