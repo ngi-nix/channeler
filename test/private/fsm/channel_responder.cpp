@@ -128,7 +128,7 @@ TEST(FSMChannelResponder, process_msg_channel_new)
 
   auto res = *events.begin();
   ASSERT_EQ(ET_MESSAGE_OUT, res->type);
-  auto converted = reinterpret_cast<message_out_event<int> *>(res.get());
+  auto converted = reinterpret_cast<message_out_event *>(res.get());
 
   // The acknowledge message needs to swap sender and recipient, and be sent on
   // the deault channel.
