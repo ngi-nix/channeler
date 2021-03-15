@@ -113,34 +113,33 @@ struct channel_assign_filter
       }
     }
 
-    // If we can get a channel structure, it means the channel is established
-    // and we can pass it on. Otherwise, we have to drop it. We cannot respond
-    // to channels that have not been established yet.
-    // XXX: Technically, we can easily just accept any channel identifier as
-    //      correct - but channels get created by user actions. That means that
-    //      any unknown channel is not the result of a user action, so could be
-    //      sent maliciously to flood buffers, as the application is not going
-    //      to be interested in draining the buffer. Best to drop the packet.
+    // There are three cases we need to consider:
+    // a) We have a full channel. In that case, we need to assign the packet
+    //    to said channel.
+    // b) We have a pending channel and early data. This can only happen to
+    //    initiators. Since the responder then clearly accepted our channel,
+    //    we could pass the channel structure. But later filters should
+    //    be able to distinguish this, so we pass an empty channel pointer.
+    // c) We do not have either kind of channel. This we must reject.
     auto ptr = m_channel_set->get(in->packet.channel());
     if (!ptr) {
-      // If there is *no* channel strucutre, it may be that the channel is
-      // pending and we're receiving early data. This is something we need
-      // to pass on without a channel structure present.
-      if (!m_channel_set->has_pending_channel(in->packet.channel())) {
-        return m_classifier.process(in->transport.source,
-            in->transport.destination, in->packet);
-      }
+      return m_classifier.process(in->transport.source,
+          in->transport.destination, in->packet);
     }
-    else {
-      // Place the packet in a buffer. We already have memory from the pool, so
-      // this is mostly about buffer management. If this fails because the
-      // buffer is full, we need to drop the packet.
+
+    // If we have an established channel here, we can place the packet in a
+    // buffer. Otherwise, we clear the channel structure again to indicate
+    // pending status.
+    if (m_channel_set->has_established_channel(in->packet.channel())) {
       auto err = ptr->buffer_push(in->packet, in->data);
       if (ERR_SUCCESS != err) {
         // TODO: in future versions, we'll need to return flow control information
         //       to the sender.
         return {};
       }
+    }
+    else {
+      ptr.reset();
     }
 
     // Need to construct a new event.

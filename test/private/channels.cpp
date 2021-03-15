@@ -129,8 +129,8 @@ TEST(Channels, upgrade_partial)
   auto res = chs.add(id);
   ASSERT_EQ(ERR_SUCCESS, res);
 
-  auto ptr = chs.get(id);
-  ASSERT_FALSE(ptr);
+  ASSERT_TRUE(chs.has_pending_channel(id));
+  ASSERT_FALSE(chs.has_established_channel(id));
 
   // Try upgrading a partial
   res = chs.make_full(id);
@@ -142,7 +142,7 @@ TEST(Channels, upgrade_partial)
   res = chs.make_full(id);
   ASSERT_EQ(ERR_SUCCESS, res);
 
-  ptr = chs.get(id);
+  auto ptr = chs.get(id);
   ASSERT_TRUE(ptr);
 }
 
