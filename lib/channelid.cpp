@@ -21,58 +21,13 @@
 
 #include <channeler/channelid.h>
 
-#include <random>
-#include <chrono>
-#include <limits>
-
-// FIXME
-//#include <channeler/error.h>
-//
-//#include <cstring>
-//
-//#include <stdexcept>
-//#include <random>
-//
-//#include <liberate/string/hexencode.h>
-//#include <liberate/cpp/hash.h>
+#include "support/random_bits.h"
 
 namespace channeler {
 
-namespace {
-
-template <typename T>
-struct random_bits
-{
-  std::default_random_engine generator;
-  std::uniform_int_distribution<T> distribution;
-
-  inline random_bits()
-    : generator{
-        static_cast<std::default_random_engine::result_type>(
-            std::chrono::system_clock::now().time_since_epoch().count()
-        )
-      }
-    , distribution{
-        std::numeric_limits<T>::min(),
-        std::numeric_limits<T>::max()
-      }
-  {
-  }
-
-  T get()
-  {
-    return distribution(generator);
-  }
-};
-
-
-} // anonymous namespace
-
-
-
 channelid create_new_channelid()
 {
-  random_bits<uint16_t> rng;
+  support::random_bits<uint16_t> rng;
 
   uint16_t cur;
   do {
@@ -99,7 +54,7 @@ error_t complete_channelid(channelid & id)
   }
 
   // Generate
-  random_bits<uint16_t> rng;
+  support::random_bits<uint16_t> rng;
 
   uint16_t cur;
   do {

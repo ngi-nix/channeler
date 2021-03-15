@@ -27,6 +27,8 @@
 #include <channeler.h>
 
 #include <cstddef>
+#include <ostream>
+#include <iomanip>
 
 #include <liberate/cpp/operators.h>
 #include <liberate/cpp/hash.h>
@@ -47,12 +49,23 @@ union CHANNELER_API channelid
   using full_type = uint32_t;
   using half_type = uint16_t;
 
-  full_type full = full_type{0xF0F0F0F0uL};
+  full_type full;
   CHANNELER_ANONYMOUS struct {
     half_type initiator;   // First (most significant) bits are set by the
                            // initiating side.
     half_type responder;   // The responding side fills in the rest.
   };
+
+  inline channelid(half_type init, half_type resp)
+    : initiator{init}
+    , responder{resp}
+  {
+  }
+
+  inline constexpr channelid()
+    : full{0xF0F0F0F0uL}
+  {
+  }
 
   // Behave like a value type
   inline size_t hash() const
@@ -96,6 +109,19 @@ union CHANNELER_API channelid
 
 LIBERATE_MAKE_COMPARABLE(channelid)
 
+/**
+ * Output operator
+ */
+inline std::ostream &
+operator<<(std::ostream & os, channelid const & id)
+{
+  os << "["
+    << std::hex << std::setw(sizeof(channelid::half_type) * 2) << std::setfill('0') << id.initiator
+    << ":" << id.responder << "]"
+    << std::dec << std::endl;
+  return os;
+}
+
 
 /**
  * The identifier for the default channel does not require negotiation. It's
@@ -133,5 +159,7 @@ error_t complete_channelid(channelid & id);
 
 
 LIBERATE_MAKE_HASHABLE(channeler::channelid)
+
+
 
 #endif // guard
