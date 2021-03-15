@@ -52,6 +52,8 @@ enum event_type : uint_fast16_t
   ET_MESSAGE, // FIXME up til here incoming only; maybe we disambiguate at some point?
 
   ET_MESSAGE_OUT,
+  ET_NEW_CHANNEL,  // FIXME this feels weird here. Let's see how things develop.
+  ET_TIMEOUT,
 };
 
 
@@ -264,7 +266,6 @@ struct message_event
 /**
  * Outgoing messages
  */
-template <typename addressT>
 struct message_out_event
   : public event
 {
@@ -294,6 +295,65 @@ struct message_out_event
 
   virtual ~message_out_event() = default;
 };
+
+
+
+/**
+ * Event for a new channel
+ */
+struct new_channel_event
+  : public event
+{
+  // *** Data members
+  peerid        sender;
+  peerid        recipient;
+
+  inline new_channel_event(
+      peerid const & _sender,
+      peerid const & _recipient)
+    : event{ET_NEW_CHANNEL}
+    , sender{_sender}
+    , recipient{_recipient}
+  {
+  }
+
+  virtual ~new_channel_event() = default;
+};
+
+
+/**
+ * Event for timeouts. Carries some kind of usage specific context, but has
+ * specialization for being empty.
+ */
+template <typename contextT = void>
+struct timeout_event
+  : public event
+{
+  // *** Data members
+  contextT  context;
+
+  inline timeout_event(
+      contextT const & ctx)
+    : event{ET_TIMEOUT}
+    , context{ctx}
+  {
+  }
+
+  virtual ~timeout_event() = default;
+};
+
+template <>
+struct timeout_event<void>
+  : public event
+{
+  inline timeout_event()
+    : event{ET_NEW_CHANNEL}
+  {
+  }
+
+  virtual ~timeout_event() = default;
+};
+
 
 
 } // namespace channeler::pipe
