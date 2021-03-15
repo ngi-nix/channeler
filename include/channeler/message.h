@@ -193,6 +193,14 @@ struct message_channel_new
   channelid::half_type  initiator_part = DEFAULT_CHANNELID.initiator;
   cookie                cookie1 = {};
 
+  inline message_channel_new(channelid::half_type const & initiator,
+      cookie const & _cookie1)
+    : message{MSG_CHANNEL_NEW}
+    , initiator_part{initiator}
+    , cookie1{_cookie1}
+  {
+  }
+
   static std::unique_ptr<message>
   extract_features(message const & wrap);
 
@@ -208,12 +216,15 @@ struct message_channel_acknowledge
   : public message
 {
   channelid       id = DEFAULT_CHANNELID;
+  cookie          cookie1 = {};
   cookie          cookie2 = {};
 
   inline message_channel_acknowledge(channelid const & _id,
+      cookie const & _cookie1,
       cookie const & _cookie2)
     : message{MSG_CHANNEL_ACKNOWLEDGE}
     , id{_id}
+    , cookie1{_cookie1}
     , cookie2{_cookie2}
   {
   }
@@ -235,6 +246,18 @@ struct message_channel_finalize
   channelid       id = DEFAULT_CHANNELID;
   cookie          cookie2 = {};
   capabilities_t  capabilities = {};
+
+  inline message_channel_finalize(channelid const & _id,
+      cookie const & _cookie2,
+      capabilities_t const & _capabilities)
+    : message{MSG_CHANNEL_FINALIZE}
+    , id{_id}
+    , cookie2{_cookie2}
+    , capabilities{_capabilities}
+  {
+  }
+
+
 
   static std::unique_ptr<message>
   extract_features(message const & wrap);
