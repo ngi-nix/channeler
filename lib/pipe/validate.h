@@ -117,6 +117,7 @@ struct validate_filter
 
   next_filterT *  m_next;
   classifier      m_classifier; // TODO ptr or ref for shared state?
+                                // https://gitlab.com/interpeer/channeler/-/issues/21
 };
 
 

@@ -48,6 +48,7 @@ namespace channeler::pipe {
  * This effectively maps packets to the internal channel data structure.
  *
  * TODO
+ * https://gitlab.com/interpeer/channeler/-/issues/19
  *
  * Expects the next_eventT constructor to take
  * - an (optional) channel data structure pointer
@@ -135,6 +136,7 @@ struct channel_assign_filter
       if (ERR_SUCCESS != err) {
         // TODO: in future versions, we'll need to return flow control information
         //       to the sender.
+        //       https://gitlab.com/interpeer/channeler/-/issues/2
         return {};
       }
     }
@@ -157,6 +159,7 @@ struct channel_assign_filter
   next_filterT *  m_next;
   channel_set *   m_channel_set;
   classifier      m_classifier; // TODO ptr or ref for shared state?
+                                // https://gitlab.com/interpeer/channeler/-/issues/21
 };
 
 

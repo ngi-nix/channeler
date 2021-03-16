@@ -39,6 +39,7 @@ namespace channeler::pipe {
 /**
  * Events are pushed down the filter pipe. They have a type, and may carry
  * a type-dependent payload.
+ * TODO: https://gitlab.com/interpeer/channeler/-/issues/22
  */
 enum event_type : uint_fast16_t
 {
@@ -79,6 +80,7 @@ using event_list_type = std::list<std::shared_ptr<event>>;
 // TODO pretty much all of the events carrying packet data can be merged into
 //      one class, and have just the type change & asserted in each filter.
 //      timeouts, etc. would need another class.
+//      https://gitlab.com/interpeer/channeler/-/issues/22
 
 
 /**

@@ -28,8 +28,6 @@
 
 #include <list>
 
-#include <iostream> // FIXME
-
 #include "packet_pool.h"
 #include "../lock_policy.h"
 
@@ -66,6 +64,7 @@ namespace channeler::memory {
  * TODO
  * - only implement FIFO for now
  * - implement when filter pipe is reasonably implemented.
+ * https://gitlab.com/interpeer/channeler/-/issues/14
  */
 template <
   std::size_t POOL_BLOCK_SIZE,

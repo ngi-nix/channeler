@@ -74,6 +74,7 @@ enum flag_index : std::size_t
 
   // See https://tools.ietf.org/html/draft-ietf-quic-spin-exp-01 for an
   // explanation on how the flag is used.
+  // TODO: https://gitlab.com/interpeer/channeler/-/issues/5
   FLAG_SPIN_BIT = 1,
 };
 

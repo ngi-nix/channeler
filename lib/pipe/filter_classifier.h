@@ -50,6 +50,7 @@ template <
 struct null_policy
 {
   // FIXME ingress as an enum? see action.h
+  // https://gitlab.com/interpeer/channeler/-/issues/18
   inline bool should_filter(addressT const &, bool ingress [[maybe_unused]])
   {
     return false;
@@ -60,6 +61,7 @@ struct null_policy
 /**
  * The filter classifier doesn't classify filters - that's a bit of a misnomer,
  * and maybe something to fix in future. TODO
+ * https://gitlab.com/interpeer/channeler/-/issues/23
  *
  * Rather, it provides the classification algorithm for what to do with packets
  * that need to be rejected. More precisely, if a packet should be rejected, it

@@ -63,10 +63,14 @@ namespace channeler {
  *
  * But what it means for this class is that we're actually looking up channels
  * only by the initiator part.
+ *
+ * TODO:
+ * https://gitlab.com/interpeer/channeler/-/issues/8
  */
 template <
   typename channelT
   // TODO Lock policy? null policy should be in its own header
+  // https://gitlab.com/interpeer/channeler/-/issues/7
 >
 class channels
 {
@@ -272,9 +276,9 @@ public:
 
 private:
   // We need to keep a set of channel identifiers under establishment.
-  // TODO: Should we address timeouts of pending channels here? Probably
-  //       better in the channel state machine, but that would require
-  //       a channel instance.
+  // TODO instead of having two maps, we can have one map in which pending channels are marked by
+  //      not containing a full channelid?
+  //      https://gitlab.com/interpeer/channeler/-/issues/9
   using pending_channel_map_t = std::unordered_map<channelid::half_type, channel_ptr>;
   pending_channel_map_t      m_pending;
 

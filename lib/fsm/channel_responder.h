@@ -175,6 +175,7 @@ struct fsm_channel_responder
     if (m_channels.has_pending_channel(msg->initiator_part)) {
       m_channels.drop_pending_channel(msg->initiator_part);
       // TODO notify other channel_initiator via action?
+      //      https://gitlab.com/interpeer/channeler/-/issues/16
       return false;
     }
 
@@ -188,6 +189,7 @@ struct fsm_channel_responder
       if (err != ERR_SUCCESS) {
         // TODO report this somehow? I don't know what the exact right thing
         // to do here would be.
+        // https://gitlab.com/interpeer/channeler/-/issues/17
         return false;
       }
     }
@@ -206,6 +208,7 @@ struct fsm_channel_responder
     auto data = m_channels.get(full_id);
     if (data && data->has_outgoing_data_pending()) {
       // TODO MSG_CHANNEL_COOKIE
+      //      https://gitlab.com/interpeer/channeler/-/issues/13
     }
     else {
       // MSG_CHANNEL_ACKNOWLEDGE
@@ -268,7 +271,8 @@ struct fsm_channel_responder
 
     // Check the cookies match.
     if (msg->cookie2 != cookie) {
-      // TODO notify other channel_initiator via action?
+      // TODO report this?
+      // https://gitlab.com/interpeer/channeler/-/issues/17
       return false;
     }
 
@@ -276,7 +280,8 @@ struct fsm_channel_responder
     // channel set.
     auto err = m_channels.add(msg->id);
     if (ERR_SUCCESS != err) {
-      // TODO notify other channel_initiator via action?
+      // TODO report this?
+      // https://gitlab.com/interpeer/channeler/-/issues/17
       return false;
     }
 
@@ -290,6 +295,7 @@ struct fsm_channel_responder
       ::channeler::pipe::event_list_type & output_events)
   {
     // TODO
+    // https://gitlab.com/interpeer/channeler/-/issues/13
     return true;
   }
 

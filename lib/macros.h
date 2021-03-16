@@ -60,8 +60,6 @@
 
 // Specific log macros - error codes and system errors
 #if defined(CHANNELER_WIN32)
-// FIXME #include <packeteer/util/string.h>
-// FIXME #include <packeteer/net/netincludes.h>
 
 #define ERR_LOG(msg, code) do { \
     TCHAR * errmsg = NULL; \

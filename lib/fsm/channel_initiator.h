@@ -75,6 +75,7 @@ template <
   std::size_t POOL_BLOCK_SIZE,
   typename channelT,
   // TODO the timeouts should probably be run-time configurable
+  //    https://gitlab.com/interpeer/channeler/-/issues/11
   timeout_unit_type CHANNEL_NEW_TIMEOUT = DEFAULT_CHANNEL_NEW_TIMEOUT,
   timeout_unit_type CHANNEL_TIMEOUT = DEFAULT_CHANNEL_TIMEOUT
 >
@@ -228,6 +229,7 @@ struct fsm_channel_initiator
       //       not as if a well-behaving initiator will create tons of
       //       channels. Let's do that in the near future instead, then
       //       we don't have to recreate the cookie above.
+      //       https://gitlab.com/interpeer/channeler/-/issues/12
       m_channels.remove(msg->id);
       return true;
     }
@@ -256,11 +258,13 @@ struct fsm_channel_initiator
     // Construct the finalize or cookie messages, respectively.
     if (channel->has_outgoing_data_pending()) {
       // TODO MSG_CHANNEL_COOKIE
+      //      https://gitlab.com/interpeer/channeler/-/issues/13
     }
     else {
       // MSG_CHANNEL_FINALIZE
       auto response = std::make_unique<message_channel_finalize>(msg->id, msg->cookie2,
           capabilities_t{}); // TODO capabilities not used yet.
+                             // https://gitlab.com/interpeer/channeler/-/issues/14
       auto ev = std::make_shared<channeler::pipe::message_out_event>(
             event->packet.recipient().copy(), event->packet.sender().copy(),
             DEFAULT_CHANNELID,
@@ -293,6 +297,7 @@ struct fsm_channel_initiator
     if (m_channels.has_channel(id)) {
       // TODO add retries with exponential backoff up to a configurable
       //      limit
+      //      https://gitlab.com/interpeer/channeler/-/issues/15
       m_channels.remove(id);
       return true;
     }

@@ -46,6 +46,7 @@ namespace channeler {
  * TODO in future, it should be possible to extend the protocol by adding
  *      to a set of registered messages in a namespace. We'll skip this for
  *      the time being.
+ *      https://gitlab.com/interpeer/channeler/-/issues/1
  */
 using message_type_base = uint16_t;
 enum message_type : message_type_base
@@ -62,9 +63,13 @@ enum message_type : message_type_base
   MSG_DATA = 20,
 
   // TODO
-  // MSG_DATA_PRORESS,
+  // MSG_DATA_PROGRESS,
   // MSG_DATA_RECEIVE_WINDOW,
+  // https://gitlab.com/interpeer/channeler/-/issues/2
+  //
+  // TODO
   // MSG_START_ENCRYPTION
+  // https://gitlab.com/interpeer/channeler/-/issues/3
 };
 
 
@@ -333,7 +338,7 @@ struct messages
       //    - use the parsed size there instead of a temp
       //    - then on dereferencing create a new message based on the
       //      pre-parsed header
-      //
+      // https://gitlab.com/interpeer/channeler/-/issues/4
       auto msg = parse_message(
           m_messages.m_buffer + m_offset,
           m_messages.m_size - m_offset

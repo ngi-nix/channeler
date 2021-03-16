@@ -44,6 +44,10 @@ serialize_header(std::byte * buf, std::size_t max, message const & msg)
   }
 
   // TODO size?
+  //      used for MSG_DATA, but would also be useful for future types. We'll
+  //      need to include a registry function that tells us whether the message
+  //      type has a fixed size or not.
+  //      https://gitlab.com/interpeer/channeler/-/issues/1
 
   return used;
 }
@@ -56,6 +60,7 @@ message_payload_size(message_type_base type)
 {
   // TODO extending this is error-prone, which is also a good reason for
   //      registering known message types
+  //      https://gitlab.com/interpeer/channeler/-/issues/1
   switch (type) {
     case MSG_CHANNEL_NEW:
       // - channelid.initiator
@@ -570,6 +575,7 @@ extract_message_features(message const & msg)
 {
   // TODO *especially* this screams for some kind of registry for factory
   //      functions per type.
+  //      https://gitlab.com/interpeer/channeler/-/issues/1
 
   switch (msg.type) {
     case MSG_CHANNEL_NEW:
@@ -602,6 +608,7 @@ serialize_message(message const & msg)
 {
   // TODO *especially* this screams for some kind of registry for factory
   //      functions per type.
+  //      https://gitlab.com/interpeer/channeler/-/issues/1
 
   switch (msg.type) {
     case MSG_CHANNEL_NEW:

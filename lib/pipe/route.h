@@ -56,6 +56,7 @@ namespace channeler::pipe {
  * TODO:
  * - unban action or interface
  * - timeout of bans
+ *   https://gitlab.com/interpeer/channeler/-/issues/24
  */
 template <
   typename addressT,
@@ -102,6 +103,7 @@ struct route_filter
     // At the next event, we expect a packet not just a header. This means
     // parsing the header a second time for now.
     // TODO: new packet constructor
+    // https://gitlab.com/interpeer/channeler/-/issues/25
     auto next = std::make_unique<next_eventT>(
         in->transport.source,
         in->transport.destination,

@@ -68,6 +68,7 @@ struct transport_filter_request_action
 {
   addressT address;
   bool     ingress; // FIXME enum?
+  // https://gitlab.com/interpeer/channeler/-/issues/18
 
   inline transport_filter_request_action(addressT const & addr, bool _ingress = true)
     : action{AT_FILTER_TRANSPORT}
@@ -82,6 +83,7 @@ struct peer_filter_request_action
 {
   peerid peer;
   bool   ingress; // FIXME enum?
+  // https://gitlab.com/interpeer/channeler/-/issues/18
 
   inline peer_filter_request_action(peerid_wrapper const & p, bool _ingress = true)
     : action{AT_FILTER_PEER}

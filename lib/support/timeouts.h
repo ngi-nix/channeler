@@ -170,6 +170,7 @@ public:
     // - check if this needs optimization
     // - may need an entirely different approach to integrate well with a
     //   platform's I/O system
+    //   https://gitlab.com/interpeer/channeler/-/issues/10
 
     auto elapsed = m_sleep(amount);
     map_t remaining;

@@ -53,6 +53,7 @@ namespace channeler::fsm {
  * Finally, the input event types are fairly limited. They are invoked at the
  * end of the input filter pipe, where events are ET_MESSAGE (or in future,
  * timeouts TODO). This is checked at run-time however.
+ * https://gitlab.com/interpeer/channeler/-/issues/10
  */
 struct fsm_base
 {

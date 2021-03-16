@@ -45,18 +45,6 @@
 #  define CHANNELER_ANONYMOUS
 #endif
 
-
-
-// Visibility macros are used by all, so they must come first.
-#include <channeler/visibility.h>
-
-// We want standard int types across the board.
-// FIXME #include <packeteer/types.h>
-
-// Not all, but the very basic headers are always included.
-#include <channeler/error.h>
-#include <channeler/version.h>
-
 /**
  * Decide what to include globally
  **/
@@ -76,56 +64,18 @@
 #    undef WIN32_LEAN_AND_MEAN
 #    undef __UNDEF_LEAN_AND_MEAN
 #  endif
-// FIXME // Link against winsock2
-// FIXME #  pragma comment(lib, "Ws2_32.lib")
 #endif
 
+// Visibility macros are used by all, so they must come first.
+#include <channeler/visibility.h>
 
-namespace channeler {
+// We want standard int types across the board.
+#include <liberate/types.h>
 
-#if 0
-/**
- * Forward
- */
-class CHANNELER_API registry;
+// Not all, but the very basic headers are always included.
+#include <channeler/error.h>
+#include <channeler/version.h>
 
-
-/**
- * The primary entry point into a channeler library instance.
- */
-class CHANNELER_API api
-{
-public:
-  /**
-   * Create a new API instance.
-   */
-  static std::shared_ptr<api> create()
-  {
-    return std::shared_ptr<api>(new api());
-  }
-  ~api();
-
-  /**
-   * Don't copy the instance - share it around, or create a new one.
-   */
-  api(api &&) = delete;
-  api(api const &) = delete;
-  api & operator=(api const &) = delete;
-
-  /**
-   * Access the registry interface.
-   */
-  registry & reg();
-
-private:
-  api();
-
-  struct api_impl;
-  std::unique_ptr<api_impl> m_impl;
-};
-
-#endif
-
-} // namespace channeler
+// TODO: include API headers if necessary
 
 #endif // guard
