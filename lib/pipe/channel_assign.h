@@ -150,7 +150,8 @@ struct channel_assign_filter
         in->transport.destination,
         in->packet,
         in->data,
-        ptr
+        ptr // TODO maybe we don't need to pass this on. Which could mean we
+            //      may not need the next_eventT type.
     );
     return m_next->consume(std::move(next));
   }

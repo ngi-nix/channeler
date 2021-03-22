@@ -95,6 +95,11 @@ struct message_parsing_filter
 
     // We have a packet and it belongs to a channel. Now we need to push
     // messages down the pipeline.
+    // TODO if the packet channel is pending, then this packet should
+    //      contain a MSG_PACKET_COOKIE. We need to process that message
+    //      *first* in order to be able to process the others. This may
+    //      require two iterations.
+    //      https://gitlab.com/interpeer/channeler/-/issues/13
     action_list_type actions;
     for (auto msg : in->packet.get_messages()) {
       // Need to construct a new event per message
