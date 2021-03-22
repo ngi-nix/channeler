@@ -46,6 +46,21 @@ struct test_fsm : public ::channeler::fsm::fsm_base
 
 };
 
+
+struct test_fsm_with_ctor : public ::channeler::fsm::fsm_base
+{
+  inline test_fsm_with_ctor(int unused [[maybe_unused]])
+  {
+  }
+
+  virtual bool process(event * to_process [[maybe_unused]],
+      action_list_type & result_actions,
+      event_list_type & output_events)
+  {
+    return false;
+  }
+};
+
 } // anonymous namespace
 
 
@@ -63,6 +78,46 @@ TEST(FSMRegistry, add)
 }
 
 
+TEST(FSMRegistry, add_with_ctor_args)
+{
+  using namespace channeler::fsm;
+
+  registry reg;
+
+  // Fail at compile time
+  // reg.add<test_fsm_with_ctor>();
+
+  // Succeed!
+  ASSERT_NO_THROW(reg.add<test_fsm_with_ctor>(42));
+}
+
+
+TEST(FSMRegistry, with_ctx_add)
+{
+  using namespace channeler::fsm;
+
+  registry<int> reg;
+
+  // Fail at compile time
+  // reg.add<foo>();
+
+  // Succeed!
+  ASSERT_NO_THROW(reg.add<test_fsm>());
+}
+
+
+TEST(FSMRegistry, with_ctx_add_with_ctor_args)
+{
+  using namespace channeler::fsm;
+
+  registry<int> reg;
+
+  // Fail at compile time
+  // reg.add<test_fsm_with_ctor>();
+
+  // Succeed!
+  ASSERT_NO_THROW(reg.add<test_fsm_with_ctor>(42));
+}
 TEST(FSMRegistry, process_without_fsm)
 {
   using namespace channeler::pipe;

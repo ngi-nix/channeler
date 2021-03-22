@@ -99,7 +99,9 @@ struct fsm_channel_initiator
    */
   inline fsm_channel_initiator(
       ::channeler::support::timeouts & timeouts,
-      channel_set & channels, secret_generator generator)
+      channel_set & channels,
+      secret_generator generator
+    )
     : m_timeouts{timeouts}
     , m_channels{channels}
     , m_secret_generator{generator}

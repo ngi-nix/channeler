@@ -103,7 +103,7 @@ TEST(FSMChannelResponder, process_msg_channel_new)
   // This is a little unfortunate, but we need the packet's sender and
   // recipient information to generate a response.
   temp_buffer data{packet_with_messages, packet_with_messages_size};
-  channeler::packet_wrapper pkt{data.buf, data.size};
+  channeler::packet_wrapper pkt{data.buf.get(), data.size};
 
   // TODO I don't like having to pass the pool block size here at all.
   using channel_t = channel_data<3>;
@@ -157,7 +157,7 @@ TEST(FSMChannelResponder, process_msg_channel_finalize)
   // This is a little unfortunate, but we need the packet's sender and
   // recipient information to generate a response.
   temp_buffer data{packet_with_messages, packet_with_messages_size};
-  channeler::packet_wrapper pkt{data.buf, data.size};
+  channeler::packet_wrapper pkt{data.buf.get(), data.size};
 
   // TODO I don't like having to pass the pool block size here at all.
   using channel_t = channel_data<3>;

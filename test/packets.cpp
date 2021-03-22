@@ -307,7 +307,7 @@ inline bool validate_packet(char const * const name,
   // Use a temp_buffer, so the packet_wrapper can modify it (not that we want
   // that now).
   temp_buffer b{buf, sizeof(buf)};
-  ::channeler::packet_wrapper p{b.buf, b.size};
+  ::channeler::packet_wrapper p{b.buf.get(), b.size};
   if (p.has_valid_checksum() != expected_value) {
     std::cout << "Packet: " << name << std::endl;
     std::cout << "  Checksum:   " << std::hex << p.checksum() << std::dec << std::endl;

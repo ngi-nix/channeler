@@ -22,8 +22,6 @@
 
 #include <gtest/gtest.h>
 
-#include <iostream> // FIXME
-
 #include "../messages.h"
 
 using namespace test;
@@ -37,11 +35,11 @@ assert_message(temp_buffer const & buf,
     std::size_t type_bytes,
     std::size_t length_bytes)
 {
-  ASSERT_NO_THROW((channeler::message{buf.buf, buf.size}));
+  ASSERT_NO_THROW((channeler::message{buf.buf.get(), buf.size}));
 
   // Validate later
-  channeler::message msg{buf.buf, buf.size, false};
-  ASSERT_EQ(msg.buffer, buf.buf);
+  channeler::message msg{buf.buf.get(), buf.size, false};
+  ASSERT_EQ(msg.buffer, buf.buf.get());
   ASSERT_EQ(msg.input_size, buf.size);
   auto err = msg.parse();
   ASSERT_EQ(err.first, channeler::ERR_SUCCESS);
@@ -49,7 +47,7 @@ assert_message(temp_buffer const & buf,
   // Payload should start one byte after the buffer.
   ASSERT_EQ(msg.buffer + type_bytes + length_bytes, msg.payload);
   ASSERT_EQ(msg.payload_size + type_bytes + length_bytes, msg.buffer_size);
-  ASSERT_EQ(msg.buffer, buf.buf);
+  ASSERT_EQ(msg.buffer, buf.buf.get());
   ASSERT_EQ(msg.buffer_size, buf.size);
 
   // Assert type
@@ -84,7 +82,7 @@ assert_serialization_ok(std::unique_ptr<channeler::message> const & msg, temp_bu
 
   for (std::size_t i = 0 ; i < buf.size ; ++i) {
     // std::cout << "compare index: " << i << std::endl;
-    ASSERT_EQ(res[i], buf.buf[i]);
+    ASSERT_EQ(res[i], buf.buf.get()[i]);
   }
 }
 
@@ -96,11 +94,11 @@ TEST(Message, fail_parse_unknown)
   temp_buffer b{message_unknown, message_unknown_size};
 
   // Exception
-  ASSERT_THROW((channeler::message{b.buf, b.size}),
+  ASSERT_THROW((channeler::message{b.buf.get(), b.size}),
       channeler::exception);
 
   // Error code
-  channeler::message msg{b.buf, b.size, false};
+  channeler::message msg{b.buf.get(), b.size, false};
   auto err = msg.parse();
   ASSERT_EQ(err.first, channeler::ERR_INVALID_MESSAGE_TYPE);
 }
@@ -113,7 +111,7 @@ TEST(Message, parse_and_serialize_channel_new)
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_NEW);
 
-  auto msg = channeler::parse_message(b.buf, b.size);
+  auto msg = channeler::parse_message(b.buf.get(), b.size);
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_NEW);
 
@@ -133,7 +131,7 @@ TEST(Message, parse_and_serialize_channel_acknowledge)
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_ACKNOWLEDGE);
 
-  auto msg = channeler::parse_message(b.buf, b.size);
+  auto msg = channeler::parse_message(b.buf.get(), b.size);
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_ACKNOWLEDGE);
 
@@ -153,7 +151,7 @@ TEST(Message, parse_and_serialize_channel_finalize)
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_FINALIZE);
 
-  auto msg = channeler::parse_message(b.buf, b.size);
+  auto msg = channeler::parse_message(b.buf.get(), b.size);
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_FINALIZE);
 
@@ -174,7 +172,7 @@ TEST(Message, parse_and_serialize_channel_cookie)
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_COOKIE);
 
-  auto msg = channeler::parse_message(b.buf, b.size);
+  auto msg = channeler::parse_message(b.buf.get(), b.size);
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_COOKIE);
 
@@ -195,7 +193,7 @@ TEST(Message, parse_and_serialize_data)
   assert_single_byte_type_variable_size_message(b, channeler::MSG_DATA,
       1);
 
-  auto msg = channeler::parse_message(b.buf, b.size);
+  auto msg = channeler::parse_message(b.buf.get(), b.size);
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_DATA);
 
@@ -208,7 +206,7 @@ TEST(Message, iterator_single_message)
 {
   temp_buffer b{message_data, message_data_size};
 
-  channeler::messages msgs{b.buf, b.size};
+  channeler::messages msgs{b.buf.get(), b.size};
 
   std::size_t count = 0;
   auto iter = msgs.begin();
@@ -233,7 +231,7 @@ TEST(Message, iterator_message_block)
 {
   temp_buffer b{message_block, message_block_size};
 
-  channeler::messages msgs{b.buf, b.size};
+  channeler::messages msgs{b.buf.get(), b.size};
 
   std::size_t count = 0;
   auto iter = msgs.begin();

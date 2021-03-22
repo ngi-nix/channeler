@@ -40,7 +40,7 @@ TEST(PacketWrapper, construct_from_buffer)
 {
   temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
 
-  channeler::packet_wrapper pkt{data.buf, data.size};
+  channeler::packet_wrapper pkt{data.buf.get(), data.size};
 
   ASSERT_EQ(pkt.proto(), 0xdeadd00d);
   ASSERT_FALSE(pkt.has_valid_proto());
@@ -81,7 +81,7 @@ TEST(PacketWrapper, construct_from_buffer)
 TEST(PacketWrapper, copy)
 {
   temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
-  channeler::packet_wrapper pkt0{data.buf, data.size};
+  channeler::packet_wrapper pkt0{data.buf.get(), data.size};
 
   // Create copy
   auto buf = pkt0.copy();
@@ -112,7 +112,7 @@ TEST(PacketWrapper, message_iteration)
 {
   temp_buffer data{packet_with_messages, packet_with_messages_size};
 
-  channeler::packet_wrapper pkt{data.buf, data.size};
+  channeler::packet_wrapper pkt{data.buf.get(), data.size};
 
   // We have a payload of 26 Bytes
   ASSERT_EQ(pkt.payload_size(), 26);

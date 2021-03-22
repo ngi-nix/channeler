@@ -210,7 +210,7 @@ TEST(FSMChannelInitiator, acknowledge_channel)
 
   // Need a packet buffer, even if the contents are not used
   test::temp_buffer data{test::packet_with_messages, test::packet_with_messages_size};
-  channeler::packet_wrapper pkt{data.buf, data.size};
+  channeler::packet_wrapper pkt{data.buf.get(), data.size};
   pkt.sender() = recipient;
   pkt.recipient() = sender;
 

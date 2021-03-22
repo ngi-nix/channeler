@@ -110,7 +110,7 @@ TEST(FSMData, remote_data_existing_channel)
   // because we only have half a channel ID. But the important part is that
   // the initiator is the same.
   test::temp_buffer buf{test::packet_regular_channelid, test::packet_regular_channelid_size};
-  packet_wrapper pkt{buf.buf, buf.size};
+  packet_wrapper pkt{buf.buf.get(), buf.size};
 
   chs.add(pkt.channel());
   auto ch = chs.get(pkt.channel());
@@ -172,7 +172,7 @@ TEST(FSMData, remote_data_pending_channel)
   // because we only have half a channel ID. But the important part is that
   // the initiator is the same.
   test::temp_buffer buf{test::packet_regular_channelid, test::packet_regular_channelid_size};
-  packet_wrapper pkt{buf.buf, buf.size};
+  packet_wrapper pkt{buf.buf.get(), buf.size};
   pkt.channel().initiator = cid;
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return

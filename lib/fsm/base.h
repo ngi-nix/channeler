@@ -72,9 +72,20 @@ struct fsm_base
  * A run-time registry of FSMs, to simplify state handling across multiple
  * FSM implementations.
  */
+namespace {
+struct empty_context {};
+} // anonymous namespace
+
+template <
+  typename contextT = empty_context
+>
 class registry
 {
 public:
+  inline registry(contextT * ctx = nullptr)
+    : m_context{ctx}
+  {
+  }
 
   /**
    * Instanciate and add FSM. There is no removal of FSMs, as it is expected
@@ -94,6 +105,16 @@ public:
     m_fsms.insert(std::move(
           std::make_unique<fsmT>(std::forward<ctor_argsT>(ctor_args)...)
     ));
+  }
+
+  template <
+    typename fsmT
+  >
+  inline void add_move(std::unique_ptr<fsmT> fsm)
+  {
+    static_assert(std::is_base_of<fsm_base, fsmT>::value,
+        "fsmT must be a descendant of fsm_base");
+    m_fsms.insert(std::move(fsm));
   }
 
 
@@ -124,7 +145,9 @@ private:
   using fsm_ptr = std::unique_ptr<fsm_base>;
   using fsm_set = std::set<fsm_ptr>;
 
-  fsm_set m_fsms;
+  fsm_set     m_fsms;
+
+  contextT *  m_context = nullptr;
 };
 
 

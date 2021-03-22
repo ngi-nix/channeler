@@ -22,24 +22,43 @@
 
 #include <cstddef>
 #include <cstring>
+#include <memory>
 
 namespace test {
 
 struct temp_buffer
 {
-  std::byte * buf;
-  size_t size;
+  std::shared_ptr<std::byte>  buf = {};
+  size_t                      size = 0;
 
   inline temp_buffer(std::byte const * orig, size_t s)
   {
+    if (!s) {
+      return;
+    }
+
+    std::byte * b = new std::byte[s];
+    memcpy(b, orig, s);
+
+    buf = std::shared_ptr<std::byte>(b);
     size = s;
-    buf = new std::byte[size];
-    memcpy(buf, orig, size);
   }
 
-  inline ~temp_buffer()
+  inline temp_buffer()
   {
-    delete [] buf;
+  }
+
+  inline temp_buffer(size_t s)
+  {
+    if (!s) {
+      return;
+    }
+
+    std::byte * b = new std::byte[s];
+    memset(b, 0, s);
+
+    buf = std::shared_ptr<std::byte>(b);
+    size = s;
   }
 };
 
