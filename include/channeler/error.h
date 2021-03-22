@@ -86,6 +86,10 @@ CHANNELER_ERRDEF(ERR_INVALID_MESSAGE_TYPE,
     7,
     "Unknown message type was received.")
 
+CHANNELER_ERRDEF(ERR_WRITE,
+    8,
+    "Write error.")
+
 
 CHANNELER_END_ERRORS
 

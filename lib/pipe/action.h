@@ -41,6 +41,7 @@ namespace channeler::pipe {
 enum action_type : uint_fast16_t
 {
   AT_UNKNOWN = 0,
+  AT_ERROR,               // Report error to upstream
   AT_FILTER_TRANSPORT,
   AT_FILTER_PEER,
 };
@@ -53,6 +54,13 @@ enum action_type : uint_fast16_t
 struct action
 {
   action_type const type = AT_UNKNOWN;
+
+  inline action(action_type t = AT_UNKNOWN)
+    : type{t}
+  {
+  }
+
+  virtual ~action() = default;
 };
 
 // Action list type
@@ -76,6 +84,8 @@ struct transport_filter_request_action
     , ingress{_ingress}
   {
   }
+
+  virtual ~transport_filter_request_action() = default;
 };
 
 struct peer_filter_request_action
@@ -91,7 +101,29 @@ struct peer_filter_request_action
     , ingress{_ingress}
   {
   }
+
+  virtual ~peer_filter_request_action() = default;
 };
+
+
+
+/**
+ * Action for reporting errors upstream
+ */
+struct error_action
+  : public action
+{
+  error_t error;
+
+  inline error_action(error_t err)
+    : action{AT_ERROR}
+    , error{err}
+  {
+  }
+
+  virtual ~error_action() = default;
+};
+
 
 
 } // namespace channeler::pipe

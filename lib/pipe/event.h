@@ -55,6 +55,12 @@ enum event_type : uint_fast16_t
   ET_MESSAGE_OUT,
   ET_NEW_CHANNEL,  // FIXME this feels weird here. Let's see how things develop.
   ET_TIMEOUT,
+  ET_USER_DATA_WRITTEN, // User writes data (to channel)
+  ET_USER_DATA_TO_READ, // User should be notified that there is data to read (from channel)
+  ET_USER_DATA_TO_SEND, // User data has been written to a buffer, and is ready
+                        // for sending.
+
+  ET_ERROR, // Error event (usually usage error)
 };
 
 
@@ -355,6 +361,100 @@ struct timeout_event<void>
 
   virtual ~timeout_event() = default;
 };
+
+
+/**
+ * Events for user data.
+ */
+struct user_data_written_event
+  : public event
+{
+  channelid               channel;
+  // TODO would be nice to have a pool reference instead of an allocation here,
+  //      but we can deal with that later.
+  std::vector<std::byte>  data;
+
+  inline user_data_written_event(
+      channelid const & _channel,
+      std::vector<std::byte> const & _data)
+    : event{ET_USER_DATA_WRITTEN}
+    , channel{_channel}
+    , data{_data}
+  {
+  }
+
+  virtual ~user_data_written_event() = default;
+};
+
+
+struct user_data_to_send_event
+  : public event
+{
+  channelid               channel;
+
+  inline user_data_to_send_event(channelid const & _channel)
+    : event{ET_USER_DATA_TO_SEND}
+    , channel{_channel}
+  {
+  }
+
+  virtual ~user_data_to_send_event() = default;
+};
+
+
+
+
+template <
+  std::size_t POOL_BLOCK_SIZE
+>
+struct user_data_to_read_event
+  : public event
+{
+  // *** Types
+  using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
+  using slot_type = typename pool_type::slot;
+  using message_type = typename messages::value_type;
+
+  // *** Data members
+  channelid     channel;
+  slot_type     slot;
+  message_type  message;
+
+  // *** Constructor
+  inline user_data_to_read_event(
+      channelid const & _channel,
+      slot_type const & _slot,
+      message_type && _msg)
+    : event{ET_USER_DATA_TO_READ}
+    , channel{_channel}
+    , slot{_slot}
+    , message{std::move(_msg)}
+  {
+  }
+
+  virtual ~user_data_to_read_event() = default;
+};
+
+
+
+/**
+ * Error event
+ */
+struct error_event
+  : public event
+{
+  // *** Data members
+  error_t error;
+
+  inline error_event(error_t err)
+    : event{ET_ERROR}
+    , error{err}
+  {
+  }
+
+  virtual ~error_event() = default;
+};
+
 
 
 
