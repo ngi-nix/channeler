@@ -54,7 +54,7 @@ using filter_t = channeler::pipe::de_envelope_filter<
 
 
 
-TEST(DeEnvelopeFilter, throw_on_invalid_event)
+TEST(PipeDeEnvelopeFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -71,7 +71,7 @@ TEST(DeEnvelopeFilter, throw_on_invalid_event)
 
 
 
-TEST(DeEnvelopeFilter, parse_data)
+TEST(PipeDeEnvelopeFilter, parse_data)
 {
   using namespace channeler::pipe;
 

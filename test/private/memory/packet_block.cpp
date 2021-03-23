@@ -22,7 +22,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(PacketBlock, memory_footprint)
+TEST(MemoryPacketBlock, memory_footprint)
 {
   using namespace channeler::memory;
   packet_block<3> block{42};
@@ -35,7 +35,7 @@ TEST(PacketBlock, memory_footprint)
 }
 
 
-TEST(PacketBlock, freelist_after_construction)
+TEST(MemoryPacketBlock, freelist_after_construction)
 {
   using namespace channeler::memory;
   packet_block<3> block{42};
@@ -47,7 +47,7 @@ TEST(PacketBlock, freelist_after_construction)
 }
 
 
-TEST(PacketBlock, allocation)
+TEST(MemoryPacketBlock, allocation)
 {
   using namespace channeler::memory;
   packet_block<2> block{42};
@@ -84,7 +84,7 @@ TEST(PacketBlock, allocation)
 }
 
 
-TEST(PacketBlock, deallocation)
+TEST(MemoryPacketBlock, deallocation)
 {
   using namespace channeler::memory;
   packet_block<2> block{42};

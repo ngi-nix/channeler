@@ -22,7 +22,8 @@
 
 #include <gtest/gtest.h>
 
-TEST(PacketBuffer, foo)
+TEST(MemoryPacketBuffer, stuff)
 {
   using namespace channeler::memory;
+  FAIL() << "Not implemented.";
 }

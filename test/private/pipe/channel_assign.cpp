@@ -68,7 +68,7 @@ using channel_set = channeler::channels<next::channel_data_t>;
 
 
 
-TEST(ChannelAssignFilter, throw_on_invalid_event)
+TEST(PipeChannelAssignFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -86,7 +86,7 @@ TEST(ChannelAssignFilter, throw_on_invalid_event)
 
 
 
-TEST(ChannelAssignFilter, pass_packet_default_channel)
+TEST(PipeChannelAssignFilter, pass_packet_default_channel)
 {
   using namespace channeler::pipe;
 
@@ -117,7 +117,7 @@ TEST(ChannelAssignFilter, pass_packet_default_channel)
 
 
 
-TEST(ChannelAssignFilter, drop_packet_unknown_channel)
+TEST(PipeChannelAssignFilter, drop_packet_unknown_channel)
 {
   using namespace channeler::pipe;
 
@@ -142,7 +142,7 @@ TEST(ChannelAssignFilter, drop_packet_unknown_channel)
 }
 
 
-TEST(ChannelAssignFilter, pass_packet_known_channel)
+TEST(PipeChannelAssignFilter, pass_packet_known_channel)
 {
   using namespace channeler::pipe;
 
@@ -174,7 +174,7 @@ TEST(ChannelAssignFilter, pass_packet_known_channel)
 
 
 
-TEST(ChannelAssignFilter, pass_packet_pending_channel)
+TEST(PipeChannelAssignFilter, pass_packet_pending_channel)
 {
   using namespace channeler::pipe;
 

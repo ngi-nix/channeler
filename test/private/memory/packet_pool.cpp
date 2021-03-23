@@ -22,7 +22,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(PacketPool, construction)
+TEST(MemoryPacketPool, construction)
 {
   using namespace channeler::memory;
 
@@ -36,7 +36,7 @@ TEST(PacketPool, construction)
 }
 
 
-TEST(PacketPool, allocation)
+TEST(MemoryPacketPool, allocation)
 {
   using namespace channeler::memory;
   packet_pool<3> pool{42};;
@@ -56,7 +56,7 @@ TEST(PacketPool, allocation)
 }
 
 
-TEST(PacketPool, deallocation)
+TEST(MemoryPacketPool, deallocation)
 {
   using namespace channeler::memory;
   packet_pool<3> pool{42};;
@@ -86,7 +86,7 @@ TEST(PacketPool, deallocation)
 }
 
 
-TEST(PacketPool, deallocation_automatic)
+TEST(MemoryPacketPool, deallocation_automatic)
 {
   using namespace channeler::memory;
   packet_pool<3> pool{42};;
@@ -165,7 +165,7 @@ inline void prune_helper(
 } // anonymous namespace
 
 
-TEST(PacketPool, pruning_ascending)
+TEST(MemoryPacketPool, pruning_ascending)
 {
   using namespace channeler::memory;
   packet_pool<1> pool{42};;
@@ -181,7 +181,7 @@ TEST(PacketPool, pruning_ascending)
 }
 
 
-TEST(PacketPool, pruning_descending)
+TEST(MemoryPacketPool, pruning_descending)
 {
   using namespace channeler::memory;
   packet_pool<1> pool{42};;

@@ -74,7 +74,7 @@ struct reject_policy
 
 
 
-TEST(ValidateFilter, throw_on_invalid_event)
+TEST(PipeValidateFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -91,7 +91,7 @@ TEST(ValidateFilter, throw_on_invalid_event)
 
 
 
-TEST(ValidateFilter, pass_packet)
+TEST(PipeValidateFilter, pass_packet)
 {
   using namespace channeler::pipe;
 
@@ -121,7 +121,7 @@ TEST(ValidateFilter, pass_packet)
 
 
 
-TEST(ValidateFilter, drop_packet)
+TEST(PipeValidateFilter, drop_packet)
 {
   using namespace channeler::pipe;
 
@@ -146,7 +146,7 @@ TEST(ValidateFilter, drop_packet)
 
 
 
-TEST(ValidateFilter, drop_packet_ban_transport_source)
+TEST(PipeValidateFilter, drop_packet_ban_transport_source)
 {
   using namespace channeler::pipe;
 
@@ -192,7 +192,7 @@ TEST(ValidateFilter, drop_packet_ban_transport_source)
 
 
 
-TEST(ValidateFilter, drop_packet_ban_transport_destination)
+TEST(PipeValidateFilter, drop_packet_ban_transport_destination)
 {
   using namespace channeler::pipe;
 
@@ -238,7 +238,7 @@ TEST(ValidateFilter, drop_packet_ban_transport_destination)
 
 
 
-TEST(ValidateFilter, drop_packet_ban_peer_sender)
+TEST(PipeValidateFilter, drop_packet_ban_peer_sender)
 {
   using namespace channeler::pipe;
 
@@ -284,7 +284,7 @@ TEST(ValidateFilter, drop_packet_ban_peer_sender)
 
 
 
-TEST(ValidateFilter, drop_packet_ban_peer_recipient)
+TEST(PipeValidateFilter, drop_packet_ban_peer_recipient)
 {
   using namespace channeler::pipe;
 

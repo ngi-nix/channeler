@@ -60,7 +60,7 @@ using filter_t = channeler::pipe::route_filter<
 
 } // anonymous namespace
 
-TEST(RouteFilter, throw_on_invalid_event)
+TEST(PipeRouteFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -77,7 +77,7 @@ TEST(RouteFilter, throw_on_invalid_event)
 
 
 
-TEST(RouteFilter, pass_packet)
+TEST(PipeRouteFilter, pass_packet)
 {
   using namespace channeler::pipe;
 
@@ -107,7 +107,7 @@ TEST(RouteFilter, pass_packet)
 
 
 
-TEST(RouteFilter, drop_sender)
+TEST(PipeRouteFilter, drop_sender)
 {
   using namespace channeler::pipe;
 
@@ -134,7 +134,7 @@ TEST(RouteFilter, drop_sender)
 
 
 
-TEST(RouteFilter, drop_recipient)
+TEST(PipeRouteFilter, drop_recipient)
 {
   using namespace channeler::pipe;
 
@@ -161,7 +161,7 @@ TEST(RouteFilter, drop_recipient)
 
 
 
-TEST(RouteFilter, pass_first_drop_second)
+TEST(PipeRouteFilter, pass_first_drop_second)
 {
   using namespace channeler::pipe;
 

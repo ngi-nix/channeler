@@ -70,7 +70,7 @@ using channel_set = channeler::channels<next::channel_data_t>;
 } // anonymous namespace
 
 
-TEST(MessageParsingFilter, throw_on_invalid_event)
+TEST(PipeMessageParsingFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -87,7 +87,7 @@ TEST(MessageParsingFilter, throw_on_invalid_event)
 
 
 
-TEST(MessageParsingFilter, produce_message_events)
+TEST(PipeMessageParsingFilter, produce_message_events)
 {
   // This test also tests that the slot reference counting mechanism works as
   // intended.
@@ -127,7 +127,7 @@ TEST(MessageParsingFilter, produce_message_events)
 
 
 
-TEST(MessageParsingFilter, empty_packet)
+TEST(PipeMessageParsingFilter, empty_packet)
 {
   // This test also tests that the slot reference counting mechanism works as
   // intended.
