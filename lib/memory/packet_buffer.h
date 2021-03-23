@@ -83,7 +83,7 @@ public:
   };
 
   // TODO also take pool?
-  inline packet_buffer(std::size_t packet_size, lock_policyT * lock)
+  inline packet_buffer(std::size_t packet_size, lock_policyT * lock = nullptr)
     : m_packet_size{packet_size}
     , m_lock{lock}
   {

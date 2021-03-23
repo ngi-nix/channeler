@@ -58,37 +58,45 @@ CHANNELER_ERRDEF(ERR_SUCCESS,
     0,
     "No error")
 
-CHANNELER_ERRDEF(ERR_INSUFFICIENT_BUFFER_SIZE,
+CHANNELER_ERRDEF(ERR_UNEXPECTED,
     1,
+    "Nobody expects the Spanish Inquisition!")
+
+CHANNELER_ERRDEF(ERR_INSUFFICIENT_BUFFER_SIZE,
+    2,
     "The provided buffer is too small for the data type!")
 
 CHANNELER_ERRDEF(ERR_DECODE,
-    2,
+    3,
     "Could not decode data buffer.")
 
 CHANNELER_ERRDEF(ERR_ENCODE,
-    3,
+    4,
     "Could not encode data buffer.")
 
 CHANNELER_ERRDEF(ERR_INVALID_CHANNELID,
-    4,
+    5,
     "Channel identifier is invalid.")
 
 CHANNELER_ERRDEF(ERR_INVALID_REFERENCE,
-    5,
+    6,
     "A reference does not resolve to a valid object.")
 
 CHANNELER_ERRDEF(ERR_INVALID_PIPE_EVENT,
-    6,
+    7,
     "An filter could not handle the event type passed to it.")
 
 CHANNELER_ERRDEF(ERR_INVALID_MESSAGE_TYPE,
-    7,
+    8,
     "Unknown message type was received.")
 
 CHANNELER_ERRDEF(ERR_WRITE,
-    8,
+    9,
     "Write error.")
+
+CHANNELER_ERRDEF(ERR_STATE,
+    10,
+    "State machine error.")
 
 
 CHANNELER_END_ERRORS

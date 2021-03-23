@@ -30,8 +30,10 @@
 #include <vector>
 
 #include "support/timeouts.h"
+#include "memory/packet_pool.h"
 #include "channel_data.h"
 #include "channels.h"
+#include "lock_policy.h"
 
 
 namespace channeler {
@@ -42,35 +44,44 @@ namespace channeler {
  */
 template <
   typename addressT,
-  std::size_t _POOL_BLOCK_SIZE
+  std::size_t _POOL_BLOCK_SIZE,
+  typename lock_policyT = null_lock_policy
 >
 struct default_context
 {
-  using address_type = addressT;
+  // *** Constants
   constexpr static std::size_t POOL_BLOCK_SIZE = _POOL_BLOCK_SIZE;
-  using channel_type = channel_data<POOL_BLOCK_SIZE>;
-  using channel_set_t = ::channeler::channels<channel_type>;
+
+  // *** Type aliases
+  using address_type = addressT;
+  using channel_type = channel_data<POOL_BLOCK_SIZE, lock_policyT>;
+  using channel_set_type = ::channeler::channels<channel_type>;
 
   using secret_type = std::vector<std::byte>;
-  using secret_generator_t = std::function<secret_type ()>;
+  using secret_generator_type = std::function<secret_type ()>;
 
-  using timeouts_t = ::channeler::support::timeouts;
-  using sleep_function = typename timeouts_t::sleep_function;
+  using timeouts_type = ::channeler::support::timeouts;
+  using sleep_function_type = typename timeouts_type::sleep_function;
 
+  using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE, lock_policyT>;
 
-  peerid              id;
-  channel_set_t       channels;
-  timeouts_t          timeouts;
-  secret_generator_t  secret_generator;
+  // *** Data members
+  peerid                id; // XXX Not per-connection, or is it?
+  channel_set_type      channels;
+  timeouts_type         timeouts; // XXX Not per-connection, or is it?
+  secret_generator_type secret_generator; // XXX Not per-connection, or is it?
+  pool_type             packet_pool; // XXX Not per-connection, or is it?
 
+  // *** Ctor
   inline default_context(
       std::size_t packet_size,
-      sleep_function && sleep,
-      secret_generator_t generator
+      sleep_function_type && sleep,
+      secret_generator_type generator
     )
     : channels{packet_size}
-    , timeouts{std::forward<sleep_function>(sleep)}
+    , timeouts{std::forward<sleep_function_type>(sleep)}
     , secret_generator{generator}
+    , packet_pool{packet_size}    // TODO lock policy?
   {
   }
 };

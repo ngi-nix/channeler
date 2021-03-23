@@ -52,6 +52,7 @@ if not meson.is_subproject()
     'private' / 'fsm' / 'channel_initiator.cpp',
     'private' / 'fsm' / 'data.cpp',
     'private' / 'fsm' / 'default.cpp',
+    'private' / 'internal' / 'api.cpp',
     'private' / 'channels.cpp',
   ]
 
