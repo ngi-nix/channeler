@@ -129,7 +129,7 @@ TEST(FSMData, remote_data_existing_channel)
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(1, events.size());
 
-  auto rev = *events.begin();
+  auto & rev = *events.begin();
   ASSERT_TRUE(rev);
   ASSERT_EQ(ET_USER_DATA_TO_READ, rev->type);
   auto rev_conv = reinterpret_cast<user_data_to_read_event<TEST_POOL_BLOCK_SIZE> *>(rev.get());
@@ -263,7 +263,7 @@ TEST(FSMData, local_data_existing_channel)
   ASSERT_EQ(1, events.size());
   ASSERT_TRUE(ch->has_outgoing_data_pending());
 
-  auto out = *events.begin();
+  auto & out = *events.begin();
   ASSERT_TRUE(out);
   ASSERT_EQ(ET_USER_DATA_TO_SEND, out->type);
 
@@ -346,7 +346,7 @@ TEST(FSMData, local_data_unknown_channel)
   ASSERT_EQ(1, actions.size());
   ASSERT_EQ(0, events.size());
 
-  auto act = *actions.begin();
+  auto & act = *actions.begin();
   ASSERT_TRUE(act);
   ASSERT_EQ(AT_ERROR, act->type);
 

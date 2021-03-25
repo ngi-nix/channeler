@@ -112,7 +112,7 @@ struct message_parsing_filter
           std::move(msg)
       );
       auto ret = m_next->consume(std::move(next));
-      std::copy(ret.begin(), ret.end(), actions.end());
+      actions.merge(ret);
     }
 
     // The nice thing about the iterator interface is that if there were no

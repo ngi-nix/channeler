@@ -44,7 +44,7 @@ struct next
     m_event = std::move(event);
     auto ptr = reinterpret_cast<input_event *>(m_event.get());
     channeler::pipe::action_list_type al;
-    al.push_back(std::make_shared<channeler::pipe::peer_filter_request_action>(ptr->packet.sender()));
+    al.push_back(std::make_unique<channeler::pipe::peer_filter_request_action>(ptr->packet.sender()));
     return al;
   }
 

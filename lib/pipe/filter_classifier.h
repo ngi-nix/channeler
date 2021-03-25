@@ -95,22 +95,22 @@ struct filter_classifier
 
     if (m_peer_policy) {
       if (m_peer_policy->should_filter(packet.sender(), true)) {
-        res.push_back(std::make_shared<peer_filter_request_action>(
+        res.push_back(std::make_unique<peer_filter_request_action>(
                 packet.sender(), true));
       }
       if (m_peer_policy->should_filter(packet.recipient(), false)) {
-        res.push_back(std::make_shared<peer_filter_request_action>(
+        res.push_back(std::make_unique<peer_filter_request_action>(
                 packet.recipient(), false));
       }
     }
 
     if (m_transport_policy) {
       if (m_transport_policy->should_filter(transport_source, true)) {
-        res.push_back(std::make_shared<transport_filter_request_action<addressT>>(
+        res.push_back(std::make_unique<transport_filter_request_action<addressT>>(
               transport_source, true));
       }
       if (m_transport_policy->should_filter(transport_destination, false)) {
-        res.push_back(std::make_shared<transport_filter_request_action<addressT>>(
+        res.push_back(std::make_unique<transport_filter_request_action<addressT>>(
               transport_destination, false));
       }
     }

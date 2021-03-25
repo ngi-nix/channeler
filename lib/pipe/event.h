@@ -37,29 +37,64 @@
 namespace channeler::pipe {
 
 /**
- * Events are pushed down the filter pipe. They have a type, and may carry
- * a type-dependent payload.
+ * Events are pushed down the filter pipe. They have a type, a category, and
+ * may carry a type-dependent payload.
+ *
+ * We have two filter pipes, an ingress and an egress filter pipe. Messages
+ * from a peer are processed in the ingress filter pipe, and responses are
+ * processed in the egress filter pipe.
+ *
+ * Additionally, we have events that are triggered from user interactions,
+ * or from system events (e.g. timeouts). They are not strictly speaking
+ * part of the filter pipe, but may be handled in a state machine.
+ *
+ * Finally, we have events that are produced by state machines to notify the
+ * user in some way - these are distrinct from events intended for the egress
+ * filter pipe.
+ *
+ * We classify these events into categories.
  * TODO: https://gitlab.com/interpeer/channeler/-/issues/22
+ *       Also, not all event types are closely related to the pipe...
+ *       we should move the base class, type and category outside of
+ *       this directory.
  */
+enum event_category : uint_fast16_t
+{
+  EC_UNKNOWN = 0,   // Do not use
+
+  EC_INGRESS,       // From I/O; packets, messages, etc.
+  EC_EGRESS,        // To I/O; packages, messages, etc.
+  EC_USER,          // From user action, e.g. "create channel"
+  EC_SYSTEM,        // From system, e.g. timeouts
+  EC_NOTIFICATION,  // To user, e.g. "an error occurred"
+};
+
 enum event_type : uint_fast16_t
 {
-  ET_UNKNOWN = 0,
+  ET_UNKNOWN = 0, // Do not use
+
+  // ** EC_INGRESS
   ET_RAW_BUFFER,
   ET_PARSED_HEADER,
   // TODO encrypted or potentially encrypted packet might have a different
   // event type.
   ET_DECRYPTED_PACKET,
   ET_ENQUEUED_PACKET,
-  ET_MESSAGE, // FIXME up til here incoming only; maybe we disambiguate at some point?
+  ET_MESSAGE,
 
+  // ** EC_EGRESS
   ET_MESSAGE_OUT,
-  ET_NEW_CHANNEL,  // FIXME this feels weird here. Let's see how things develop.
-  ET_TIMEOUT,
-  ET_USER_DATA_WRITTEN, // User writes data (to channel)
-  ET_USER_DATA_TO_READ, // User should be notified that there is data to read (from channel)
   ET_USER_DATA_TO_SEND, // User data has been written to a buffer, and is ready
                         // for sending.
+  // ** EC_USER
+  ET_NEW_CHANNEL,       // User creates new channel
+  ET_USER_DATA_WRITTEN, // User writes data (to channel)
 
+  // ** EC_SYSTEM
+  ET_TIMEOUT,
+
+  // ** EC_NOTIFICATION
+  ET_USER_DATA_TO_READ, // User should be notified that there is data to read (from channel)
   ET_ERROR, // Error event (usually usage error)
 };
 
@@ -69,10 +104,12 @@ enum event_type : uint_fast16_t
  */
 struct event
 {
-  event_type const type;
+  event_category const  category;
+  event_type const      type;
 
-  inline event(event_type t = ET_UNKNOWN)
-    : type{t}
+  inline event(event_category c = EC_UNKNOWN, event_type t = ET_UNKNOWN)
+    : category{c}
+    , type{t}
   {
   }
 
@@ -80,7 +117,7 @@ struct event
 };
 
 // Event list type
-using event_list_type = std::list<std::shared_ptr<event>>;
+using event_list_type = std::list<std::unique_ptr<event>>;
 
 
 // TODO pretty much all of the events carrying packet data can be merged into
@@ -118,7 +155,7 @@ struct raw_buffer_event
   inline raw_buffer_event(addressT const & source,
       addressT const & destination,
       slot_type const & slot)
-    : event{ET_RAW_BUFFER}
+    : event{EC_INGRESS, ET_RAW_BUFFER}
     , transport{source, destination}
     , data{slot}
   {
@@ -292,7 +329,7 @@ struct message_out_event
       peerid const & _recipient,
       channelid const & _channel,
       message_type && msg)
-    : event{ET_MESSAGE_OUT}
+    : event{EC_EGRESS, ET_MESSAGE_OUT}
     , sender{_sender}
     , recipient{_recipient}
     , channel{_channel}
@@ -319,7 +356,7 @@ struct new_channel_event
   inline new_channel_event(
       peerid const & _sender,
       peerid const & _recipient)
-    : event{ET_NEW_CHANNEL}
+    : event{EC_USER, ET_NEW_CHANNEL}
     , sender{_sender}
     , recipient{_recipient}
   {
@@ -342,7 +379,7 @@ struct timeout_event
 
   inline timeout_event(
       contextT const & ctx)
-    : event{ET_TIMEOUT}
+    : event{EC_SYSTEM, ET_TIMEOUT}
     , context{ctx}
   {
   }
@@ -355,7 +392,7 @@ struct timeout_event<void>
   : public event
 {
   inline timeout_event()
-    : event{ET_NEW_CHANNEL}
+    : event{EC_SYSTEM, ET_TIMEOUT}
   {
   }
 
@@ -377,7 +414,7 @@ struct user_data_written_event
   inline user_data_written_event(
       channelid const & _channel,
       std::vector<std::byte> const & _data)
-    : event{ET_USER_DATA_WRITTEN}
+    : event{EC_USER, ET_USER_DATA_WRITTEN}
     , channel{_channel}
     , data{_data}
   {
@@ -393,7 +430,7 @@ struct user_data_to_send_event
   channelid               channel;
 
   inline user_data_to_send_event(channelid const & _channel)
-    : event{ET_USER_DATA_TO_SEND}
+    : event{EC_EGRESS, ET_USER_DATA_TO_SEND}
     , channel{_channel}
   {
   }
@@ -425,7 +462,7 @@ struct user_data_to_read_event
       channelid const & _channel,
       slot_type const & _slot,
       message_type && _msg)
-    : event{ET_USER_DATA_TO_READ}
+    : event{EC_NOTIFICATION, ET_USER_DATA_TO_READ}
     , channel{_channel}
     , slot{_slot}
     , message{std::move(_msg)}
@@ -447,7 +484,7 @@ struct error_event
   error_t error;
 
   inline error_event(error_t err)
-    : event{ET_ERROR}
+    : event{EC_NOTIFICATION, ET_ERROR}
     , error{err}
   {
   }

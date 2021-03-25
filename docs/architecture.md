@@ -173,9 +173,8 @@ The input pipe arranges filters in the following steps:
    broken).
 1. `State handling` - this last filter encapsulates the protocol state machine.
    Any internal messages are processed and discarded, while data messages are
-   made available to the application.
-1. The last filter provides data and other notifications to the application
-   layer, which is considered a "filter" here.
+   made available to the application. Notifications to the application layer
+   are made.
 
 
 Output Filters

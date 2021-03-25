@@ -125,7 +125,7 @@ TEST(FSMChannelInitiator, initiate_new_channel)
   ASSERT_TRUE(ret);
 
   ASSERT_EQ(1, events.size());
-  auto rev = *events.begin();
+  auto & rev = *events.begin();
   ASSERT_EQ(rev->type, ET_MESSAGE_OUT);
   auto rev_conv = reinterpret_cast<message_out_event *>(rev.get());
   ASSERT_TRUE(rev_conv->message);
@@ -241,7 +241,7 @@ TEST(FSMChannelInitiator, acknowledge_channel)
 
   // We should also ensure that the out event is a message event, and contains
   // a message_channel_finalize with the appropriate cookie2
-  auto rev = *events.begin();
+  auto & rev = *events.begin();
   ASSERT_EQ(rev->type, ET_MESSAGE_OUT);
   auto rev_conv = reinterpret_cast<message_out_event *>(rev.get());
   ASSERT_TRUE(rev_conv->message);

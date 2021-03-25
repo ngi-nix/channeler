@@ -213,12 +213,12 @@ struct fsm_channel_responder
     else {
       // MSG_CHANNEL_ACKNOWLEDGE
       auto response = std::make_unique<message_channel_acknowledge>(full_id, msg->cookie1, cookie2);
-      auto ev = std::make_shared<channeler::pipe::message_out_event>(
+      auto ev = std::make_unique<channeler::pipe::message_out_event>(
             packet.recipient().copy(), packet.sender().copy(),
             packet.channel(), // XXX should be DEFAULT_CHANNELID
             std::move(response)
           );
-      output_events.push_back(ev);
+      output_events.push_back(std::move(ev));
     }
 
     return true;

@@ -183,7 +183,7 @@ TEST(PipeValidateFilter, drop_packet_ban_transport_source)
   // We also expect the result list to contain a recommendation to filter the
   // source address at the transport level
   ASSERT_EQ(1, res.size());
-  auto action = *(res.begin());
+  auto & action = *res.begin();
   ASSERT_EQ(action->type, AT_FILTER_TRANSPORT);
   auto * ptr = reinterpret_cast<transport_filter_request_action<address_t> *>(action.get());
   ASSERT_EQ(ptr->address, 123);
@@ -229,7 +229,7 @@ TEST(PipeValidateFilter, drop_packet_ban_transport_destination)
   // We also expect the result list to contain a recommendation to filter the
   // source address at the transport level
   ASSERT_EQ(1, res.size());
-  auto action = *(res.begin());
+  auto & action = *res.begin();
   ASSERT_EQ(action->type, AT_FILTER_TRANSPORT);
   auto * ptr = reinterpret_cast<transport_filter_request_action<address_t> *>(action.get());
   ASSERT_EQ(ptr->address, 321);
@@ -275,7 +275,7 @@ TEST(PipeValidateFilter, drop_packet_ban_peer_sender)
   // We also expect the result list to contain a recommendation to filter the
   // source address at the transport level
   ASSERT_EQ(1, res.size());
-  auto action = *(res.begin());
+  auto & action = *res.begin();
   ASSERT_EQ(action->type, AT_FILTER_PEER);
   auto * ptr = reinterpret_cast<peer_filter_request_action *>(action.get());
   ASSERT_EQ(ptr->peer, packet.sender());
@@ -321,7 +321,7 @@ TEST(PipeValidateFilter, drop_packet_ban_peer_recipient)
   // We also expect the result list to contain a recommendation to filter the
   // source address at the transport level
   ASSERT_EQ(1, res.size());
-  auto action = *(res.begin());
+  auto & action = *res.begin();
   ASSERT_EQ(action->type, AT_FILTER_PEER);
   auto * ptr = reinterpret_cast<peer_filter_request_action *>(action.get());
   ASSERT_EQ(ptr->peer, packet.recipient());

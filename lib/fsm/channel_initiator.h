@@ -167,12 +167,12 @@ struct fsm_channel_initiator
 
     // Create and return MSG_CHANNEL_NEW in output_events
     auto init = std::make_unique<message_channel_new>(id, cookie1);
-    auto ev = std::make_shared<channeler::pipe::message_out_event>(
+    auto ev = std::make_unique<channeler::pipe::message_out_event>(
           sender, recipient,
           DEFAULT_CHANNELID,
           std::move(init)
         );
-    output_events.push_back(ev);
+    output_events.push_back(std::move(ev));
 
     // Use timout provider to set a timeout with the context being a tuple
     // of a channel tag and the initiator part.
@@ -267,12 +267,12 @@ struct fsm_channel_initiator
       auto response = std::make_unique<message_channel_finalize>(msg->id, msg->cookie2,
           capabilities_t{}); // TODO capabilities not used yet.
                              // https://gitlab.com/interpeer/channeler/-/issues/14
-      auto ev = std::make_shared<channeler::pipe::message_out_event>(
+      auto ev = std::make_unique<channeler::pipe::message_out_event>(
             event->packet.recipient().copy(), event->packet.sender().copy(),
             DEFAULT_CHANNELID,
             std::move(response)
           );
-      output_events.push_back(ev);
+      output_events.push_back(std::move(ev));
     }
 
     return true;

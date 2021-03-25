@@ -126,7 +126,7 @@ TEST(FSMChannelResponder, process_msg_channel_new)
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(1, events.size());
 
-  auto res = *events.begin();
+  auto & res = *events.begin();
   ASSERT_EQ(ET_MESSAGE_OUT, res->type);
   auto converted = reinterpret_cast<message_out_event *>(res.get());
 

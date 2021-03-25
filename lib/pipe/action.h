@@ -64,7 +64,7 @@ struct action
 };
 
 // Action list type
-using action_list_type = std::list<std::shared_ptr<action>>;
+using action_list_type = std::list<std::unique_ptr<action>>;
 
 
 /**

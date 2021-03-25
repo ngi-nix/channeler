@@ -118,7 +118,7 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(1, events.size());
 
-  auto result_ev1 = *events.begin();
+  auto & result_ev1 = *events.begin();
   ASSERT_TRUE(result_ev1);
   ASSERT_EQ(result_ev1->type, ET_MESSAGE_OUT);
   auto result_ev1_conv = reinterpret_cast<message_out_event *>(result_ev1.get());
@@ -145,7 +145,7 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(1, events.size());
 
-  auto result_ev2 = *events.begin();
+  auto & result_ev2 = *events.begin();
   ASSERT_TRUE(result_ev2);
   ASSERT_EQ(result_ev2->type, ET_MESSAGE_OUT);
   auto result_ev2_conv = reinterpret_cast<message_out_event *>(result_ev2.get());
@@ -172,7 +172,7 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(1, events.size());
 
-  auto result_ev3 = *events.begin();
+  auto & result_ev3 = *events.begin();
   ASSERT_TRUE(result_ev3);
   ASSERT_EQ(result_ev3->type, ET_MESSAGE_OUT);
   auto result_ev3_conv = reinterpret_cast<message_out_event *>(result_ev3.get());

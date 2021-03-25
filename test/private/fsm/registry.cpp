@@ -36,10 +36,10 @@ struct test_fsm : public ::channeler::fsm::fsm_base
   {
     // For the test case, we need to add one action and two
     // events.
-    result_actions.push_back(std::make_shared<action>());
+    result_actions.push_back(std::make_unique<action>());
 
-    output_events.push_back(std::make_shared<event>());
-    output_events.push_back(std::make_shared<event>());
+    output_events.push_back(std::make_unique<event>());
+    output_events.push_back(std::make_unique<event>());
 
     return true;
   }

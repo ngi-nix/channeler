@@ -141,12 +141,12 @@ struct fsm_data
 
     // Since this is for a channel we know, we need to copy the data payload
     // into an event for the user to consume.
-    auto result = std::make_shared<data_to_read_event_type>(
+    auto result = std::make_unique<data_to_read_event_type>(
         event->packet.channel(),
         event->data,
         std::move(event->message)
     );
-    output_events.push_back(result);
+    output_events.push_back(std::move(result));
 
     return true;
   }
@@ -159,7 +159,7 @@ struct fsm_data
     // If we don't know the given channel, then we must error out via an
     // action.
     if (!m_channels.has_channel(event->channel)) {
-      result_actions.push_back(std::make_shared<channeler::pipe::error_action>(
+      result_actions.push_back(std::make_unique<channeler::pipe::error_action>(
             ERR_INVALID_CHANNELID));
       return true;
     }
@@ -169,7 +169,7 @@ struct fsm_data
     auto ch = m_channels.get(event->channel);
     auto ret = ch->add_outgoing_data(event->data);
     if (ret < 0) {
-      result_actions.push_back(std::make_shared<channeler::pipe::error_action>(
+      result_actions.push_back(std::make_unique<channeler::pipe::error_action>(
             ERR_WRITE));
     }
 
@@ -177,7 +177,7 @@ struct fsm_data
     // The only payload that is necessary is the channel identifier, for
     // the pipe to start producing messages.
     if (m_channels.has_established_channel(event->channel)) {
-      output_events.push_back(std::make_shared<channeler::pipe::user_data_to_send_event>(
+      output_events.push_back(std::make_unique<channeler::pipe::user_data_to_send_event>(
             event->channel));
     }
 
