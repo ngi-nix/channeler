@@ -25,6 +25,8 @@
 #include <channeler/capabilities.h>
 #include <channeler/cookie.h>
 
+#include <iostream> // FIXME
+
 #include <liberate/serialization/integer.h>
 #include <liberate/serialization/varint.h>
 
@@ -33,23 +35,44 @@ namespace channeler {
 
 namespace {
 
-std::size_t
-serialize_header(std::byte * buf, std::size_t max, message const & msg)
+inline std::size_t
+serialize_header(std::byte * buf, std::size_t max, message_type type,
+    std::size_t payload_size = 0)
 {
+  std::size_t total = 0;
+
   // We know the message type, and need to serialize it.
-  liberate::types::varint type = static_cast<liberate::types::varint>(msg.type);
-  auto used = liberate::serialization::serialize_varint(buf, max, type);
+  auto tmp = static_cast<liberate::types::varint>(type);
+  auto used = liberate::serialization::serialize_varint(
+      buf + total,
+      max - total,
+      tmp);
   if (used <= 0) {
     return 0;
   }
+  total += used;
 
-  // TODO size?
-  //      used for MSG_DATA, but would also be useful for future types. We'll
-  //      need to include a registry function that tells us whether the message
-  //      type has a fixed size or not.
-  //      https://gitlab.com/interpeer/channeler/-/issues/1
+  // Also serialize size, if it is given.
+  if (payload_size > 0) {
+    tmp = static_cast<liberate::types::varint>(payload_size);
+    used = liberate::serialization::serialize_varint(
+        buf + total,
+        max - total,
+        tmp);
+    if (used <= 0) {
+      return 0;
+    }
+    total += used;
+  }
 
-  return used;
+  return total;
+}
+
+
+inline std::size_t
+serialize_header(std::byte * buf, std::size_t max, message const & msg)
+{
+  return serialize_header(buf, max, msg.type);
 }
 
 
@@ -140,19 +163,87 @@ message::parse()
     *const_cast<std::size_t *>(&payload_size) = buffer_size - used;
   }
   else {
-    // Variable length messages have the size included as a varint
+    // Variable length messages have the payload size included as a varint
     auto used2 = liberate::serialization::deserialize_varint(tmp, buffer + used, input_size - used);
     if (!used2) {
       return {ERR_DECODE, "Could not decode message length"};
     }
-    *const_cast<std::size_t *>(&buffer_size) = static_cast<std::size_t>(tmp);
+    *const_cast<std::size_t *>(&payload_size) = static_cast<std::size_t>(tmp);
+    *const_cast<std::size_t *>(&buffer_size) = payload_size + used + used2;
     *const_cast<std::byte const **>(&payload) = buffer + used + used2;
-    *const_cast<std::size_t *>(&payload_size) = buffer_size - used - used2;
   }
 
   // Payload processing is part of subtypes, and not happening here.
 
   return {ERR_SUCCESS, {}};
+}
+
+
+
+/**
+ * message_data
+ */
+std::unique_ptr<message>
+message_data::extract_features(message const & wrap)
+{
+  auto ptr = new message_data{wrap};
+  return std::unique_ptr<message_data>(ptr);
+}
+
+
+
+message_data::message_data(message const & wrap)
+  : message{wrap}
+{
+}
+
+
+message_data::message_data(std::vector<std::byte> && data)
+  : message{nullptr, 0, false}
+  , owned_buffer{std::move(data)}
+{
+  *const_cast<std::byte const **>(&buffer) = &owned_buffer[0];
+  *const_cast<std::size_t *>(&input_size) = owned_buffer.size();
+
+  auto err = parse();
+  if (err.first != ERR_SUCCESS) {
+    throw exception{err.first, err.second};
+  }
+}
+
+
+std::unique_ptr<message>
+message_data::create(std::byte const * buf, std::size_t size)
+{
+  if (!buf || !size) {
+    return {};
+  }
+
+  // We need to understand the length of the serialized message header. We know
+  // it is at maximum two varints in size, so we'll serialize this first.
+  std::byte header[liberate::serialization::VARINT_MAX_BUFSIZE * 2];
+  auto used = serialize_header(header, sizeof(header),
+      MSG_DATA, size);
+
+  // Allocate a vector of the right size.
+  std::vector<std::byte> result;
+  result.resize(used + size);
+
+  memcpy(&result[0], header, used);
+  memcpy(&result[0] + used, buf, size);
+
+  auto ptr = new message_data{std::move(result)};
+  return std::unique_ptr<message>(ptr);
+}
+
+
+
+std::vector<std::byte>
+message_data::serialize(message_data const & msg)
+{
+  // XXX This assumes that the buffer_size is set. This is done when parsing
+  //     and when creating from data, see create() above.
+  return {msg.buffer, msg.buffer + msg.buffer_size};
 }
 
 
@@ -592,7 +683,7 @@ extract_message_features(message const & msg)
 
     case MSG_DATA:
       // Must make copy
-      return std::make_unique<message>(msg);
+      return message_data::extract_features(msg);
 
     default:
       break;
@@ -632,8 +723,9 @@ serialize_message(message const & msg)
       );
 
     case MSG_DATA:
-      // Must make copy
-      return {msg.buffer, msg.buffer + msg.buffer_size};
+      return message_data::serialize(
+          *reinterpret_cast<message_data const *>(&msg)
+      );
 
     default:
       break;

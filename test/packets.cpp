@@ -261,7 +261,7 @@ std::byte const packet_with_messages[] = {
   // **** payload
   0x14_b, // MSG_DATA
 
-  0x08_b, // *Message* size
+  0x06_b, // *Payload* size
 
   // Payload
   0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, 0x00_b, 0x00_b,
@@ -287,7 +287,7 @@ std::byte const packet_with_messages[] = {
 
   // **** footer
   // Checksum
-  0x92_b, 0x2d_b, 0xfe_b, 0xb6_b,
+  0x02_b, 0xdd_b, 0x6d_b, 0xe1_b,
 };
 std::size_t const packet_with_messages_size = sizeof(packet_with_messages);
 

@@ -292,7 +292,36 @@ private:
 };
 
 
-struct message_data : public message {};
+struct message_data
+  : public message
+{
+  // TODO
+  // - maybe make constructors in other messages private and offer
+  //   the same kind of interface
+  // - deal with ownership somehow
+
+  /**
+   * Create a data message from a *data* buffer. This data buffer does not
+   * include the type or size.
+   *
+   * This *must* create messages that take ownership of data, so that is
+   * what we do here.
+   */
+  static std::unique_ptr<message>
+  create(std::byte const * buf, std::size_t max);
+
+  static std::unique_ptr<message>
+  extract_features(message const & wrap);
+
+  static std::vector<std::byte>
+  serialize(message_data const & msg);
+
+private:
+  explicit message_data(message const & wrap);
+  explicit message_data(std::vector<std::byte> && data);
+
+  std::vector<std::byte>  owned_buffer;
+};
 
 
 

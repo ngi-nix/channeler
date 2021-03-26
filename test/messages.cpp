@@ -86,7 +86,7 @@ std::size_t const message_channel_cookie_size = sizeof(message_channel_cookie);
 std::byte const message_data[] = {
   0x14_b, // MSG_DATA
 
-  0x08_b, // *Message* size
+  0x06_b, // *Payload* size
 
   // Payload
   0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, 0x00_b, 0x00_b,
@@ -98,7 +98,7 @@ std::size_t const message_data_size = sizeof(message_data);
 std::byte const message_block[] = {
   0x14_b, // MSG_DATA
 
-  0x08_b, // *Message* size
+  0x06_b, // *Payload* size
 
   // Payload
   0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, 0x00_b, 0x00_b,
