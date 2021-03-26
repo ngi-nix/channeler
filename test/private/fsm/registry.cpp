@@ -54,8 +54,8 @@ struct test_fsm_with_ctor : public ::channeler::fsm::fsm_base
   }
 
   virtual bool process(event * to_process [[maybe_unused]],
-      action_list_type & result_actions,
-      event_list_type & output_events)
+      action_list_type & result_actions [[maybe_unused]],
+      event_list_type & output_events [[maybe_unused]])
   {
     return false;
   }

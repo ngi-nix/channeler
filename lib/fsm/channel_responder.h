@@ -289,10 +289,10 @@ struct fsm_channel_responder
   }
 
 
-  inline bool handle_cookie(message_channel_cookie * msg,
-      ::channeler::packet_wrapper const & packet,
-      ::channeler::pipe::action_list_type & result_actions,
-      ::channeler::pipe::event_list_type & output_events)
+  inline bool handle_cookie(message_channel_cookie * msg [[maybe_unused]],
+      ::channeler::packet_wrapper const & packet [[maybe_unused]],
+      ::channeler::pipe::action_list_type & result_actions [[maybe_unused]],
+      ::channeler::pipe::event_list_type & output_events [[maybe_unused]])
   {
     // TODO
     // https://gitlab.com/interpeer/channeler/-/issues/13
