@@ -86,7 +86,7 @@ enum event_type : uint_fast16_t
   ET_MESSAGE_OUT,
   ET_USER_DATA_TO_SEND, // User data has been written to a buffer, and is ready
                         // for sending.
-  ET_RAW_PACKET_ASSEMBLED,  // Packet is produced
+  ET_PACKET_OUT,        // Contains an outbound/egress packet
 
   // ** EC_USER
   ET_NEW_CHANNEL,       // User creates new channel
@@ -350,7 +350,7 @@ struct message_out_event
 template <
   std::size_t POOL_BLOCK_SIZE
 >
-struct raw_packet_assembled_event
+struct packet_out_event
   : public event
 {
   // *** Types
@@ -365,18 +365,18 @@ struct raw_packet_assembled_event
   ::channeler::packet_wrapper packet;
 
   // *** Constructor
-  inline raw_packet_assembled_event(
+  inline packet_out_event(
       slot_type && _slot,
       ::channeler::packet_wrapper && _packet
     )
-    : event{EC_EGRESS, ET_RAW_PACKET_ASSEMBLED}
+    : event{EC_EGRESS, ET_PACKET_OUT}
     , slot{std::move(_slot)}
     , packet{std::move(_packet)}
   {
   }
 
 
-  virtual ~raw_packet_assembled_event() = default;
+  virtual ~packet_out_event() = default;
 };
 
 

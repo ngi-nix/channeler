@@ -49,6 +49,7 @@ if not meson.is_subproject()
     'private' / 'pipe' / 'message_parsing.cpp',
     'private' / 'pipe' / 'state_handling.cpp',
     'private' / 'pipe' / 'message_bundling.cpp',
+    'private' / 'pipe' / 'add_checksum.cpp',
     'private' / 'fsm' / 'registry.cpp',
     'private' / 'fsm' / 'channel_responder.cpp',
     'private' / 'fsm' / 'channel_initiator.cpp',

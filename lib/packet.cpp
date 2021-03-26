@@ -390,6 +390,25 @@ packet_wrapper::calculate_checksum() const
 
 
 
+error_t
+packet_wrapper::update_checksum()
+{
+  auto err = update_to_buffer(
+      m_buffer,
+      m_size,
+      m_public_header,
+      m_private_header,
+      m_footer);
+  if (ERR_SUCCESS != err.first) {
+    return err.first;
+  }
+
+  m_footer.checksum = calculate_checksum();
+  return ERR_SUCCESS;
+}
+
+
+
 bool
 packet_wrapper::has_valid_checksum() const
 {

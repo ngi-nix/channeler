@@ -193,3 +193,5 @@ steps:
   as such it is explicitly *not* part of message bundling.
 1. `Buffer` - places the filter in the output buffer.
 1. The last filter provides data and other notifications to the I/O loop.
+1. TODO: A outbound routing filter would be necessary for multi-link
+   connections.

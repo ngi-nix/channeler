@@ -458,6 +458,7 @@ public:
    * Calculate and validate checksum
    */
   liberate::checksum::crc32_checksum calculate_checksum() const;
+  error_t update_checksum();
   bool has_valid_checksum() const;
 
   /**
