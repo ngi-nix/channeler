@@ -352,11 +352,20 @@ public:
     return m_public_header.packet_size;
   }
 
+  inline packet_size_t & packet_size()
+  {
+    return m_public_header.packet_size;
+  }
+
   inline payload_size_t payload_size() const
   {
     return m_private_header.payload_size;
   }
 
+  inline payload_size_t & payload_size()
+  {
+    return m_private_header.payload_size;
+  }
 
   inline liberate::checksum::crc32_checksum checksum() const
   {
@@ -427,6 +436,7 @@ public:
    * Return a pointer to the start of the payload.
    */
   std::byte const * payload() const;
+  std::byte * payload();
 
   /**
    * Return a pointer to the start of the buffer.

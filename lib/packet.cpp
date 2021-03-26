@@ -327,6 +327,14 @@ packet_wrapper::payload() const
 
 
 
+std::byte *
+packet_wrapper::payload()
+{
+  return m_buffer + public_header_size() + private_header_size();
+}
+
+
+
 std::byte const *
 packet_wrapper::buffer() const
 {
