@@ -77,7 +77,10 @@ struct CHANNELER_API peerid_wrapper
   peerid copy() const;
 
   // Pointer to raw buffer; equivalent to start in the constructor
-  std::byte const * raw;
+  std::byte const * raw = nullptr;
+
+  peerid_wrapper(peerid_wrapper const & other);
+  peerid_wrapper & operator=(peerid_wrapper const & other);
 };
 
 

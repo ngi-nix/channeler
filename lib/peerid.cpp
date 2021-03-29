@@ -24,6 +24,8 @@
 
 #include <cstring>
 
+#include <iostream> // FIXME
+
 #include <stdexcept>
 
 #include <liberate/string/hexencode.h>
@@ -37,11 +39,19 @@ namespace channeler {
 peerid_wrapper::peerid_wrapper(std::byte const * start, size_t bufsize)
   : raw{start}
 {
-  if (bufsize < size()) {
+  if (!raw || bufsize < size()) {
     throw exception{ERR_INSUFFICIENT_BUFFER_SIZE,
       "Input buffer too small for a peer identifier."};
   }
 }
+
+
+
+peerid_wrapper::peerid_wrapper(peerid_wrapper const & other)
+  : raw{other.raw}
+{
+}
+
 
 
 std::string
@@ -82,6 +92,21 @@ peerid_wrapper::copy() const
 {
   return {raw, size()};
 }
+
+
+
+peerid_wrapper &
+peerid_wrapper::operator=(peerid_wrapper const & other)
+{
+  if (!raw || !other.raw) {
+    throw std::logic_error("Should never happen; see regular ctor.");
+  }
+  if (raw != other.raw) {
+    memcpy(const_cast<std::byte*>(raw), other.raw, size());
+  }
+  return *this;
+}
+
 
 
 
