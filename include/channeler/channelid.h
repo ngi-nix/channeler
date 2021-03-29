@@ -118,7 +118,7 @@ operator<<(std::ostream & os, channelid const & id)
   os << "["
     << std::hex << std::setw(sizeof(channelid::half_type) * 2) << std::setfill('0') << id.initiator
     << ":" << id.responder << "]"
-    << std::dec << std::endl;
+    << std::dec;
   return os;
 }
 
