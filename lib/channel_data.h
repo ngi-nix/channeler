@@ -52,47 +52,67 @@ struct channel_data
   using slot_type = typename buffer_type::pool_type::slot;
 
   // Output buffer can likely be optimized
-  using out_buf_data = std::vector<std::byte>;
-  using out_buf_entry = std::shared_ptr<out_buf_data>;
-  using out_index = ssize_t;
-  using out_buf = std::map<out_index, out_buf_entry>;
+  using egress_message_buffer = std::list<std::unique_ptr<message>>;
 
   inline channel_data(channelid const & id, std::size_t packet_size,
       lock_policyT * lock = nullptr)
     : m_id{id}
     , m_lock{lock}
-    , m_buffer{packet_size, m_lock}
+    , m_ingress_buffer{packet_size, m_lock}
+    , m_egress_buffer{packet_size, m_lock}
   {
   }
 
 
-  inline error_t buffer_push(packet_wrapper const & packet, slot_type slot)
+  inline error_t ingress_buffer_push(packet_wrapper const & packet, slot_type slot)
   {
-    return m_buffer.push(packet, slot);
+    return m_ingress_buffer.push(packet, slot);
+  }
+
+  inline error_t egress_buffer_push(packet_wrapper const & packet, slot_type slot)
+  {
+    return m_egress_buffer.push(packet, slot);
   }
 
   // TODO pop for reading
 
-  inline bool has_outgoing_data_pending() const
+  inline bool has_egress_data_pending() const
   {
     return !m_output_buffer.empty();
   }
 
 
-  inline out_index add_outgoing_data(out_buf_data const & data)
+  inline void enqueue_egress_message(std::unique_ptr<message> msg)
   {
-    auto ret = m_next_output++;
-    m_output_buffer[ret] = std::make_shared<out_buf_data>(data);
+    // TODO order e.g. by timestamp? Most likely by insertion time is
+    // good enough.
+    m_output_buffer.push_back(std::move(msg));
+  }
+
+  inline std::unique_ptr<message> dequeue_egress_message()
+  {
+    auto ret = std::move(m_output_buffer.front());
+    m_output_buffer.pop_front();
     return ret;
+  }
+
+  std::size_t next_egress_message_size() const
+  {
+    auto iter = m_output_buffer.begin();
+    if (iter == m_output_buffer.end()) {
+      return 0;
+    }
+
+    return (*iter)->buffer_size;
   }
 
 
   channelid       m_id;
   lock_policyT *  m_lock;
-  buffer_type     m_buffer;
+  buffer_type     m_ingress_buffer;
+  buffer_type     m_egress_buffer;
 
-  out_buf         m_output_buffer;
-  out_index       m_next_output = 0;
+  egress_message_buffer  m_output_buffer;
 };
 
 } // namespace channeler

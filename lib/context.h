@@ -41,6 +41,10 @@ namespace channeler {
 /**
  * In a standard configuration, we need a default kind of context. This context
  * is provided here.
+ *
+ * The context is for a peer-to-peer connection. XXX At this point in time, it
+ * is assumed that there is only one connection between two peers, but this will
+ * have to change in future, of course.
  */
 template <
   typename addressT,
@@ -67,6 +71,7 @@ struct default_context
 
   // *** Data members
   peerid                id; // XXX Not per-connection, or is it?
+  peerid                peer; // XXX Not per-connection, or is it?
   channel_set_type      channels;
   timeouts_type         timeouts; // XXX Not per-connection, or is it?
   secret_generator_type secret_generator; // XXX Not per-connection, or is it?
