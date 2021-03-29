@@ -129,8 +129,6 @@ TEST(FSMChannelInitiator, initiate_new_channel)
   ASSERT_EQ(rev->type, ET_MESSAGE_OUT);
   auto rev_conv = reinterpret_cast<message_out_event *>(rev.get());
   ASSERT_TRUE(rev_conv->message);
-  ASSERT_EQ(rev_conv->sender, sender);
-  ASSERT_EQ(rev_conv->recipient, recipient);
   ASSERT_EQ(rev_conv->channel, DEFAULT_CHANNELID);
   ASSERT_EQ(rev_conv->message->type, MSG_CHANNEL_NEW);
   auto msg = reinterpret_cast<message_channel_new *>(rev_conv->message.get());
@@ -245,8 +243,6 @@ TEST(FSMChannelInitiator, acknowledge_channel)
   ASSERT_EQ(rev->type, ET_MESSAGE_OUT);
   auto rev_conv = reinterpret_cast<message_out_event *>(rev.get());
   ASSERT_TRUE(rev_conv->message);
-  ASSERT_EQ(rev_conv->sender, sender);
-  ASSERT_EQ(rev_conv->recipient, recipient);
   ASSERT_EQ(rev_conv->channel, DEFAULT_CHANNELID);
   ASSERT_EQ(rev_conv->message->type, MSG_CHANNEL_FINALIZE);
   auto msg = reinterpret_cast<message_channel_finalize *>(rev_conv->message.get());

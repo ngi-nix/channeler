@@ -134,8 +134,6 @@ TEST(FSMChannelResponder, process_msg_channel_new)
   // the deault channel.
   ASSERT_EQ(MSG_CHANNEL_ACKNOWLEDGE, converted->message->type);
   auto convmsg = reinterpret_cast<channeler::message_channel_acknowledge *>(converted->message.get());
-  ASSERT_EQ(converted->sender, pkt.recipient());
-  ASSERT_EQ(converted->recipient, pkt.sender());
   ASSERT_EQ(converted->channel, pkt.channel());
 
   // Check the cookie.

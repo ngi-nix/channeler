@@ -206,7 +206,7 @@ struct fsm_channel_responder
     // and there is pending data for it (unlikely), we want to send a
     // MSG_CHANNEL_COOKIE instead of a MSG_CHANNEL_ACKNOWLEDGE.
     auto data = m_channels.get(full_id);
-    if (data && data->has_outgoing_data_pending()) {
+    if (data && data->has_egress_data_pending()) {
       // TODO MSG_CHANNEL_COOKIE
       //      https://gitlab.com/interpeer/channeler/-/issues/13
     }
@@ -214,7 +214,6 @@ struct fsm_channel_responder
       // MSG_CHANNEL_ACKNOWLEDGE
       auto response = std::make_unique<message_channel_acknowledge>(full_id, msg->cookie1, cookie2);
       auto ev = std::make_unique<channeler::pipe::message_out_event>(
-            packet.recipient().copy(), packet.sender().copy(),
             packet.channel(), // XXX should be DEFAULT_CHANNELID
             std::move(response)
           );

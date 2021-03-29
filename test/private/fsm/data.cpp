@@ -247,7 +247,6 @@ TEST(FSMData, local_data_existing_channel)
   chs.add(id);
   auto ch = chs.get(id);
   ASSERT_TRUE(ch);
-  ASSERT_FALSE(ch->has_outgoing_data_pending());
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return
   // false.
@@ -261,13 +260,12 @@ TEST(FSMData, local_data_existing_channel)
   ASSERT_TRUE(ret);
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(1, events.size());
-  ASSERT_TRUE(ch->has_outgoing_data_pending());
 
   auto & out = *events.begin();
   ASSERT_TRUE(out);
-  ASSERT_EQ(ET_USER_DATA_TO_SEND, out->type);
+  ASSERT_EQ(ET_MESSAGE_OUT, out->type);
 
-  auto outconv = reinterpret_cast<user_data_to_send_event *>(out.get());
+  auto outconv = reinterpret_cast<message_out_event *>(out.get());
   ASSERT_EQ(id, outconv->channel);
 }
 
@@ -294,7 +292,6 @@ TEST(FSMData, local_data_pending_channel)
   chs.add(id);
   auto ch = chs.get(id);
   ASSERT_TRUE(ch);
-  ASSERT_FALSE(ch->has_outgoing_data_pending());
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return
   // false.
@@ -304,11 +301,17 @@ TEST(FSMData, local_data_pending_channel)
   event_t ev{id, data};
   auto ret = fsm.process(&ev, actions, events);
 
-  // We processed it, but the result is an error
+  // Also for a pending channel we need to have an output event
   ASSERT_TRUE(ret);
   ASSERT_EQ(0, actions.size());
-  ASSERT_EQ(0, events.size());
-  ASSERT_TRUE(ch->has_outgoing_data_pending());
+  ASSERT_EQ(1, events.size());
+
+  auto & out = *events.begin();
+  ASSERT_TRUE(out);
+  ASSERT_EQ(ET_MESSAGE_OUT, out->type);
+
+  auto outconv = reinterpret_cast<message_out_event *>(out.get());
+  ASSERT_EQ(id, outconv->channel);
 }
 
 

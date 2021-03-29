@@ -164,22 +164,14 @@ struct fsm_data
       return true;
     }
 
-    // If we have a channel, it doesn't matter if pending or established, we
-    // expect the data to be buffered for output.
-    auto ch = m_channels.get(event->channel);
-    auto ret = ch->add_outgoing_data(event->data);
-    if (ret < 0) {
-      result_actions.push_back(std::make_unique<channeler::pipe::error_action>(
-            ERR_WRITE));
-    }
-
-    // If the channel was not pending, we also need to produce an event.
-    // The only payload that is necessary is the channel identifier, for
-    // the pipe to start producing messages.
-    if (m_channels.has_established_channel(event->channel)) {
-      output_events.push_back(std::make_unique<channeler::pipe::user_data_to_send_event>(
-            event->channel));
-    }
+    // If we have a channel, we need to wrap the data into a data message and
+    // produce an appropriate output event.
+    auto msg = message_data::create(event->data);
+    auto ev = std::make_unique<channeler::pipe::message_out_event>(
+        event->channel,
+        std::move(msg)
+    );
+    output_events.push_back(std::move(ev));
 
     return true;
   }

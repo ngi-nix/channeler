@@ -168,7 +168,6 @@ struct fsm_channel_initiator
     // Create and return MSG_CHANNEL_NEW in output_events
     auto init = std::make_unique<message_channel_new>(id, cookie1);
     auto ev = std::make_unique<channeler::pipe::message_out_event>(
-          sender, recipient,
           DEFAULT_CHANNELID,
           std::move(init)
         );
@@ -258,7 +257,7 @@ struct fsm_channel_initiator
         ::channeler::support::timeouts::duration{CHANNEL_TIMEOUT});
 
     // Construct the finalize or cookie messages, respectively.
-    if (channel->has_outgoing_data_pending()) {
+    if (channel->has_egress_data_pending()) {
       // TODO MSG_CHANNEL_COOKIE
       //      https://gitlab.com/interpeer/channeler/-/issues/13
     }
@@ -268,7 +267,6 @@ struct fsm_channel_initiator
           capabilities_t{}); // TODO capabilities not used yet.
                              // https://gitlab.com/interpeer/channeler/-/issues/14
       auto ev = std::make_unique<channeler::pipe::message_out_event>(
-            event->packet.recipient().copy(), event->packet.sender().copy(),
             DEFAULT_CHANNELID,
             std::move(response)
           );
