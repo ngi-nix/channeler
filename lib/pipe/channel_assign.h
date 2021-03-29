@@ -132,7 +132,7 @@ struct channel_assign_filter
     // buffer. Otherwise, we clear the channel structure again to indicate
     // pending status.
     if (m_channel_set->has_established_channel(in->packet.channel())) {
-      auto err = ptr->buffer_push(in->packet, in->data);
+      auto err = ptr->ingress_buffer_push(in->packet, in->data);
       if (ERR_SUCCESS != err) {
         // TODO: in future versions, we'll need to return flow control information
         //       to the sender.
