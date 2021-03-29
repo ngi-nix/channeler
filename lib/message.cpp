@@ -238,12 +238,29 @@ message_data::create(std::byte const * buf, std::size_t size)
 
 
 
-std::vector<std::byte>
-message_data::serialize(message_data const & msg)
+std::unique_ptr<message>
+message_data::create(std::vector<std::byte> & data)
+{
+  if (!data.size()) {
+    return {};
+  }
+  auto ptr = new message_data{std::move(data)};
+  return std::unique_ptr<message>(ptr);
+}
+
+
+
+std::size_t
+message_data::serialize(std::byte * out, std::size_t max,
+    message_data const & msg)
 {
   // XXX This assumes that the buffer_size is set. This is done when parsing
   //     and when creating from data, see create() above.
-  return {msg.buffer, msg.buffer + msg.buffer_size};
+  if (msg.buffer_size > max) {
+    return 0;
+  }
+  ::memcpy(out, msg.buffer, msg.buffer_size);
+  return msg.buffer_size;
 }
 
 
@@ -300,19 +317,22 @@ message_channel_new::message_channel_new(message const & wrap)
 
 
 
-std::vector<std::byte>
-message_channel_new::serialize(message_channel_new const & msg)
+std::size_t
+message_channel_new::serialize(std::byte * out, std::size_t max,
+    message_channel_new const & msg)
 {
   // We know the buffer size, as it's fixed.
-  std::vector<std::byte> res;
-  res.resize(msg.buffer_size);
+  if (msg.buffer_size > max) {
+    return 0;
+  }
+
   std::size_t remaining = msg.buffer_size;
-  std::byte * offset = &res[0];
+  std::byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
   if (used <= 0) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -321,7 +341,7 @@ message_channel_new::serialize(message_channel_new const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       msg.initiator_part);
   if (used != sizeof(msg.initiator_part)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -331,15 +351,15 @@ message_channel_new::serialize(message_channel_new const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp);
   if (used != sizeof(tmp)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
 
   if (remaining != 0) {
-    return {};
+    return 0;
   }
-  return res;
+  return msg.buffer_size;
 }
 
 
@@ -395,19 +415,22 @@ message_channel_acknowledge::message_channel_acknowledge(message const & wrap)
 
 
 
-std::vector<std::byte>
-message_channel_acknowledge::serialize(message_channel_acknowledge const & msg)
+std::size_t
+message_channel_acknowledge::serialize(std::byte * out, std::size_t max,
+    message_channel_acknowledge const & msg)
 {
   // We know the buffer size, as it's fixed.
-  std::vector<std::byte> res;
-  res.resize(msg.buffer_size);
+  if (msg.buffer_size > max) {
+    return 0;
+  }
+
   std::size_t remaining = msg.buffer_size;
-  std::byte * offset = &res[0];
+  std::byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
   if (used <= 0) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -416,7 +439,7 @@ message_channel_acknowledge::serialize(message_channel_acknowledge const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       msg.id.full);
   if (used != sizeof(msg.id.full)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -426,15 +449,15 @@ message_channel_acknowledge::serialize(message_channel_acknowledge const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp);
   if (used != sizeof(tmp)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
 
   if (remaining != 0) {
-    return {};
+    return 0;
   }
-  return res;
+  return msg.buffer_size;
 }
 
 
@@ -504,19 +527,22 @@ message_channel_finalize::message_channel_finalize(message const & wrap)
 
 
 
-std::vector<std::byte>
-message_channel_finalize::serialize(message_channel_finalize const & msg)
+std::size_t
+message_channel_finalize::serialize(std::byte * out, std::size_t max,
+    message_channel_finalize const & msg)
 {
   // We know the buffer size, as it's fixed.
-  std::vector<std::byte> res;
-  res.resize(msg.buffer_size);
+  if (msg.buffer_size > max) {
+    return 0;
+  }
+
   std::size_t remaining = msg.buffer_size;
-  std::byte * offset = &res[0];
+  std::byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
   if (used <= 0) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -525,7 +551,7 @@ message_channel_finalize::serialize(message_channel_finalize const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       msg.id.full);
   if (used != sizeof(msg.id.full)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -535,7 +561,7 @@ message_channel_finalize::serialize(message_channel_finalize const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp);
   if (used != sizeof(tmp)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -545,15 +571,15 @@ message_channel_finalize::serialize(message_channel_finalize const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp2);
   if (used != sizeof(tmp2)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
 
   if (remaining != 0) {
-    return {};
+    return 0;
   }
-  return res;
+  return msg.buffer_size;
 }
 
 
@@ -613,19 +639,22 @@ message_channel_cookie::message_channel_cookie(message const & wrap)
 
 
 
-std::vector<std::byte>
-message_channel_cookie::serialize(message_channel_cookie const & msg)
+std::size_t
+message_channel_cookie::serialize(std::byte * out, std::size_t max,
+    message_channel_cookie const & msg)
 {
   // We know the buffer size, as it's fixed.
-  std::vector<std::byte> res;
-  res.resize(msg.buffer_size);
+  if (msg.buffer_size > max) {
+    return 0;
+  }
+
   std::size_t remaining = msg.buffer_size;
-  std::byte * offset = &res[0];
+  std::byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
   if (used <= 0) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -635,7 +664,7 @@ message_channel_cookie::serialize(message_channel_cookie const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp);
   if (used != sizeof(tmp)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
@@ -645,15 +674,15 @@ message_channel_cookie::serialize(message_channel_cookie const & msg)
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp2);
   if (used != sizeof(tmp2)) {
-    return {};
+    return 0;
   }
   offset += used;
   remaining -= used;
 
   if (remaining != 0) {
-    return {};
+    return 0;
   }
-  return res;
+  return msg.buffer_size;
 }
 
 
@@ -694,37 +723,39 @@ extract_message_features(message const & msg)
 }
 
 
-std::vector<std::byte>
-serialize_message(message const & msg)
+
+std::size_t
+serialize_message(std::byte * output, std::size_t max,
+    std::unique_ptr<message> const & msg)
 {
   // TODO *especially* this screams for some kind of registry for factory
   //      functions per type.
   //      https://gitlab.com/interpeer/channeler/-/issues/1
 
-  switch (msg.type) {
+  switch (msg->type) {
     case MSG_CHANNEL_NEW:
-      return message_channel_new::serialize(
-          *reinterpret_cast<message_channel_new const *>(&msg)
+      return message_channel_new::serialize(output, max,
+          *reinterpret_cast<message_channel_new const *>(msg.get())
       );
 
     case MSG_CHANNEL_ACKNOWLEDGE:
-      return message_channel_acknowledge::serialize(
-          *reinterpret_cast<message_channel_acknowledge const *>(&msg)
+      return message_channel_acknowledge::serialize(output, max,
+          *reinterpret_cast<message_channel_acknowledge const *>(msg.get())
       );
 
     case MSG_CHANNEL_FINALIZE:
-      return message_channel_finalize::serialize(
-          *reinterpret_cast<message_channel_finalize const *>(&msg)
+      return message_channel_finalize::serialize(output, max,
+          *reinterpret_cast<message_channel_finalize const *>(msg.get())
       );
 
     case MSG_CHANNEL_COOKIE:
-      return message_channel_cookie::serialize(
-          *reinterpret_cast<message_channel_cookie const *>(&msg)
+      return message_channel_cookie::serialize(output, max,
+          *reinterpret_cast<message_channel_cookie const *>(msg.get())
       );
 
     case MSG_DATA:
-      return message_data::serialize(
-          *reinterpret_cast<message_data const *>(&msg)
+      return message_data::serialize(output, max,
+          *reinterpret_cast<message_data const *>(msg.get())
       );
 
     default:
@@ -732,7 +763,7 @@ serialize_message(message const & msg)
   }
 
   // Unable to produce anything
-  return {};
+  return 0;
 }
 
 } // namespace channeler

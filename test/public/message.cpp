@@ -75,14 +75,15 @@ assert_single_byte_type_fixed_size_message(temp_buffer const & buf,
 
 
 inline void
-assert_serialization_ok(std::unique_ptr<channeler::message> const & msg, temp_buffer const & buf)
+assert_serialization_ok(std::vector<std::byte> & out,
+    std::unique_ptr<channeler::message> const & msg, temp_buffer const & buf)
 {
-  auto res = serialize_message(msg);
-  ASSERT_EQ(res.size(), buf.size);
+  auto res = serialize_message(&out[0], out.size(), msg);
+  ASSERT_EQ(res, buf.size);
 
   for (std::size_t i = 0 ; i < buf.size ; ++i) {
     // std::cout << "compare index: " << i << std::endl;
-    ASSERT_EQ(res[i], buf.buf.get()[i]);
+    ASSERT_EQ(out[i], buf.buf.get()[i]);
   }
 }
 
@@ -120,7 +121,9 @@ TEST(Message, parse_and_serialize_channel_new)
   ASSERT_EQ(0xbeefb4be, ptr->cookie1);
 
   // Serialize
-  assert_serialization_ok(msg, b);
+  std::vector<std::byte> out;
+  out.resize(200);
+  assert_serialization_ok(out, msg, b);
 }
 
 
@@ -140,7 +143,9 @@ TEST(Message, parse_and_serialize_channel_acknowledge)
   ASSERT_EQ(0xbeefb4be, ptr->cookie2);
 
   // Serialize
-  assert_serialization_ok(msg, b);
+  std::vector<std::byte> out;
+  out.resize(200);
+  assert_serialization_ok(out, msg, b);
 }
 
 
@@ -161,7 +166,9 @@ TEST(Message, parse_and_serialize_channel_finalize)
   ASSERT_TRUE(ptr->capabilities.none());
 
   // Serialize
-  assert_serialization_ok(msg, b);
+  std::vector<std::byte> out;
+  out.resize(200);
+  assert_serialization_ok(out, msg, b);
 }
 
 
@@ -181,7 +188,9 @@ TEST(Message, parse_and_serialize_channel_cookie)
   ASSERT_TRUE(ptr->capabilities.none());
 
   // Serialize
-  assert_serialization_ok(msg, b);
+  std::vector<std::byte> out;
+  out.resize(200);
+  assert_serialization_ok(out, msg, b);
 }
 
 
@@ -198,7 +207,9 @@ TEST(Message, parse_and_serialize_data)
   ASSERT_EQ(msg->type, channeler::MSG_DATA);
 
   // Serialize
-  assert_serialization_ok(msg, b);
+  std::vector<std::byte> out;
+  out.resize(200);
+  assert_serialization_ok(out, msg, b);
 }
 
 

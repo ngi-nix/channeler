@@ -175,17 +175,9 @@ parse_message(std::byte const * buffer, std::size_t size)
  *
  * TODO also this will move into the registry
  */
-std::vector<std::byte>
-serialize_message(message const & msg);
-
-inline std::vector<std::byte>
-serialize_message(std::unique_ptr<message> const & msg)
-{
-  if (!msg) {
-    return {};
-  }
-  return serialize_message(*msg);
-}
+std::size_t
+serialize_message(std::byte * output, std::size_t max_size,
+    std::unique_ptr<message> const & msg);
 
 
 
@@ -209,8 +201,8 @@ struct message_channel_new
   static std::unique_ptr<message>
   extract_features(message const & wrap);
 
-  static std::vector<std::byte>
-  serialize(message_channel_new const & msg);
+  static std::size_t
+  serialize(std::byte * out, std::size_t max, message_channel_new const & msg);
 
 private:
   explicit message_channel_new(message const & wrap);
@@ -237,8 +229,8 @@ struct message_channel_acknowledge
   static std::unique_ptr<message>
   extract_features(message const & wrap);
 
-  static std::vector<std::byte>
-  serialize(message_channel_acknowledge const & msg);
+  static std::size_t
+  serialize(std::byte * out, std::size_t max, message_channel_acknowledge const & msg);
 
 private:
   explicit message_channel_acknowledge(message const & wrap);
@@ -267,8 +259,8 @@ struct message_channel_finalize
   static std::unique_ptr<message>
   extract_features(message const & wrap);
 
-  static std::vector<std::byte>
-  serialize(message_channel_finalize const & msg);
+  static std::size_t
+  serialize(std::byte * out, std::size_t max, message_channel_finalize const & msg);
 
 private:
   explicit message_channel_finalize(message const & wrap);
@@ -284,8 +276,8 @@ struct message_channel_cookie
   static std::unique_ptr<message>
   extract_features(message const & wrap);
 
-  static std::vector<std::byte>
-  serialize(message_channel_cookie const & msg);
+  static std::size_t
+  serialize(std::byte * out, std::size_t max, message_channel_cookie const & msg);
 
 private:
   explicit message_channel_cookie(message const & wrap);
@@ -305,16 +297,19 @@ struct message_data
    * include the type or size.
    *
    * This *must* create messages that take ownership of data, so that is
-   * what we do here.
+   * what we do here. That means that the vector version moves the data.
    */
   static std::unique_ptr<message>
   create(std::byte const * buf, std::size_t max);
 
   static std::unique_ptr<message>
+  create(std::vector<std::byte> & data);
+
+  static std::unique_ptr<message>
   extract_features(message const & wrap);
 
-  static std::vector<std::byte>
-  serialize(message_data const & msg);
+  static std::size_t
+  serialize(std::byte * out, std::size_t max, message_data const & msg);
 
 private:
   explicit message_data(message const & wrap);
