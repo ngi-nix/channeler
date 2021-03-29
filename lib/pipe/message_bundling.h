@@ -27,6 +27,7 @@
 #include <channeler.h>
 
 #include <memory>
+#include <iostream> // FIXME
 
 #include "../memory/packet_pool.h"
 #include "event.h"
@@ -55,21 +56,31 @@ template <
   typename addressT,
   std::size_t POOL_BLOCK_SIZE,
   typename next_filterT,
-  typename next_eventT
+  typename next_eventT,
+  typename channelT
 >
 struct message_bundling_filter
 {
-  using input_event = message_out_event;
+  using input_event = message_out_enqueued_event;
   using pool_type = ::channeler::memory::packet_pool<
     POOL_BLOCK_SIZE
     // FIXME lock policy
   >;
   using slot_type = typename pool_type::slot;
+  using channel_set = ::channeler::channels<channelT>;
+  using peerid_function = std::function<peerid()>;
 
   inline message_bundling_filter(next_filterT * next,
-      pool_type & pool)
+      channel_set & channels,
+      pool_type & pool,
+      peerid_function own_peerid_func,
+      peerid_function peer_peerid_func
+    )
     : m_next{next}
+    , m_channels{channels}
     , m_pool{pool}
+    , m_own_peerid_func{own_peerid_func}
+    , m_peer_peerid_func{peer_peerid_func}
   {
   }
 
@@ -79,63 +90,69 @@ struct message_bundling_filter
     if (!ev) {
       throw exception{ERR_INVALID_REFERENCE};
     }
-    if (ev->type != ET_MESSAGE_OUT) {
+    if (ev->type != ET_MESSAGE_OUT_ENQUEUED) {
       throw exception{ERR_INVALID_PIPE_EVENT};
     }
 
     input_event const * in = reinterpret_cast<input_event const *>(ev.get());
+
+    // Let's be paranoid and check that there is egress data.
+    auto ch = m_channels.get(in->channel);
+    if (!ch->has_egress_data_pending()) {
+      // TODO what to do here?
+      return {};
+    }
 
     // Allocate memory. This is for creating the packet header, which is useful
     // for understanding the maximum payload size.
     slot_type slot = m_pool.allocate();
     ::channeler::packet_wrapper packet{slot.data(), slot.size(), false};
 
-    // Ensure that the message size does not exceed the packet size.
-    // TODO we don't fragment mesages yet, but this may have to happen here.
-    if (in->message->buffer_size > packet.max_payload_size()) {
-      // FIXME create some kind of action to warn the user
-      return {};
-    }
+    // Populate the packet's metadata as far as we understand it.
+    packet.packet_size() = slot.size(); // Fixed packet size helps hide
+                                        // payloads
+    packet.sender() = m_own_peerid_func();
+    packet.recipient() = m_peer_peerid_func();
+    packet.channel() = in->channel;
+    // TODO flags
 
-    // TODO much of this could be moved into the packet class:
-    // - initialize with meta as in the next few llines
-    // - have add_message() functions that does the message adding
-    //   piecemeal
-    // - add padding only when requesting the buffer
-    //
+    // Grab the channel; we'll pack as many messages as fit into the packet
+    // here.
+
     // // TODO much of this could be moved into the packet class:
     // - initialize with meta as in the next few llines
     // - have add_message() functions that does the message adding
     //   piecemeal
     // - add padding only when requesting the buffer
 
-    // Populate the packet's metadata as far as we understand it.
-    packet.packet_size() = slot.size(); // Fixed packet size helps hide
-                                        // payloads
-    packet.sender() = in->sender;
-    packet.recipient() = in->recipient;
-    packet.channel() = in->channel;
-    // TODO flags
+    size_t remaining = packet.max_payload_size();
+    std::byte * offset = packet.payload();
 
-    // Serialize message into the payload
-    std::size_t payload_size = in->message->buffer_size;
-    memcpy(packet.payload(), in->message->buffer, in->message->buffer_size);
-    auto remain = packet.max_payload_size() - payload_size;
+    do {
+      std::size_t next_size = ch->next_egress_message_size();
+      if (!next_size || next_size > remaining) {
+        break;
+      }
+
+      auto used = serialize_message(offset, remaining,
+          std::move(ch->dequeue_egress_message()));
+      offset += used;
+      remaining -= used;
+    } while (remaining > 0);
+
+    // Update packet payload size. The remaining buffer is part of the packet
+    // size, but not of the payload size.
+    packet.payload_size() = packet.max_payload_size() - remaining;
 
     // Fill the remaining bytes with padding. We use a variant of PKCS#7
     // https://tools.ietf.org/html/rfc5652#section-6.3
     // The main difference is that we do have a packet size encoded, so
     // we do not care about the length of the padding being below 256
     // Bytes.
-    uint8_t pad_value = remain % 0xff;
-    std::byte * offset = packet.payload() + payload_size;
-    for (std::size_t i = 0 ; i < remain ; ++i) {
+    uint8_t pad_value = remaining % 0xff;
+    for (std::size_t i = 0 ; i < remaining ; ++i) {
       offset[i] = static_cast<std::byte>(pad_value);
     }
-
-    // Update packet payload size. The remaining buffer is part of the packet
-    // size, but not of the payload size.
-    packet.payload_size() = payload_size;
 
     // Pass slot and packet on to next filter
     auto next = std::make_unique<next_eventT>(
@@ -147,7 +164,10 @@ struct message_bundling_filter
 
 
   next_filterT *  m_next;
+  channel_set &   m_channels;
   pool_type &     m_pool;
+  peerid_function m_own_peerid_func;
+  peerid_function m_peer_peerid_func;
 };
 
 
