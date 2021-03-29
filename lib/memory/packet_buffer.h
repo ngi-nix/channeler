@@ -98,6 +98,10 @@ public:
   }
 
   // TODO pop for reading
+  inline bool empty() const
+  {
+    return m_buffer.empty();
+  }
 
 private:
 

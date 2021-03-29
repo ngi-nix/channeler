@@ -400,36 +400,23 @@ struct packet_out_event
  * Outgoing packets (enqueued)
  */
 template <
-  std::size_t POOL_BLOCK_SIZE,
   typename channelT
 >
 struct packet_out_enqueued_event
   : public event
 {
   // *** Types
-  using pool_type = ::channeler::memory::packet_pool<
-    POOL_BLOCK_SIZE
-    // FIXME lock policy
-  >;
-  using slot_type = typename pool_type::slot;
   using channel_set = ::channeler::channels<channelT>;
   using channel_ptr = typename channel_set::channel_ptr;
 
   // *** Data members
-  slot_type                   slot;
-  ::channeler::packet_wrapper packet;
   channel_ptr                 channel;
-
 
   // *** Constructor
   inline packet_out_enqueued_event(
-      slot_type && _slot,
-      ::channeler::packet_wrapper && _packet,
       channel_ptr _channel
     )
     : event{EC_EGRESS, ET_PACKET_OUT_ENQUEUED}
-    , slot{std::move(_slot)}
-    , packet{std::move(_packet)}
     , channel{_channel}
   {
   }

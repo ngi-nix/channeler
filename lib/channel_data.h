@@ -74,7 +74,13 @@ struct channel_data
     return m_egress_buffer.push(packet, slot);
   }
 
-  // TODO pop for reading
+  // TODO
+  // - pop for reading
+  // - non-const ref
+  inline buffer_type const & egress_buffer() const
+  {
+    return m_egress_buffer;
+  }
 
   inline bool has_egress_data_pending() const
   {

@@ -183,6 +183,8 @@ Output Filters
 The output pipe is simpler than the input pipe, and provides the following
 steps:
 
+1. `Enqueue Message` - the filter takes a message produced by an FSM and
+  enqueues it in the appropriate channel data structure.
 1. `Message Bundling` - the filter decides, based on channel settings and
   message flags, whether to buffer data from the application layer until a
   packet can be filled, or send a packet immediately.
