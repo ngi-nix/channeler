@@ -190,10 +190,11 @@ steps:
   packet can be filled, or send a packet immediately.
 1. `Encryption` - takes an unencrypted packet and encrypts it [not yet
   implemented]
-1. `Checksum` - calculates the packet checksum. Depending on the crypto
+1. `AddChecksum` - calculates the packet checksum. Depending on the crypto
   algorithm, this might be subsumed into the encryption pipeline, and
   as such it is explicitly *not* part of message bundling.
-1. `Buffer` - places the filter in the output buffer.
-1. The last filter provides data and other notifications to the I/O loop.
+1. `OutBuffer` - places the filter in the output buffer.
 1. TODO: A outbound routing filter would be necessary for multi-link
    connections.
+1. The `Callback` filter links the statically constructed egress filter
+  pipe to a callback function for notifying the I/O loop.
