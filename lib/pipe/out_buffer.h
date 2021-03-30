@@ -27,14 +27,9 @@
 #include <channeler.h>
 
 #include <memory>
-#include <iostream> // FIXME
 
-#include "../memory/packet_pool.h"
 #include "event.h"
 #include "action.h"
-
-#include <channeler/packet.h>
-#include <channeler/error.h>
 
 
 namespace channeler::pipe {
