@@ -115,7 +115,7 @@ struct default_ingress
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
-    return m_de_envelope(std::move(ev));
+    return m_de_envelope.consume(std::move(ev));
   }
 
   state_handling  m_state_handling;

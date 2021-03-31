@@ -101,7 +101,7 @@ struct default_egress
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
-    return m_enqueue_message(std::move(ev));
+    return m_enqueue_message.consume(std::move(ev));
   }
 
   callback          m_callback;
