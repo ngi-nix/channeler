@@ -54,12 +54,11 @@ struct channel_data
   // Output buffer can likely be optimized
   using egress_message_buffer = std::list<std::unique_ptr<message>>;
 
-  inline channel_data(channelid const & id, std::size_t packet_size,
-      lock_policyT * lock = nullptr)
+  inline channel_data(channelid const & id, lock_policyT * lock = nullptr)
     : m_id{id}
     , m_lock{lock}
-    , m_ingress_buffer{packet_size, m_lock}
-    , m_egress_buffer{packet_size, m_lock}
+    , m_ingress_buffer{m_lock}
+    , m_egress_buffer{m_lock}
   {
   }
 
