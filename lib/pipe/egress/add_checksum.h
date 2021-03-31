@@ -31,6 +31,7 @@
 #include "../../memory/packet_pool.h"
 #include "../event.h"
 #include "../action.h"
+#include "../event_as.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>
@@ -67,14 +68,7 @@ struct add_checksum_filter
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
-    if (!ev) {
-      throw exception{ERR_INVALID_REFERENCE};
-    }
-    if (ev->type != ET_PACKET_OUT) {
-      throw exception{ERR_INVALID_PIPE_EVENT};
-    }
-
-    input_event * in = reinterpret_cast<input_event *>(ev.get());
+    auto in = event_as<input_event>("egress:add_checksum", ev.get(), ET_PACKET_OUT);
 
     // Set checksum
     auto err = in->packet.update_checksum();

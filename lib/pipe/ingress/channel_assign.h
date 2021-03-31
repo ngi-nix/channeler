@@ -34,6 +34,7 @@
 #include "../event.h"
 #include "../action.h"
 #include "../filter_classifier.h"
+#include "../event_as.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>
@@ -89,14 +90,7 @@ struct channel_assign_filter
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
-    if (!ev) {
-      throw exception{ERR_INVALID_REFERENCE};
-    }
-    if (ev->type != ET_DECRYPTED_PACKET) {
-      throw exception{ERR_INVALID_PIPE_EVENT};
-    }
-
-    input_event * in = reinterpret_cast<input_event *>(ev.get());
+    auto in = event_as<input_event>("ingress:channel_assign", ev.get(), ET_DECRYPTED_PACKET);
 
     // If there is no data passed, we should also throw.
     if (nullptr == in->data.data()) {

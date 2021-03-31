@@ -30,6 +30,7 @@
 
 #include "../event.h"
 #include "../action.h"
+#include "../event_as.h"
 
 
 namespace channeler::pipe {
@@ -70,14 +71,8 @@ struct out_buffer_filter
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
-    if (!ev) {
-      throw exception{ERR_INVALID_REFERENCE};
-    }
-    if (ev->type != ET_PACKET_OUT) {
-      throw exception{ERR_INVALID_PIPE_EVENT};
-    }
-
-    input_event const * in = reinterpret_cast<input_event const *>(ev.get());
+    auto in = event_as<input_event const>("egress:out_buffer", ev.get(),
+        ET_PACKET_OUT);
 
     auto ptr = m_channels.get(in->packet.channel());
     if (!ptr) {

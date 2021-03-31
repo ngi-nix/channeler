@@ -31,6 +31,7 @@
 #include "../../memory/packet_pool.h"
 #include "../event.h"
 #include "../action.h"
+#include "../event_as.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>
@@ -66,14 +67,7 @@ struct enqueue_message_filter
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
-    if (!ev) {
-      throw exception{ERR_INVALID_REFERENCE};
-    }
-    if (ev->type != ET_MESSAGE_OUT) {
-      throw exception{ERR_INVALID_PIPE_EVENT};
-    }
-
-    input_event * in = reinterpret_cast<input_event *>(ev.get());
+    auto in = event_as<input_event>("egress:enqueue_message", ev.get(), ET_MESSAGE_OUT);
 
     // Get the appropriate channel data
     auto ch = m_channels.get(in->channel);

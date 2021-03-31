@@ -31,6 +31,7 @@
 
 #include "../event.h"
 #include "../action.h"
+#include "../event_as.h"
 
 namespace channeler::pipe {
 
@@ -57,6 +58,7 @@ struct callback_filter
 
   inline action_list_type consume(std::unique_ptr<event> ev)
   {
+    auto in = event_as<input_event>("egress:callback", ev.get(), ET_PACKET_OUT_ENQUEUED);
     return m_callback(std::move(ev));
   }
 
