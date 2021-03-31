@@ -78,13 +78,13 @@ TEST(FSMStandardRegistry, create)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    [](channeler::support::timeouts::duration d) { return d; },
   };
 
   connection_t ctx{
     node,
-    peer,
-    [](channeler::support::timeouts::duration d) { return d; },
+    peer
   };
 
   auto reg = get_standard_registry<address_t>(ctx);
@@ -116,23 +116,23 @@ TEST(FSMStandardRegistry, negotiate_channel)
   node_t node1{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    [](channeler::support::timeouts::duration d) { return d; },
   };
   node_t node2{
     peer,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    [](channeler::support::timeouts::duration d) { return d; },
   };
 
   connection_t peer1_ctx{
     node1,
-    peer,
-    [](channeler::support::timeouts::duration d) { return d; },
+    peer
   };
   connection_t peer2_ctx{
     node2,
-    self,
-    [](channeler::support::timeouts::duration d) { return d; },
+    self
   };
 
   // Create two registries

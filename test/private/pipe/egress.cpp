@@ -59,13 +59,13 @@ TEST(PipeEgress, create)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    [](channeler::support::timeouts::duration d) { return d; },
   };
 
   connection_t ctx{
     node,
-    peer,
-    [](channeler::support::timeouts::duration d) { return d; },
+    peer
   };
 
   typename egress_t::channel_set_type chs;

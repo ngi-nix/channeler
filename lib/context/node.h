@@ -58,7 +58,7 @@ struct node
   using slot_type = typename pool_type::slot;
 
   using secret_type = std::vector<std::byte>;
-  using secret_generator_type = std::function<secret_type ()>;
+  using secret_generator_func = std::function<secret_type ()>;
 
   // The timeouts *type* should be node defined, but the instance is per
   // connection.
@@ -66,12 +66,14 @@ struct node
   using sleep_func = typename timeouts_type::sleep_function;
 
   inline node(peerid const & self, std::size_t packet_size,
-      secret_generator_type generator
+      secret_generator_func generator,
+      sleep_func sleep
     )
     : m_self{self}
     , m_packet_size{packet_size}
     , m_packet_pool{packet_size}
     , m_secret_generator{generator}
+    , m_sleep{sleep}
   {
   }
 
@@ -90,9 +92,14 @@ struct node
     return m_packet_pool;
   }
 
-  inline secret_generator_type & secret_generator()
+  inline secret_generator_func & secret_generator()
   {
     return m_secret_generator;
+  }
+
+  inline sleep_func & sleep()
+  {
+    return m_sleep;
   }
 
 private:
@@ -100,7 +107,8 @@ private:
   peerid                m_self;
   std::size_t           m_packet_size;
   pool_type             m_packet_pool;
-  secret_generator_type m_secret_generator;
+  secret_generator_func m_secret_generator;
+  sleep_func            m_sleep;
 };
 
 

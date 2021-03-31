@@ -66,13 +66,11 @@ struct connection
   using timeouts_type = typename node_type::timeouts_type;
   using sleep_func = typename node_type::sleep_func;
 
-  inline connection(node_type & node, peerid const & peer,
-      sleep_func _sleep_func
-    )
+  inline connection(node_type & node, peerid const & peer)
     : m_node{node}
     , m_peer{peer}
     , m_channels{}
-    , m_timeouts{_sleep_func}
+    , m_timeouts{m_node.sleep()}
   {
   }
 

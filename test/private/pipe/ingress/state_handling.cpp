@@ -84,13 +84,13 @@ TEST(PipeIngressStateHandlingFilter, throw_on_invalid_event)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    [](channeler::support::timeouts::duration d) { return d; },
   };
 
   connection_t ctx{
     node,
-    peer,
-    [](channeler::support::timeouts::duration d) { return d; },
+    peer
   };
 
   auto reg = channeler::fsm::get_standard_registry<address_t>(ctx);
@@ -117,13 +117,13 @@ TEST(PipeIngressStateHandlingFilter, create_message_on_channel_new)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    [](channeler::support::timeouts::duration d) { return d; },
   };
 
   connection_t ctx{
     node,
-    peer,
-    [](channeler::support::timeouts::duration d) { return d; },
+    peer
   };
 
   auto reg = channeler::fsm::get_standard_registry<address_t>(ctx);

@@ -19,7 +19,8 @@
  **/
 
 #include "../lib/internal/api.h"
-#include "../lib/context.h"
+#include "../lib/context/node.h"
+#include "../lib/context/connection.h"
 
 #include "../../temp_buffer.h"
 
@@ -27,12 +28,23 @@
 
 namespace {
 
-using ctx_t = channeler::default_context<
-  int,
-  3
+static constexpr std::size_t PACKET_SIZE = 300;
+
+using address_t = int; // for testing
+
+using node_t = ::channeler::context::node<
+  3 // POOL_BLOCK_SIZE
+  // XXX lock policy is null by default
 >;
 
-using api_t = channeler::internal::connection_api<ctx_t>;
+using connection_t = ::channeler::context::connection<
+  address_t,
+  node_t
+>;
+
+using api_t = channeler::internal::connection_api<
+  connection_t
+>;
 
 
 constexpr char const hello[] = "hello, world!";
@@ -128,6 +140,25 @@ test_data_exchange(channeler::channelid const & id,
   }
 }
 
+// All test cases
+static channeler::peerid self;
+static channeler::peerid peer;
+
+static node_t self_node{
+  self,
+  PACKET_SIZE,
+  []() -> std::vector<std::byte> { return {}; },
+  [](channeler::support::timeouts::duration d) { return d; },
+};
+
+static node_t peer_node{
+  peer,
+  PACKET_SIZE,
+  []() -> std::vector<std::byte> { return {}; },
+  [](channeler::support::timeouts::duration d) { return d; },
+};
+
+
 
 } // anonymous namespace
 
@@ -136,11 +167,7 @@ TEST(InternalAPI, create)
 {
   using namespace channeler::fsm;
 
-  ctx_t ctx{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; }
-  };
+  connection_t ctx{self_node, peer};
 
   api_t api{
     ctx,
@@ -156,11 +183,7 @@ TEST(InternalAPI, fail_sending_data_on_default_channel)
   using namespace channeler::fsm;
   using namespace channeler;
 
-  ctx_t ctx{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; }
-  };
+  connection_t ctx{self_node, peer};
 
   api_t api{
     ctx,
@@ -183,16 +206,8 @@ TEST(InternalAPI, establish_channel)
   using namespace channeler::fsm;
   using namespace channeler;
 
-  ctx_t ctx1{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; }
-  };
-  ctx_t ctx2{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; }
-  };
+  connection_t ctx1{self_node, peer};
+  connection_t ctx2{peer_node, self};
 
   api_t * peer_api1 = nullptr;
   api_t * peer_api2 = nullptr;
@@ -224,7 +239,7 @@ TEST(InternalAPI, establish_channel)
 
   // Establish channel
   auto err = peer_api1->establish_channel(
-    ctx2.id,
+    ctx2.node().id(),
     std::bind(&channel_establishment_callback::callback, &ccb1, _1, _2)
   );
   ASSERT_EQ(ERR_SUCCESS, err);
@@ -250,21 +265,8 @@ TEST(InternalAPI, send_data_on_established_channel)
   using namespace channeler::fsm;
   using namespace channeler;
 
-  channeler::fsm::registry reg1;
-  channeler::fsm::registry reg2;
-
-  ctx_t ctx1{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; },
-    reg1
-  };
-  ctx_t ctx2{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; },
-    reg2
-  };
+  connection_t ctx1{self_node, peer};
+  connection_t ctx2{peer_node, self};
 
   api_t * peer_api1 = nullptr;
   api_t * peer_api2 = nullptr;
@@ -294,7 +296,7 @@ TEST(InternalAPI, send_data_on_established_channel)
 
   // *** Establish channel
   auto err = peer_api1->establish_channel(
-    ctx2.id,
+    ctx2.node().id(),
     std::bind(&channel_establishment_callback::callback, &ccb1, _1, _2)
   );
   EXPECT_EQ(ERR_SUCCESS, err);

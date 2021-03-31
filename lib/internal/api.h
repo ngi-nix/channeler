@@ -48,11 +48,11 @@ namespace channeler::internal {
  * connection.
  */
 template <
-  typename contextT
+  typename connection_contextT
 >
 struct connection_api
 {
-  using pool_type = typename contextT::pool_type;
+  using pool_type = typename connection_contextT::node_type::pool_type;
   using slot_type = typename pool_type::slot;
 
   using channel_establishment_callback = std::function<void (error_t, channelid const &)>;
@@ -65,13 +65,13 @@ struct connection_api
    * - a context, providing per-connection  FIXME
    * TODO
    */
-  inline connection_api(contextT & context,
+  inline connection_api(connection_contextT & context,
       channel_establishment_callback remote_cb,
       packet_to_send_callback packet_cb,
       data_available_callback data_cb
     )
     : m_context{context}
-    , m_registry{fsm::get_standard_registry(m_context)}
+    , m_registry{fsm::get_standard_registry<typename connection_contextT::address_type>(m_context)}
     , m_remote_establishment_cb{remote_cb}
     , m_packet_to_send_cb{packet_cb}
     , m_data_available_cb{data_cb}
@@ -91,7 +91,7 @@ struct connection_api
   {
     // Establishing a channel means sending an appropriate user
     // event to the FSM.
-    auto event = pipe::new_channel_event(m_context.id, peer);
+    auto event = pipe::new_channel_event(m_context.node().id(), peer);
 
     pipe::action_list_type result_actions;
     pipe::event_list_type result_events;
@@ -175,7 +175,7 @@ struct connection_api
    */
   inline slot_type allocate()
   {
-    return m_context.packet_pool.allocate();
+    return m_context.node().packet_pool().allocate();
   }
 
 
@@ -207,10 +207,8 @@ struct connection_api
 
 
 private:
-  using registry_type = fsm::registry<contextT>;
-
-  contextT &    m_context;
-  registry_type m_registry;
+  connection_contextT &           m_context;
+  fsm::registry                   m_registry;
 
   channel_establishment_callback  m_remote_establishment_cb;
   packet_to_send_callback         m_packet_to_send_cb;
