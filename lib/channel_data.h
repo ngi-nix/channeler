@@ -73,12 +73,24 @@ struct channel_data
     return m_egress_buffer.push(packet, slot);
   }
 
+  inline typename buffer_type::buffer_entry egress_buffer_pop()
+  {
+    return m_egress_buffer.pop();
+  }
+
   // TODO
   // - pop for reading
   // - non-const ref
   inline buffer_type const & egress_buffer() const
   {
     return m_egress_buffer;
+  }
+
+
+
+  inline channelid const & id() const
+  {
+    return m_id;
   }
 
   inline bool has_egress_data_pending() const
@@ -108,7 +120,7 @@ struct channel_data
       return 0;
     }
 
-    return (*iter)->buffer_size;
+    return (*iter)->serialized_size();
   }
 
 
