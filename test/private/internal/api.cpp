@@ -22,13 +22,13 @@
 #include "../lib/context/node.h"
 #include "../lib/context/connection.h"
 
-#include "../../temp_buffer.h"
+#include "../../hexdump.h"
 
 #include <gtest/gtest.h>
 
 namespace {
 
-static constexpr std::size_t PACKET_SIZE = 300;
+static constexpr std::size_t PACKET_SIZE = 120;
 
 using address_t = int; // for testing
 
@@ -59,20 +59,23 @@ struct packet_loop_callback
   {
   }
 
-  void packet_to_send()
+  void packet_to_send(channeler::channelid const & channel)
   {
     ++m_call_count;
 
     // If we have a packet to send, we'll just feed it to our peer.
-    auto own_slot = m_self->packet_to_send();
+    auto entry = m_self->packet_to_send(channel);
+    test::hexdump(std::cerr, entry.packet.buffer(), entry.packet.buffer_size());
 
     // Allocate a peer slot, copy packet.
     auto peer_slot = m_peer->allocate();
-    ASSERT_EQ(own_slot.size(), peer_slot.size());
-    memcpy(peer_slot.data(), own_slot.data(), own_slot.size());
+    ASSERT_EQ(entry.packet.buffer_size(), peer_slot.size());
+    memcpy(peer_slot.data(), entry.packet.buffer(), peer_slot.size());
+
+    test::hexdump(std::cerr, peer_slot.data(), peer_slot.size());
 
     // Let the peer consume its slot
-    m_peer->received_packet(peer_slot);
+    m_peer->received_packet(123, 321, peer_slot);
   }
 
   std::size_t m_call_count = 0;
@@ -172,7 +175,7 @@ TEST(InternalAPI, create)
   api_t api{
     ctx,
     [](error_t, channeler::channelid) {},
-    [](){},
+    [](channeler::channelid){},
     [](channeler::channelid, std::size_t) {}
   };
 }
@@ -188,7 +191,7 @@ TEST(InternalAPI, fail_sending_data_on_default_channel)
   api_t api{
     ctx,
     [](channeler::error_t, channelid) {},
-    [](){},
+    [](channeler::channelid){},
     [](channelid, std::size_t) {}
   };
 
@@ -223,13 +226,13 @@ TEST(InternalAPI, establish_channel)
   peer_api1 = new api_t{
     ctx1,
     [](channeler::error_t, channelid) {},
-    std::bind(&packet_loop_callback::packet_to_send, &loop1),
+    std::bind(&packet_loop_callback::packet_to_send, &loop1, _1),
     [](channelid, std::size_t) {}
   };
   peer_api2 = new api_t{
     ctx2,
     std::bind(&channel_establishment_callback::callback, &ccb2, _1, _2),
-    std::bind(&packet_loop_callback::packet_to_send, &loop2),
+    std::bind(&packet_loop_callback::packet_to_send, &loop2, _1),
     [](channelid, std::size_t) {}
   };
 
@@ -284,13 +287,13 @@ TEST(InternalAPI, send_data_on_established_channel)
   peer_api1 = new api_t{
     ctx1,
     [](channeler::error_t, channelid) {},
-    std::bind(&packet_loop_callback::packet_to_send, &loop1),
+    std::bind(&packet_loop_callback::packet_to_send, &loop1, _1),
     std::bind(&data_available_callback::callback, &dcb1, _1, _2)
   };
   peer_api2 = new api_t{
     ctx2,
     [](channeler::error_t, channelid) {},
-    std::bind(&packet_loop_callback::packet_to_send, &loop2),
+    std::bind(&packet_loop_callback::packet_to_send, &loop2, _1),
     std::bind(&data_available_callback::callback, &dcb2, _1, _2)
   };
 

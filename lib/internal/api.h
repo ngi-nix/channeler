@@ -32,6 +32,9 @@
 #include <channeler/error.h>
 
 #include "../fsm/default.h"
+#include "../pipe/ingress.h"
+#include "../pipe/egress.h"
+#include "../pipe/action.h"
 
 namespace channeler::internal {
 
@@ -55,14 +58,19 @@ struct connection_api
   using pool_type = typename connection_contextT::node_type::pool_type;
   using slot_type = typename pool_type::slot;
 
+  using address_type = typename connection_contextT::address_type;
+
+  using ingress_type = pipe::default_ingress<connection_contextT>;
+  using egress_type = pipe::default_egress<connection_contextT>;
+
   using channel_establishment_callback = std::function<void (error_t, channelid const &)>;
-  using packet_to_send_callback = std::function<void ()>;
+  using packet_to_send_callback = std::function<void (channelid const &)>;
   using data_available_callback = std::function<void (channelid const &, std::size_t)>;
+
+  using buffer_entry = typename connection_contextT::channel_type::buffer_type::buffer_entry;
 
   /**
    * Constructor accepts:
-   *
-   * - a context, providing per-connection  FIXME
    * TODO
    */
   inline connection_api(connection_contextT & context,
@@ -72,10 +80,39 @@ struct connection_api
     )
     : m_context{context}
     , m_registry{fsm::get_standard_registry<typename connection_contextT::address_type>(m_context)}
+    , m_event_route_map{}
+    , m_ingress{m_registry, m_event_route_map, m_context.channels()}
+    , m_egress{
+        std::bind(&connection_api::redirect_egress_event, this, std::placeholders::_1),
+        m_context.channels(),
+        m_context.node().packet_pool(),
+        [this]() { return m_context.node().id(); },
+        [this]() { return m_context.peer(); }
+      }
     , m_remote_establishment_cb{remote_cb}
     , m_packet_to_send_cb{packet_cb}
     , m_data_available_cb{data_cb}
   {
+    // Populate event route map
+    using namespace std::placeholders;
+
+    m_event_route_map[pipe::EC_UNKNOWN] =
+      std::bind(&connection_api::handle_unknown_event, this, _1);
+
+    m_event_route_map[pipe::EC_INGRESS] =
+      std::bind(&connection_api::handle_ingress_event, this, _1);
+
+    m_event_route_map[pipe::EC_EGRESS] =
+      std::bind(&connection_api::handle_egress_event, this, _1);
+
+    m_event_route_map[pipe::EC_USER] =
+      std::bind(&connection_api::handle_user_event, this, _1);
+
+    m_event_route_map[pipe::EC_SYSTEM] =
+      std::bind(&connection_api::handle_system_event, this, _1);
+
+    m_event_route_map[pipe::EC_NOTIFICATION] =
+      std::bind(&connection_api::handle_notification_event, this, _1);
   }
 
   // *** Channel interface
@@ -89,6 +126,10 @@ struct connection_api
    */
   inline error_t establish_channel(peerid const & peer, channel_establishment_callback cb)
   {
+    // Channel establishment happens on the default channel; we need to create a
+    // default channel entry if we haven't already.
+    m_context.channels().add(DEFAULT_CHANNELID);
+
     // Establishing a channel means sending an appropriate user
     // event to the FSM.
     auto event = pipe::new_channel_event(m_context.node().id(), peer);
@@ -96,14 +137,39 @@ struct connection_api
     pipe::action_list_type result_actions;
     pipe::event_list_type result_events;
     auto processed = m_registry.process(&event, result_actions, result_events);
-    if (!processed) {
+    if (!processed || result_events.empty()) {
       return ERR_STATE;
     }
 
-    // TODO
-    // - send produced message to output pipe to produce packet (eventually)
-    return ERR_UNEXPECTED;
+    std::cout << "processed: " << processed << std::endl;
+    std::cout << "actions:   " << result_actions.size() << std::endl;
+    std::cout << "events:    " << result_events.size() << std::endl;
 
+    auto ev = std::move(result_events.front());
+    result_events.pop_front(); // XXX necessary? probably not.
+    if (!ev) {
+      return ERR_STATE;
+    }
+
+    // This *should* produce a message out event. If that's not happening, it's unclear
+    // what we should do.
+    if (ev->type != pipe::ET_MESSAGE_OUT) {
+      // TODO details?
+      return ERR_STATE;
+    }
+
+    // Since this is ET_MESSAGE_OUT, feed this to the egress pipe. The pipe
+    // then produces callbacks as necessary.
+    result_actions = m_egress.consume(std::move(ev));
+    if (!result_actions.empty()) {
+      // TODO handle better
+      return ERR_UNEXPECTED;
+    }
+
+    // TODO maybe when a channel is added, we want a result action for
+    //      notifying the caller, with the channel identifier?
+
+    std::cout << "consumed! We should have some callback?" << std::endl;
     return ERR_SUCCESS;
   }
 
@@ -185,11 +251,26 @@ struct connection_api
    * Buffers for incoming packets are taken from a pool, so the API
    * really just needs a pool slot.
    */
-  inline error_t received_packet(slot_type slot)
+  inline error_t received_packet(address_type const & source,
+      address_type const & destination,
+      slot_type const & slot)
   {
-    // TODO
+    std::cout << "received packet: " << slot.size() << std::endl;
+    auto ev = std::make_unique<
+      pipe::raw_buffer_event<
+        address_type, connection_contextT::POOL_BLOCK_SIZE
+      >
+    >(source, destination, slot);
+
     // Feed into default ingress pipe
-    return ERR_UNEXPECTED;
+    auto actions = m_ingress.consume(std::move(ev));
+    if (!actions.empty()) {
+      // TODO handle
+      std::cout << "oops?" << std::endl;
+      return ERR_UNEXPECTED;
+    }
+    std::cout << "ok, packet received and processed." << std::endl;
+    return ERR_SUCCESS;
   }
 
 
@@ -200,15 +281,84 @@ struct connection_api
    * API just returns the slot. If the slot is empty, there is no more
    * data ready for sending.
    */
-  inline slot_type packet_to_send()
+  inline buffer_entry packet_to_send(channelid const & channel)
   {
-    // TODO
+    auto ptr = m_context.channels().get(channel);
+    // TODO in future, don't just pop - we might have to resend something
+    return ptr->egress_buffer_pop();
   }
 
 
 private:
+
+  pipe::action_list_type redirect_egress_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "egress event produced: " << ev->type << std::endl;
+    switch (ev->type) {
+      case pipe::ET_PACKET_OUT_ENQUEUED:
+        {
+          auto converted = reinterpret_cast<
+            pipe::packet_out_enqueued_event<typename connection_contextT::channel_type> *
+          >(ev.get());
+          auto channel = converted->channel->id();
+          std::cout << "have a packet to send: " << channel << std::endl;
+          m_packet_to_send_cb(channel);
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    // TODO
+    return {};
+  }
+
+  pipe::action_list_type handle_ingress_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "ingress event of type: " << ev->type << std::endl;
+    return {};
+  }
+
+  pipe::action_list_type handle_unknown_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "unknown event" << std::endl;
+    return {};
+  }
+
+  pipe::action_list_type handle_egress_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "egress event of type: " << ev->type << std::endl;
+    return m_egress.consume(std::move(ev));
+  }
+
+  pipe::action_list_type handle_user_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "user event of type: " << ev->type << std::endl;
+    return {};
+  }
+
+  pipe::action_list_type handle_system_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "system event of type: " << ev->type << std::endl;
+    return {};
+  }
+
+  pipe::action_list_type handle_notification_event(std::unique_ptr<pipe::event> ev)
+  {
+    std::cout << "notification event of type: " << ev->type << std::endl;
+    return {};
+  }
+
+
+
   connection_contextT &           m_context;
   fsm::registry                   m_registry;
+
+  pipe::event_route_map           m_event_route_map;
+
+  ingress_type                    m_ingress;
+  egress_type                     m_egress;
 
   channel_establishment_callback  m_remote_establishment_cb;
   packet_to_send_callback         m_packet_to_send_cb;
