@@ -83,9 +83,8 @@ public:
   };
 
   // TODO also take pool?
-  inline packet_buffer(std::size_t packet_size, lock_policyT * lock = nullptr)
-    : m_packet_size{packet_size}
-    , m_lock{lock}
+  inline packet_buffer(lock_policyT * lock = nullptr)
+    : m_lock{lock}
   {
   }
 
@@ -109,9 +108,6 @@ private:
   // a bounded FIFO, implement loss behaviour on pop(), etc.
   using list_t = std::list<buffer_entry>;
   list_t          m_buffer;
-
-  // Packet size
-  std::size_t     m_packet_size;
 
   // Lock policy
   lock_policyT *  m_lock;
