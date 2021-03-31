@@ -43,7 +43,7 @@ template <
   typename addressT,
   typename nodeT,
   typename transport_failure_policyT = ::channeler::pipe::null_policy<addressT>,
-  typename peer_failure_policyT = ::channeler::pipe::null_policy<peerid>
+  typename peer_failure_policyT = ::channeler::pipe::null_policy<peerid_wrapper>
 >
 struct connection
 {
