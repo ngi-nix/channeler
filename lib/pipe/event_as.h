@@ -34,8 +34,20 @@
 
 namespace channeler::pipe {
 
+inline void
+event_assert_set(char const * caller, event * raw)
+{
+#if defined(DEBUG) && !defined(NDEBUG)
+  if (!raw) {
+    std::cerr << caller << " received empty event." << std::endl;
+    throw exception{ERR_INVALID_REFERENCE};
+  }
+  std::cout << caller << " received event type: " << raw->type << std::endl;
+#endif // DEBUG
+}
+
 /**
- * Helper structure for asserting that a given filter receives an event of a
+ * Helper function for asserting that a given filter receives an event of a
  * given type.
  *
  * When DEBUG is defined, this is active code. When NDEBUG is defined, only
@@ -44,22 +56,20 @@ namespace channeler::pipe {
 template <
   typename eventT
 >
-eventT *
+inline eventT *
 event_as(char const * caller, event * raw, event_type expected_type)
 {
+  event_assert_set(caller, raw);
+
 #if defined(DEBUG) && !defined(NDEBUG)
-  if (!raw) {
-    std::cerr << caller << " received empty event." << std::endl;
-    throw exception{ERR_INVALID_REFERENCE};
-  }
   if (raw->type != expected_type) {
     std::cerr << caller << " received unexpected event type: " << raw->type
       << " (wanted: " << expected_type << ")"
       << std::endl;
     throw exception{ERR_INVALID_PIPE_EVENT};
   }
-  std::cout << caller << " received expected event type: " << raw->type << std::endl;
 #endif // DEBUG
+
   return reinterpret_cast<eventT *>(raw);
 }
 
