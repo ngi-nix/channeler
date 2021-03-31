@@ -19,7 +19,6 @@
  **/
 
 #include "../lib/fsm/data.h"
-// FIXME #include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
 
@@ -49,7 +48,7 @@ TEST(FSMData, process_bad_event)
   using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
   using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return
@@ -69,12 +68,12 @@ TEST(FSMData, process_bad_message)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return
@@ -98,12 +97,12 @@ TEST(FSMData, remote_data_existing_channel)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // We need a packet with the above channel ID. Which won't exist, ever,
@@ -158,12 +157,12 @@ TEST(FSMData, remote_data_pending_channel)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   auto cid = chs.new_pending_channel();
   auto ch = chs.get(cid);
   fsm_t fsm{chs};
@@ -200,12 +199,12 @@ TEST(FSMData, remote_data_unknown_channel)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return
@@ -233,12 +232,12 @@ TEST(FSMData, local_data_existing_channel)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
   using event_t = fsm_t::data_written_event_type;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // Random channelid, make pending
@@ -279,12 +278,12 @@ TEST(FSMData, local_data_pending_channel)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
   using event_t = fsm_t::data_written_event_type;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // Random channelid, make pending
@@ -324,12 +323,12 @@ TEST(FSMData, local_data_unknown_channel)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_data<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_data<int, TEST_POOL_BLOCK_SIZE, channel_t>;
   using event_t = fsm_t::data_written_event_type;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs};
 
   // Random channelid

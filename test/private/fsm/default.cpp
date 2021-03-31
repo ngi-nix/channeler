@@ -19,13 +19,25 @@
  **/
 
 #include "../lib/fsm/default.h"
-#include "../lib/context.h"
+#include "../lib/context/node.h"
+#include "../lib/context/connection.h"
 
 #include "../../temp_buffer.h"
 
 #include <gtest/gtest.h>
 
 namespace {
+
+constexpr std::size_t PACKET_SIZE = 120;
+
+using address_t = int; // for testing
+
+using node_t = ::channeler::context::node<
+  3 // POOL_BLOCK_SIZE
+  // XXX lock policy is null by default
+>;
+
+using connection_t = ::channeler::context::connection<node_t>;
 
 using packet_t = std::pair<
   channeler::packet_wrapper,
@@ -53,57 +65,76 @@ make_packet(channeler::peerid const & sender,
 } // anonymous namespace
 
 
-TEST(FSMDefaultRegistry, create)
+TEST(FSMStandardRegistry, create)
 {
   using namespace channeler::fsm;
 
-  using ctx_t = channeler::default_context<
-    int,
-    3
-  >;
-  ctx_t ctx{
-    42,
-    [](channeler::support::timeouts::duration d) { return d; },
+  channeler::peerid self;
+  channeler::peerid peer;
+
+  node_t node{
+    self,
+    PACKET_SIZE,
     []() -> std::vector<std::byte> { return {}; }
   };
 
-  auto reg = get_standard_registry(ctx);
+  connection_t ctx{
+    node,
+    peer,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
+
+  auto reg = get_standard_registry<address_t>(ctx);
 }
 
 
-TEST(FSMDefaultRegistry, negotiate_channel)
+TEST(FSMStandardRegistry, negotiate_channel)
 {
   // We should be able to negotiate a channel between two default registries
   using namespace channeler::fsm;
   using namespace channeler::pipe;
 
-  using ctx_t = channeler::default_context<
-    int,
-    3
-  >;
   using pool_t = channeler::memory::packet_pool<
-    ctx_t::POOL_BLOCK_SIZE
+    connection_t::POOL_BLOCK_SIZE
   >;
   using message_event_t = message_event<
-    typename ctx_t::address_type,
-    ctx_t::POOL_BLOCK_SIZE,
-    typename ctx_t::channel_type
+    address_t,
+    connection_t::POOL_BLOCK_SIZE,
+    typename connection_t::channel_type
   >;
 
-  pool_t pool{42};
+  pool_t pool{PACKET_SIZE};
 
   // Copying the context is fine here, we should just have two
   // unique contexts.
-  ctx_t peer1_ctx{
-    42,
-    [](channeler::support::timeouts::duration d) { return d; },
+  channeler::peerid self;
+  channeler::peerid peer;
+
+  node_t node1{
+    self,
+    PACKET_SIZE,
     []() -> std::vector<std::byte> { return {}; }
   };
-  ctx_t peer2_ctx = peer1_ctx;
+  node_t node2{
+    peer,
+    PACKET_SIZE,
+    []() -> std::vector<std::byte> { return {}; }
+  };
+
+  connection_t peer1_ctx{
+    node1,
+    peer,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
+  connection_t peer2_ctx{
+    node2,
+    self,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
 
   // Create two registries
-  auto peer1_reg = get_standard_registry(peer1_ctx);
-  auto peer2_reg = get_standard_registry(peer2_ctx);
+  auto peer1_reg = get_standard_registry<address_t>(peer1_ctx);
+  auto peer2_reg = get_standard_registry<address_t>(peer2_ctx);
 
   action_list_type actions;
   event_list_type events;
@@ -112,7 +143,7 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   // Step 1: one peer initiates a new channel
   //         We need to have a message event as the output.
   auto ev1 = new_channel_event(
-      peer1_ctx.id, peer2_ctx.id);
+      peer1_ctx.node().id(), peer1_ctx.peer());
   result = peer1_reg.process(&ev1, actions, events);
   ASSERT_TRUE(result);
   ASSERT_EQ(0, actions.size());
@@ -127,12 +158,12 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   auto result_ev1_msg = reinterpret_cast<channeler::message_channel_new *>(result_ev1_conv->message.get());
 
   auto half_id = result_ev1_msg->initiator_part;
-  ASSERT_TRUE(peer1_ctx.channels.has_pending_channel(half_id));
-  ASSERT_FALSE(peer2_ctx.channels.has_pending_channel(half_id));
+  ASSERT_TRUE(peer1_ctx.channels().has_pending_channel(half_id));
+  ASSERT_FALSE(peer2_ctx.channels().has_pending_channel(half_id));
 
   // Step 2: the other peer returns a cookie.
   //         We have to feed the output message to the other peer's registry.
-  auto pkt2 = make_packet(peer1_ctx.id, peer2_ctx.id);
+  auto pkt2 = make_packet(peer2_ctx.peer(), peer2_ctx.node().id());
   auto ev2 = message_event_t{123, 321, pkt2.first, pool.allocate(), {},
     std::move(result_ev1_conv->message)
   };
@@ -155,11 +186,11 @@ TEST(FSMDefaultRegistry, negotiate_channel)
 
   auto id = result_ev2_msg->id;
   ASSERT_EQ(half_id, id.initiator);
-  ASSERT_TRUE(peer1_ctx.channels.has_pending_channel(id));
-  ASSERT_FALSE(peer2_ctx.channels.has_pending_channel(id));
+  ASSERT_TRUE(peer1_ctx.channels().has_pending_channel(id));
+  ASSERT_FALSE(peer2_ctx.channels().has_pending_channel(id));
 
   // Step 3: the ack message should finalize the channel on peer1
-  auto pkt3 = make_packet(peer2_ctx.id, peer1_ctx.id);
+  auto pkt3 = make_packet(peer2_ctx.node().id(), peer2_ctx.peer());
   auto ev3 = message_event_t{321, 123, pkt3.first, pool.allocate(), {},
     std::move(result_ev2_conv->message)
   };
@@ -180,12 +211,12 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   ASSERT_EQ(channeler::MSG_CHANNEL_FINALIZE, result_ev3_conv->message->type);
   auto result_ev3_msg = reinterpret_cast<channeler::message_channel_finalize *>(result_ev3_conv->message.get());
 
-  ASSERT_TRUE(peer1_ctx.channels.has_established_channel(id));
-  ASSERT_FALSE(peer2_ctx.channels.has_pending_channel(id));
+  ASSERT_TRUE(peer1_ctx.channels().has_established_channel(id));
+  ASSERT_FALSE(peer2_ctx.channels().has_pending_channel(id));
 
   // Step 4: peer 2 needs to process the finalize message to also have an
   //         established channel
-  auto pkt4 = make_packet(peer1_ctx.id, peer2_ctx.id);
+  auto pkt4 = make_packet(peer1_ctx.node().id(), peer1_ctx.peer());
   auto ev4 = message_event_t{123, 321, pkt4.first, pool.allocate(), {},
     std::move(result_ev3_conv->message)
   };
@@ -198,6 +229,6 @@ TEST(FSMDefaultRegistry, negotiate_channel)
   ASSERT_EQ(0, actions.size());
   ASSERT_EQ(0, events.size());
 
-  ASSERT_TRUE(peer1_ctx.channels.has_established_channel(id));
-  ASSERT_TRUE(peer2_ctx.channels.has_established_channel(id));
+  ASSERT_TRUE(peer1_ctx.channels().has_established_channel(id));
+  ASSERT_TRUE(peer2_ctx.channels().has_established_channel(id));
 }

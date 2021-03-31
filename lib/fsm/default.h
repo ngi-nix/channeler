@@ -26,7 +26,7 @@
 
 #include <channeler.h>
 
-#include "base.h"
+#include "registry.h"
 #include "channel_initiator.h"
 #include "channel_responder.h"
 #include "data.h"
@@ -43,42 +43,48 @@ namespace channeler::fsm {
  * TODO
  */
 template <
-  typename contextT
+  typename addressT,
+  typename connection_contextT
 >
-inline registry<contextT>
-get_standard_registry(contextT & ctx)
+inline registry
+get_standard_registry(connection_contextT & conn_ctx)
 {
-  registry<contextT> reg{&ctx};
+  registry reg;
 
   // Channel initiator
   using init_fsm_t = fsm_channel_initiator<
-    typename contextT::address_type,
-    contextT::POOL_BLOCK_SIZE,
-    typename contextT::channel_type
+    addressT,
+    connection_contextT::POOL_BLOCK_SIZE,
+    typename connection_contextT::channel_type
   >;
   auto init = std::make_unique<init_fsm_t>(
-      ctx.timeouts, ctx.channels, ctx.secret_generator
+      conn_ctx.timeouts(),
+      conn_ctx.channels(),
+      conn_ctx.node().secret_generator()
   );
   reg.add_move(std::move(init));
 
   // Channel responder
   using resp_fsm_t = fsm_channel_responder<
-    typename contextT::address_type,
-    contextT::POOL_BLOCK_SIZE,
-    typename contextT::channel_type
+    addressT,
+    connection_contextT::POOL_BLOCK_SIZE,
+    typename connection_contextT::channel_type
   >;
   auto resp = std::make_unique<resp_fsm_t>(
-      ctx.channels, ctx.secret_generator
+      conn_ctx.channels(),
+      conn_ctx.node().secret_generator()
   );
   reg.add_move(std::move(resp));
 
   // Data
   using data_fsm_t = fsm_data<
-    typename contextT::address_type,
-    contextT::POOL_BLOCK_SIZE,
-    typename contextT::channel_type
+    addressT,
+    connection_contextT::POOL_BLOCK_SIZE,
+    typename connection_contextT::channel_type
   >;
-  auto data = std::make_unique<data_fsm_t>(ctx.channels);
+  auto data = std::make_unique<data_fsm_t>(
+      conn_ctx.channels()
+  );
   reg.add_move(std::move(data));
 
   return reg;

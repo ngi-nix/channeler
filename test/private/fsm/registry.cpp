@@ -18,7 +18,7 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/fsm/base.h"
+#include "../lib/fsm/registry.h"
 
 #include <gtest/gtest.h>
 
@@ -96,7 +96,7 @@ TEST(FSMRegistry, with_ctx_add)
 {
   using namespace channeler::fsm;
 
-  registry<int> reg;
+  registry reg;
 
   // Fail at compile time
   // reg.add<foo>();
@@ -110,7 +110,7 @@ TEST(FSMRegistry, with_ctx_add_with_ctor_args)
 {
   using namespace channeler::fsm;
 
-  registry<int> reg;
+  registry reg;
 
   // Fail at compile time
   // reg.add<test_fsm_with_ctor>();

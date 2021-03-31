@@ -49,7 +49,7 @@ TEST(FSMChannelResponder, process_bad_event)
   using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
   using fsm_t = fsm_channel_responder<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs, []() {
     return fsm_t::secret_type{};
   }};
@@ -71,12 +71,12 @@ TEST(FSMChannelResponder, process_bad_message)
   using namespace channeler;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_responder<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_responder<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs, []() { return fsm_t::secret_type{}; }};
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return
@@ -106,12 +106,12 @@ TEST(FSMChannelResponder, process_msg_channel_new)
   channeler::packet_wrapper pkt{data.buf.get(), data.size};
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_responder<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_responder<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs, []() { return fsm_t::secret_type{}; }};
 
   // MSG_CHANNEL_NEW should be processed, and at this point we'll expect a
@@ -158,12 +158,12 @@ TEST(FSMChannelResponder, process_msg_channel_finalize)
   channeler::packet_wrapper pkt{data.buf.get(), data.size};
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_responder<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_responder<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   fsm_t fsm{chs, []() { return fsm_t::secret_type{}; }};
 
   // MSG_CHANNEL_FINALIZE should be processed, but we should not get output

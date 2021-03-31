@@ -50,7 +50,7 @@ TEST(FSMChannelInitiator, process_bad_event)
   using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
   using fsm_t = fsm_channel_initiator<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   timeouts t{[] (timeouts::duration a) -> timeouts::duration { return a; }};
   fsm_t fsm{t, chs, []() {
     return fsm_t::secret_type{};
@@ -74,12 +74,12 @@ TEST(FSMChannelInitiator, process_bad_message)
   using namespace channeler::support;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_initiator<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_initiator<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
   pool_type pool{TEST_PACKET_SIZE};
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   timeouts t{[] (timeouts::duration a) -> timeouts::duration { return a; }};
   fsm_t fsm{t, chs, []() { return fsm_t::secret_type{}; }};
 
@@ -103,10 +103,10 @@ TEST(FSMChannelInitiator, initiate_new_channel)
   using namespace channeler::support;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_initiator<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_initiator<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   timeouts t{[] (timeouts::duration a) -> timeouts::duration { return a; }};
   fsm_t fsm{t, chs, []() { return fsm_t::secret_type{}; }};
 
@@ -148,10 +148,10 @@ TEST(FSMChannelInitiator, timeout_pending_channel)
   using namespace channeler::support;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_initiator<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_initiator<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   timeouts t{[] (timeouts::duration a) -> timeouts::duration { return a; }};
   fsm_t fsm{t, chs, []() { return fsm_t::secret_type{}; }};
 
@@ -181,11 +181,11 @@ TEST(FSMChannelInitiator, acknowledge_channel)
   using namespace channeler::support;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_initiator<int, 3, channel_t>;
-  using event_t = message_event<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_initiator<int, TEST_POOL_BLOCK_SIZE, channel_t>;
+  using event_t = message_event<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   timeouts t{[] (timeouts::duration a) -> timeouts::duration { return a; }};
   fsm_t fsm{t, chs, []() { return fsm_t::secret_type{}; }};
 
@@ -259,10 +259,10 @@ TEST(FSMChannelInitiator, timeout_established_channel)
   using namespace channeler::support;
 
   // TODO I don't like having to pass the pool block size here at all.
-  using channel_t = channel_data<3>;
-  using fsm_t = fsm_channel_initiator<int, 3, channel_t>;
+  using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
+  using fsm_t = fsm_channel_initiator<int, TEST_POOL_BLOCK_SIZE, channel_t>;
 
-  fsm_t::channel_set chs{TEST_PACKET_SIZE};
+  fsm_t::channel_set chs;
   timeouts t{[] (timeouts::duration a) -> timeouts::duration { return a; }};
   fsm_t fsm{t, chs, []() { return fsm_t::secret_type{}; }};
 
