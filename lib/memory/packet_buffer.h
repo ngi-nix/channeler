@@ -96,6 +96,13 @@ public:
     return ERR_SUCCESS;
   }
 
+  inline buffer_entry pop()
+  {
+    auto entry = m_buffer.front();
+    m_buffer.pop_front();
+    return entry;
+  }
+
   // TODO pop for reading
   inline bool empty() const
   {
