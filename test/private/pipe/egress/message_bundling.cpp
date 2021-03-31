@@ -57,7 +57,7 @@ using filter_t = channeler::pipe::message_bundling_filter<
 
 
 
-TEST(PipeIngressMessageBundlingFilter, throw_on_invalid_event)
+TEST(PipeEgressMessageBundlingFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -78,7 +78,7 @@ TEST(PipeIngressMessageBundlingFilter, throw_on_invalid_event)
 }
 
 
-TEST(PipeIngressMessageBundlingFilter, bundle_message)
+TEST(PipeEgressMessageBundlingFilter, bundle_message)
 {
   using namespace channeler::pipe;
 

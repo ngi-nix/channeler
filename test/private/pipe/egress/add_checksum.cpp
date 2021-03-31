@@ -57,7 +57,7 @@ using filter_t = channeler::pipe::add_checksum_filter<
 
 
 
-TEST(PipeIngressAddChecksumFilter, throw_on_invalid_event)
+TEST(PipeEgressAddChecksumFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -74,7 +74,7 @@ TEST(PipeIngressAddChecksumFilter, throw_on_invalid_event)
 }
 
 
-TEST(PipeIngressAddChecksumFilter, checksum)
+TEST(PipeEgressAddChecksumFilter, checksum)
 {
   using namespace channeler::pipe;
 

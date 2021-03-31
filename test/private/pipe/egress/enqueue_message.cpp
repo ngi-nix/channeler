@@ -51,7 +51,7 @@ using filter_t = channeler::pipe::enqueue_message_filter<
 
 
 
-TEST(PipeIngressEnqueueMessageFilter, throw_on_invalid_event)
+TEST(PipeEgressEnqueueMessageFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -68,7 +68,7 @@ TEST(PipeIngressEnqueueMessageFilter, throw_on_invalid_event)
 }
 
 
-TEST(PipeIngressEnqueueMessageFilter, enqueue_message)
+TEST(PipeEgressEnqueueMessageFilter, enqueue_message)
 {
   using namespace channeler::pipe;
 

@@ -46,7 +46,7 @@ using filter_t = channeler::pipe::callback_filter<
 
 
 
-TEST(PipeIngressCallbackFilter, pass_events)
+TEST(PipeEgressCallbackFilter, pass_events)
 {
   using namespace channeler::pipe;
 

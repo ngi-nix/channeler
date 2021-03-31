@@ -67,7 +67,7 @@ using filter_t = channeler::pipe::out_buffer_filter<
 
 
 
-TEST(PipeIngressOutBufferFilter, throw_on_invalid_event)
+TEST(PipeEgressOutBufferFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -86,7 +86,7 @@ TEST(PipeIngressOutBufferFilter, throw_on_invalid_event)
 
 
 // TODO enqueue_bad_channel
-TEST(PipeIngressOutBufferFilter, enqueue)
+TEST(PipeEgressOutBufferFilter, enqueue)
 {
   using namespace channeler::pipe;
 
