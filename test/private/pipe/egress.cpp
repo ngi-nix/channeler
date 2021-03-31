@@ -19,20 +19,31 @@
  **/
 
 #include "../lib/pipe/egress.h"
-#include "../lib/context.h"
+#include "../lib/context/node.h"
+#include "../lib/context/connection.h"
 
 #include <gtest/gtest.h>
 
 namespace {
 
 constexpr static std::size_t PACKET_SIZE = 300;
+constexpr static std::size_t POOL_BLOCK_SIZE = 3;
 
-using ctx_t = channeler::default_context<
-  int,
-  3
+using address_t = int;
+
+using node_t = ::channeler::context::node<
+  POOL_BLOCK_SIZE
+  // XXX lock policy is null by default
 >;
 
-using egress_t = channeler::pipe::default_egress<ctx_t>;
+using connection_t = ::channeler::context::connection<
+  address_t,
+  node_t
+>;
+
+using egress_t = channeler::pipe::default_egress<
+  connection_t
+>;
 
 
 } // anonymous namespace
@@ -42,13 +53,23 @@ TEST(PipeEgress, create)
 {
   using namespace channeler::pipe;
 
-  ctx_t ctx{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
+  channeler::peerid self;
+  channeler::peerid peer;
+
+  node_t node{
+    self,
+    PACKET_SIZE,
     []() -> std::vector<std::byte> { return {}; }
   };
 
-  typename egress_t::channel_set chs{PACKET_SIZE};
+  connection_t ctx{
+    node,
+    peer,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
+
+  typename egress_t::channel_set_type chs;
+  typename egress_t::pool_type pool{PACKET_SIZE};
 
   std::unique_ptr<event> caught;
   egress_t egress{
@@ -57,6 +78,9 @@ TEST(PipeEgress, create)
       caught = std::move(ev);
       return {};
     },
-    chs
+    chs,
+    pool,
+    []() -> channeler::peerid { return {}; },
+    []() -> channeler::peerid { return {}; }
   };
 }

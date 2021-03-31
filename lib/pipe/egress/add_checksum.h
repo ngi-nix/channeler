@@ -28,9 +28,9 @@
 
 #include <memory>
 
-#include "../memory/packet_pool.h"
-#include "event.h"
-#include "action.h"
+#include "../../memory/packet_pool.h"
+#include "../event.h"
+#include "../action.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>

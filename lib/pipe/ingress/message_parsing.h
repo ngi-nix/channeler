@@ -17,8 +17,8 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE.
  **/
-#ifndef CHANNELER_PIPE_MESSAGE_PARSING_H
-#define CHANNELER_PIPE_MESSAGE_PARSING_H
+#ifndef CHANNELER_PIPE_INGRESS_MESSAGE_PARSING_H
+#define CHANNELER_PIPE_INGRESS_MESSAGE_PARSING_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -29,11 +29,11 @@
 #include <memory>
 #include <set>
 
-#include "../memory/packet_pool.h"
-#include "../channels.h"
-#include "event.h"
-#include "action.h"
-#include "filter_classifier.h"
+#include "../../memory/packet_pool.h"
+#include "../../channels.h"
+#include "../event.h"
+#include "../action.h"
+#include "../filter_classifier.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>

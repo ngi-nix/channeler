@@ -17,8 +17,8 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE.
  **/
-#ifndef CHANNELER_PIPE_STATE_HANDLING_H
-#define CHANNELER_PIPE_STATE_HANDLING_H
+#ifndef CHANNELER_PIPE_INGRESS_STATE_HANDLING_H
+#define CHANNELER_PIPE_INGRESS_STATE_HANDLING_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -26,21 +26,12 @@
 
 #include <channeler.h>
 
-#include <iostream> // FIXME
 #include <functional>
 #include <map>
 
-#include "../lock_policy.h"
-#include "event.h"
-#include "action.h"
-
-// TODO
-// next filter:
-// - take events
-// - invoke callback with event
-// - this allows context to hook the events back into its own NAAH
-//  ... though probably yes.
-//  -> EVENT CATEGORIES
+#include "../../lock_policy.h"
+#include "../event.h"
+#include "../action.h"
 
 
 namespace channeler::pipe {

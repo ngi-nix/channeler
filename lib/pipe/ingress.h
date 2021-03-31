@@ -28,12 +28,12 @@
 
 #include "filter_classifier.h"
 
-#include "state_handling.h"
-#include "message_parsing.h"
-#include "channel_assign.h"
-#include "validate.h"
-#include "route.h"
-#include "de_envelope.h"
+#include "ingress/state_handling.h"
+#include "ingress/message_parsing.h"
+#include "ingress/channel_assign.h"
+#include "ingress/validate.h"
+#include "ingress/route.h"
+#include "ingress/de_envelope.h"
 
 #include "../fsm/default.h"
 
@@ -43,20 +43,22 @@ namespace channeler::pipe {
  * Default ingress filter pipe.
  */
 template <
-  typename contextT,
-  typename peer_failure_policyT = null_policy<peerid_wrapper>,
-  typename transport_failure_policyT = null_policy<typename contextT::address_type>
+  typename connection_contextT
 >
 struct default_ingress
 {
+
   // *** Basic context-derived type aliases and constants
-  constexpr static std::size_t POOL_BLOCK_SIZE = contextT::POOL_BLOCK_SIZE;
-  using address_type = typename contextT::address_type;
+  constexpr static std::size_t POOL_BLOCK_SIZE = connection_contextT::POOL_BLOCK_SIZE;
+  using address_type = typename connection_contextT::address_type;
 
-  using fsm_registry_type = ::channeler::fsm::registry<contextT>;
+  using fsm_registry_type = ::channeler::fsm::registry;
 
-  using channel_type = typename contextT::channel_type;
-  using channel_set = ::channeler::channels<channel_type>;
+  using channel_type = typename connection_contextT::channel_type;
+  using channel_set_type = typename connection_contextT::channel_set_type;
+
+  using peer_failure_policy_type = typename connection_contextT::peer_failure_policy_type;
+  using transport_failure_policy_type = typename connection_contextT::transport_failure_policy_type;
 
 
   // *** Filter type aliases
@@ -69,21 +71,21 @@ struct default_ingress
     address_type, POOL_BLOCK_SIZE,
     state_handling, typename state_handling::input_event,
     channel_type,
-    peer_failure_policyT,
-    transport_failure_policyT
+    peer_failure_policy_type,
+    transport_failure_policy_type
   >;
   using channel_assign = channel_assign_filter<
     address_type, POOL_BLOCK_SIZE,
     message_parsing, typename message_parsing::input_event,
     channel_type,
-    peer_failure_policyT,
-    transport_failure_policyT
+    peer_failure_policy_type,
+    transport_failure_policy_type
   >;
   using validate = validate_filter<
     address_type, POOL_BLOCK_SIZE,
     channel_assign, typename channel_assign::input_event,
-    peer_failure_policyT,
-    transport_failure_policyT
+    peer_failure_policy_type,
+    transport_failure_policy_type
   >;
   using route = route_filter<
     address_type, POOL_BLOCK_SIZE,
@@ -97,9 +99,9 @@ struct default_ingress
   inline default_ingress(
       fsm_registry_type & registry,
       event_route_map & route_map,
-      channel_set & channels,
-      peer_failure_policyT * peer_p = nullptr,
-      transport_failure_policyT * trans_p = nullptr
+      channel_set_type & channels,
+      peer_failure_policy_type * peer_p = nullptr,
+      transport_failure_policy_type * trans_p = nullptr
     )
     : m_state_handling{registry, route_map}
     , m_message_parsing{&m_state_handling}

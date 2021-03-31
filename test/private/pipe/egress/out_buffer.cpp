@@ -18,22 +18,33 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/de_envelope.h"
+#include "../lib/pipe/egress/out_buffer.h"
+#include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
+
+#include "../../../packets.h"
 
 namespace {
 
 // For testing
 using address_t = uint16_t;
 constexpr std::size_t POOL_BLOCK_SIZE = 3;
-constexpr std::size_t PACKET_SIZE = 42;
+constexpr std::size_t PACKET_SIZE = 200;
 
 using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
+using channel_data = ::channeler::channel_data<
+  POOL_BLOCK_SIZE
+  // TODO lock policy
+>;
+using channel_set = ::channeler::channels<channel_data>;
+
 struct next
 {
-  using input_event = channeler::pipe::parsed_header_event<address_t, POOL_BLOCK_SIZE>;
+  using input_event = channeler::pipe::packet_out_enqueued_event<
+    channel_data
+  >;
 
   inline channeler::pipe::action_list_type consume(std::unique_ptr<channeler::pipe::event> event)
   {
@@ -43,9 +54,11 @@ struct next
   std::unique_ptr<channeler::pipe::event> m_event;
 };
 
-using filter_t = channeler::pipe::de_envelope_filter<
+
+using filter_t = channeler::pipe::out_buffer_filter<
   address_t,
   POOL_BLOCK_SIZE,
+  channel_data,
   next,
   next::input_event
 >;
@@ -54,12 +67,14 @@ using filter_t = channeler::pipe::de_envelope_filter<
 
 
 
-TEST(PipeDeEnvelopeFilter, throw_on_invalid_event)
+TEST(PipeIngressOutBufferFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
+  pool_type pool{PACKET_SIZE};
+  channel_set chs;
   next n;
-  filter_t filter{&n};
+  filter_t filter{&n, chs};
 
   // Create a default event; this should not be handled.
   auto ev = std::make_unique<event>();
@@ -70,26 +85,41 @@ TEST(PipeDeEnvelopeFilter, throw_on_invalid_event)
 }
 
 
-
-TEST(PipeDeEnvelopeFilter, parse_data)
+// TODO enqueue_bad_channel
+TEST(PipeIngressOutBufferFilter, enqueue)
 {
   using namespace channeler::pipe;
 
   pool_type pool{PACKET_SIZE};
-
-  auto data = pool.allocate();
-
+  channel_set chs;
   next n;
-  filter_t filter{&n};
+  filter_t filter{&n, chs};
 
-  // No data added to event.
-  auto ev = std::make_unique<filter_t::input_event>(123, 321, data);
-  ASSERT_NO_THROW(filter.consume(std::move(ev)));
+  // Create packet
+  auto slot = pool.allocate();
+  memcpy(slot.data(), test::packet_default_channel,
+      test::packet_default_channel_size);
+  auto packet = channeler::packet_wrapper(slot.data(), slot.size(), true);
+
+  // Make sure channel exists for this test case
+  chs.add(packet.channel());
+
+  // Pass through filter
+  auto ev = std::make_unique<packet_out_event<POOL_BLOCK_SIZE>>(
+      std::move(slot),
+      std::move(packet)
+  );
+  auto ret = filter.consume(std::move(ev));
+
+  ASSERT_EQ(0, ret.size());
 
   // No need to actually test packet header parsing - that's been tested
   // elsewhere. This tests that the filter passes on things well.
-  ASSERT_EQ(n.m_event->type, ET_PARSED_HEADER);
+  ASSERT_TRUE(n.m_event);
+  ASSERT_EQ(n.m_event->type, ET_PACKET_OUT_ENQUEUED);
   next::input_event * ptr = reinterpret_cast<next::input_event *>(n.m_event.get());
-  ASSERT_EQ(123, ptr->transport.source);
-  ASSERT_EQ(321, ptr->transport.destination);
+  ASSERT_TRUE(ptr->channel);
+
+  // We could check that the packet is in the buffer
+  ASSERT_FALSE(ptr->channel->egress_buffer().empty());
 }

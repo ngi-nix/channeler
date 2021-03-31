@@ -18,7 +18,7 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/enqueue_message.h"
+#include "../lib/pipe/egress/enqueue_message.h"
 #include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
@@ -26,10 +26,7 @@
 namespace {
 
 constexpr std::size_t PACKET_SIZE = 200;
-constexpr std::size_t TEST_POOL_BLOCK_SIZE = 3;
-
-// For testing
-using address_t = uint16_t;
+constexpr std::size_t POOL_BLOCK_SIZE = 3;
 
 struct next
 {
@@ -45,22 +42,21 @@ struct next
 
 
 using filter_t = channeler::pipe::enqueue_message_filter<
-  address_t,
+  ::channeler::channel_data<POOL_BLOCK_SIZE>,
   next,
-  next::input_event,
-  ::channeler::channel_data<TEST_POOL_BLOCK_SIZE>
+  next::input_event
 >;
 
 } // anonymous namespace
 
 
 
-TEST(PipeEnqueueMessageFilter, throw_on_invalid_event)
+TEST(PipeIngressEnqueueMessageFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
   next n;
-  filter_t::channel_set chs{PACKET_SIZE};
+  filter_t::channel_set chs;
   filter_t filter{&n, chs};
 
   // Create a default event; this should not be handled.
@@ -72,12 +68,12 @@ TEST(PipeEnqueueMessageFilter, throw_on_invalid_event)
 }
 
 
-TEST(PipeEnqueueMessageFilter, enqueue_message)
+TEST(PipeIngressEnqueueMessageFilter, enqueue_message)
 {
   using namespace channeler::pipe;
 
   next n;
-  filter_t::channel_set chs{PACKET_SIZE};
+  filter_t::channel_set chs;
   filter_t filter{&n, chs};
 
   auto channel = channeler::create_new_channelid();

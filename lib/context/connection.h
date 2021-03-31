@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "../memory/packet_pool.h"
+#include "../pipe/filter_classifier.h"
 
 
 namespace channeler::context {
@@ -39,12 +40,18 @@ namespace channeler::context {
  * as lightweight as possible.
  */
 template <
-  typename nodeT
+  typename addressT,
+  typename nodeT,
+  typename transport_failure_policyT = ::channeler::pipe::null_policy<addressT>,
+  typename peer_failure_policyT = ::channeler::pipe::null_policy<peerid>
 >
 struct connection
 {
   // *** Template type aliases
+  using address_type = addressT;
   using node_type = nodeT;
+  using transport_failure_policy_type = transport_failure_policyT;
+  using peer_failure_policy_type = peer_failure_policyT;
 
   // *** Constants
   constexpr static std::size_t POOL_BLOCK_SIZE = node_type::POOL_BLOCK_SIZE;

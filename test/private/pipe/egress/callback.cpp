@@ -18,12 +18,12 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/callback.h"
+#include "../lib/pipe/egress/callback.h"
 #include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
+#include "../../../packets.h"
 
 namespace {
 
@@ -46,7 +46,7 @@ using filter_t = channeler::pipe::callback_filter<
 
 
 
-TEST(PipeCallbackFilter, pass_events)
+TEST(PipeIngressCallbackFilter, pass_events)
 {
   using namespace channeler::pipe;
 

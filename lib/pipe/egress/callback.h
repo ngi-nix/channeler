@@ -29,8 +29,8 @@
 #include <memory>
 #include <functional>
 
-#include "event.h"
-#include "action.h"
+#include "../event.h"
+#include "../action.h"
 
 namespace channeler::pipe {
 

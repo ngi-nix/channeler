@@ -18,11 +18,11 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/validate.h"
+#include "../lib/pipe/ingress/validate.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
+#include "../../../packets.h"
 
 using namespace test;
 
@@ -74,7 +74,7 @@ struct reject_policy
 
 
 
-TEST(PipeValidateFilter, throw_on_invalid_event)
+TEST(PipeIngressValidateFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -91,7 +91,7 @@ TEST(PipeValidateFilter, throw_on_invalid_event)
 
 
 
-TEST(PipeValidateFilter, pass_packet)
+TEST(PipeIngressValidateFilter, pass_packet)
 {
   using namespace channeler::pipe;
 
@@ -121,7 +121,7 @@ TEST(PipeValidateFilter, pass_packet)
 
 
 
-TEST(PipeValidateFilter, drop_packet)
+TEST(PipeIngressValidateFilter, drop_packet)
 {
   using namespace channeler::pipe;
 
@@ -146,7 +146,7 @@ TEST(PipeValidateFilter, drop_packet)
 
 
 
-TEST(PipeValidateFilter, drop_packet_ban_transport_source)
+TEST(PipeIngressValidateFilter, drop_packet_ban_transport_source)
 {
   using namespace channeler::pipe;
 
@@ -192,7 +192,7 @@ TEST(PipeValidateFilter, drop_packet_ban_transport_source)
 
 
 
-TEST(PipeValidateFilter, drop_packet_ban_transport_destination)
+TEST(PipeIngressValidateFilter, drop_packet_ban_transport_destination)
 {
   using namespace channeler::pipe;
 
@@ -238,7 +238,7 @@ TEST(PipeValidateFilter, drop_packet_ban_transport_destination)
 
 
 
-TEST(PipeValidateFilter, drop_packet_ban_peer_sender)
+TEST(PipeIngressValidateFilter, drop_packet_ban_peer_sender)
 {
   using namespace channeler::pipe;
 
@@ -284,7 +284,7 @@ TEST(PipeValidateFilter, drop_packet_ban_peer_sender)
 
 
 
-TEST(PipeValidateFilter, drop_packet_ban_peer_recipient)
+TEST(PipeIngressValidateFilter, drop_packet_ban_peer_recipient)
 {
   using namespace channeler::pipe;
 

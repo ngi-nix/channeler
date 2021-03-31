@@ -19,20 +19,31 @@
  **/
 
 #include "../lib/pipe/ingress.h"
-#include "../lib/context.h"
+#include "../lib/context/node.h"
+#include "../lib/context/connection.h"
 
 #include <gtest/gtest.h>
 
 namespace {
 
 constexpr static std::size_t PACKET_SIZE = 300;
+constexpr std::size_t POOL_BLOCK_SIZE = 3;
 
-using ctx_t = channeler::default_context<
-  int,
-  3
+using address_t = int;
+
+using node_t = ::channeler::context::node<
+  POOL_BLOCK_SIZE
+  // XXX lock policy is null by default
 >;
 
-using ingress_t = channeler::pipe::default_ingress<ctx_t>;
+using connection_t = ::channeler::context::connection<
+  address_t,
+  node_t
+>;
+
+using ingress_t = channeler::pipe::default_ingress<
+  connection_t
+>;
 
 
 } // anonymous namespace
@@ -42,14 +53,24 @@ TEST(PipeIngress, create)
 {
   using namespace channeler::pipe;
 
-  ctx_t ctx{
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
+  channeler::peerid self;
+  channeler::peerid peer;
+
+  node_t node{
+    self,
+    PACKET_SIZE,
     []() -> std::vector<std::byte> { return {}; }
   };
 
-  auto registry = channeler::fsm::get_standard_registry(ctx);
-  typename ingress_t::channel_set chs{PACKET_SIZE};
+  connection_t ctx{
+    node,
+    peer,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
+
+
+  auto registry = channeler::fsm::get_standard_registry<address_t>(ctx);
+  typename ingress_t::channel_set_type chs;
   event_route_map route_map;
 
   ingress_t ingress{registry, route_map, chs};

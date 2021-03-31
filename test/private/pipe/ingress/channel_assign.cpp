@@ -18,12 +18,12 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/channel_assign.h"
+#include "../lib/pipe/ingress/channel_assign.h"
 #include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
+#include "../../../packets.h"
 
 using namespace test;
 
@@ -68,12 +68,12 @@ using channel_set = channeler::channels<next::channel_data_t>;
 
 
 
-TEST(PipeChannelAssignFilter, throw_on_invalid_event)
+TEST(PipeIngressChannelAssignFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
   next n;
-  channel_set chs{42};
+  channel_set chs;
   simple_filter_t filter{&n, &chs};
 
   // Create a default event; this should not be handled.
@@ -86,7 +86,7 @@ TEST(PipeChannelAssignFilter, throw_on_invalid_event)
 
 
 
-TEST(PipeChannelAssignFilter, pass_packet_default_channel)
+TEST(PipeIngressChannelAssignFilter, pass_packet_default_channel)
 {
   using namespace channeler::pipe;
 
@@ -98,7 +98,7 @@ TEST(PipeChannelAssignFilter, pass_packet_default_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs{42};
+  channel_set chs;
   simple_filter_t filter{&n, &chs};
 
   // No data added to event.
@@ -117,7 +117,7 @@ TEST(PipeChannelAssignFilter, pass_packet_default_channel)
 
 
 
-TEST(PipeChannelAssignFilter, drop_packet_unknown_channel)
+TEST(PipeIngressChannelAssignFilter, drop_packet_unknown_channel)
 {
   using namespace channeler::pipe;
 
@@ -129,7 +129,7 @@ TEST(PipeChannelAssignFilter, drop_packet_unknown_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs{42};
+  channel_set chs;
   simple_filter_t filter{&n, &chs};
 
   // No data added to event.
@@ -142,7 +142,7 @@ TEST(PipeChannelAssignFilter, drop_packet_unknown_channel)
 }
 
 
-TEST(PipeChannelAssignFilter, pass_packet_known_channel)
+TEST(PipeIngressChannelAssignFilter, pass_packet_known_channel)
 {
   using namespace channeler::pipe;
 
@@ -154,7 +154,7 @@ TEST(PipeChannelAssignFilter, pass_packet_known_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs{42};
+  channel_set chs;
   simple_filter_t filter{&n, &chs};
 
   // Before consuming the packet, make sure that the channel is already
@@ -174,7 +174,7 @@ TEST(PipeChannelAssignFilter, pass_packet_known_channel)
 
 
 
-TEST(PipeChannelAssignFilter, pass_packet_pending_channel)
+TEST(PipeIngressChannelAssignFilter, pass_packet_pending_channel)
 {
   using namespace channeler::pipe;
 
@@ -186,7 +186,7 @@ TEST(PipeChannelAssignFilter, pass_packet_pending_channel)
   channeler::packet_wrapper packet{data.data(), data.size()};
 
   next n;
-  channel_set chs{42};
+  channel_set chs;
   simple_filter_t filter{&n, &chs};
 
   // Before consuming the packet, make sure that the channel is already

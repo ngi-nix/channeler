@@ -18,12 +18,12 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/message_parsing.h"
+#include "../lib/pipe/ingress/message_parsing.h"
 #include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
+#include "../../../packets.h"
 
 using namespace test;
 
@@ -70,7 +70,7 @@ using channel_set = channeler::channels<next::channel_data_t>;
 } // anonymous namespace
 
 
-TEST(PipeMessageParsingFilter, throw_on_invalid_event)
+TEST(PipeIngressMessageParsingFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -87,7 +87,7 @@ TEST(PipeMessageParsingFilter, throw_on_invalid_event)
 
 
 
-TEST(PipeMessageParsingFilter, produce_message_events)
+TEST(PipeIngressMessageParsingFilter, produce_message_events)
 {
   // This test also tests that the slot reference counting mechanism works as
   // intended.
@@ -127,7 +127,7 @@ TEST(PipeMessageParsingFilter, produce_message_events)
 
 
 
-TEST(PipeMessageParsingFilter, empty_packet)
+TEST(PipeIngressMessageParsingFilter, empty_packet)
 {
   // This test also tests that the slot reference counting mechanism works as
   // intended.

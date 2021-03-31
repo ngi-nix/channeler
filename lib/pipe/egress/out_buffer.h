@@ -28,8 +28,8 @@
 
 #include <memory>
 
-#include "event.h"
-#include "action.h"
+#include "../event.h"
+#include "../action.h"
 
 
 namespace channeler::pipe {
@@ -48,9 +48,9 @@ namespace channeler::pipe {
 template <
   typename addressT,
   std::size_t POOL_BLOCK_SIZE,
+  typename channelT,
   typename next_filterT,
-  typename next_eventT,
-  typename channelT
+  typename next_eventT
 >
 struct out_buffer_filter
 {

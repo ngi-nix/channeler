@@ -27,11 +27,10 @@
 #include <channeler.h>
 
 #include <memory>
-#include <iostream> // FIXME
 
-#include "../memory/packet_pool.h"
-#include "event.h"
-#include "action.h"
+#include "../../memory/packet_pool.h"
+#include "../event.h"
+#include "../action.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>
@@ -55,9 +54,9 @@ namespace channeler::pipe {
 template <
   typename addressT,
   std::size_t POOL_BLOCK_SIZE,
+  typename channelT,
   typename next_filterT,
-  typename next_eventT,
-  typename channelT
+  typename next_eventT
 >
 struct message_bundling_filter
 {

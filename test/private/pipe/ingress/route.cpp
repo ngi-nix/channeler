@@ -18,11 +18,11 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/route.h"
+#include "../lib/pipe/ingress/route.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
+#include "../../../packets.h"
 
 using namespace test;
 
@@ -60,7 +60,7 @@ using filter_t = channeler::pipe::route_filter<
 
 } // anonymous namespace
 
-TEST(PipeRouteFilter, throw_on_invalid_event)
+TEST(PipeIngressRouteFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
@@ -77,7 +77,7 @@ TEST(PipeRouteFilter, throw_on_invalid_event)
 
 
 
-TEST(PipeRouteFilter, pass_packet)
+TEST(PipeIngressRouteFilter, pass_packet)
 {
   using namespace channeler::pipe;
 
@@ -107,7 +107,7 @@ TEST(PipeRouteFilter, pass_packet)
 
 
 
-TEST(PipeRouteFilter, drop_sender)
+TEST(PipeIngressRouteFilter, drop_sender)
 {
   using namespace channeler::pipe;
 
@@ -134,7 +134,7 @@ TEST(PipeRouteFilter, drop_sender)
 
 
 
-TEST(PipeRouteFilter, drop_recipient)
+TEST(PipeIngressRouteFilter, drop_recipient)
 {
   using namespace channeler::pipe;
 
@@ -161,7 +161,7 @@ TEST(PipeRouteFilter, drop_recipient)
 
 
 
-TEST(PipeRouteFilter, pass_first_drop_second)
+TEST(PipeIngressRouteFilter, pass_first_drop_second)
 {
   using namespace channeler::pipe;
 

@@ -18,11 +18,10 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/add_checksum.h"
+#include "../lib/pipe/egress/message_bundling.h"
+#include "../lib/channel_data.h"
 
 #include <gtest/gtest.h>
-
-#include "../../packets.h"
 
 namespace {
 
@@ -46,9 +45,10 @@ struct next
 };
 
 
-using filter_t = channeler::pipe::add_checksum_filter<
+using filter_t = channeler::pipe::message_bundling_filter<
   address_t,
   POOL_BLOCK_SIZE,
+  channeler::channel_data<POOL_BLOCK_SIZE>,
   next,
   next::input_event
 >;
@@ -57,13 +57,17 @@ using filter_t = channeler::pipe::add_checksum_filter<
 
 
 
-TEST(PipeAddChecksumFilter, throw_on_invalid_event)
+TEST(PipeIngressMessageBundlingFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
   pool_type pool{PACKET_SIZE};
+  filter_t::channel_set chs;
   next n;
-  filter_t filter{&n};
+  filter_t filter{&n, chs, pool,
+    []() { return channeler::peerid{}; },
+    []() { return channeler::peerid{}; }
+  };
 
   // Create a default event; this should not be handled.
   auto ev = std::make_unique<event>();
@@ -74,31 +78,38 @@ TEST(PipeAddChecksumFilter, throw_on_invalid_event)
 }
 
 
-TEST(PipeAddChecksumFilter, checksum)
+TEST(PipeIngressMessageBundlingFilter, bundle_message)
 {
   using namespace channeler::pipe;
 
   pool_type pool{PACKET_SIZE};
+  filter_t::channel_set chs;
   next n;
-  filter_t filter{&n};
+  channeler::peerid self;
+  channeler::peerid peer;
+  filter_t filter{&n, chs, pool,
+    [&self]() { return self; },
+    [&peer]() { return peer; }
+  };
 
-  // Create packet
-  auto slot = pool.allocate();
-  memcpy(slot.data(), test::packet_default_channel,
-      test::packet_default_channel_size);
-  auto packet = channeler::packet_wrapper(slot.data(), slot.size(), true);
+  // Create input event
+  channeler::peerid sender;
+  channeler::peerid recipient;
+  auto channel = channeler::create_new_channelid();
+  channeler::complete_channelid(channel);
+  auto err = chs.add(channel);
+  EXPECT_EQ(channeler::ERR_SUCCESS, err);
 
-  // Mess up checksum
-  auto sum = packet.checksum();
-  packet.checksum() = 0;
-  ASSERT_FALSE(packet.has_valid_checksum());
+  std::byte buf[130]; // It does not matter what's in this memory, but it
+                      // does matter somewhat that the size of the buffer
+                      // exceeds a length encodable in a single byte.
+  auto msg = channeler::message_data::create(buf, sizeof(buf));
+  auto ch = chs.get(channel);
+  ch->enqueue_egress_message(std::move(msg));
 
-  // Pass through filter
-  auto ev = std::make_unique<packet_out_event<POOL_BLOCK_SIZE>>(
-      std::move(slot),
-      std::move(packet)
+  auto ev = std::make_unique<message_out_enqueued_event>(
+      channel
   );
-
   auto ret = filter.consume(std::move(ev));
 
   ASSERT_EQ(0, ret.size());
@@ -107,7 +118,10 @@ TEST(PipeAddChecksumFilter, checksum)
   // elsewhere. This tests that the filter passes on things well.
   ASSERT_EQ(n.m_event->type, ET_PACKET_OUT);
   next::input_event * ptr = reinterpret_cast<next::input_event *>(n.m_event.get());
+  ASSERT_EQ(self, ptr->packet.sender());
+  ASSERT_EQ(peer, ptr->packet.recipient());
+  ASSERT_EQ(channel, ptr->packet.channel());
 
-  ASSERT_EQ(sum, ptr->packet.checksum());
-  ASSERT_TRUE(ptr->packet.has_valid_checksum());
+  // We have one message type and two length bytes
+  ASSERT_EQ(sizeof(buf) + 3, ptr->packet.payload_size());
 }

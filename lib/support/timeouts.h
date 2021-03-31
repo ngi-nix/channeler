@@ -116,8 +116,8 @@ public:
 
   using expired = std::vector<timeout_scoped_tag_type>;
 
-  inline timeouts(sleep_function && func)
-    : m_sleep{std::forward<sleep_function>(func)}
+  inline timeouts(sleep_function func)
+    : m_sleep{func}
   {
   }
 

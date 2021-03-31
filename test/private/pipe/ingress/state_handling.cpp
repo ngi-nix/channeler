@@ -18,15 +18,16 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/state_handling.h"
+#include "../lib/pipe/ingress/state_handling.h"
 #include "../lib/channel_data.h"
-#include "../lib/context.h"
+#include "../lib/context/node.h"
+#include "../lib/context/connection.h"
 #include "../lib/fsm/default.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
-#include "../../messages.h"
+#include "../../../packets.h"
+#include "../../../messages.h"
 
 
 using namespace test;
@@ -38,24 +39,24 @@ using address_t = uint16_t;
 constexpr std::size_t POOL_BLOCK_SIZE = 3;
 std::size_t PACKET_SIZE = packet_with_messages_size;
 
-using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
-using channel_data_t = channeler::channel_data<POOL_BLOCK_SIZE>;
-
-using ctx_t = channeler::default_context<
-  int,
-  3
+using node_t = ::channeler::context::node<
+  POOL_BLOCK_SIZE
+  // XXX lock policy is null by default
 >;
 
-using registry_t = channeler::fsm::registry<ctx_t>;
+using connection_t = ::channeler::context::connection<
+  address_t,
+  node_t
+>;
+
+using registry_t = channeler::fsm::registry;
 
 using simple_filter_t = channeler::pipe::state_handling_filter<
   address_t,
   POOL_BLOCK_SIZE,
-  channel_data_t,
+  typename connection_t::channel_type,
   registry_t
 >;
-
-using channel_set = channeler::channels<channel_data_t>;
 
 
 struct event_capture
@@ -73,16 +74,27 @@ struct event_capture
 } // anonymous namespace
 
 
-TEST(PipeStateHandlingFilter, throw_on_invalid_event)
+TEST(PipeIngressStateHandlingFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
-  ctx_t ctx {
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
+  channeler::peerid self;
+  channeler::peerid peer;
+
+  node_t node{
+    self,
+    PACKET_SIZE,
     []() -> std::vector<std::byte> { return {}; }
   };
-  auto reg = channeler::fsm::get_standard_registry(ctx);
+
+  connection_t ctx{
+    node,
+    peer,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
+
+  auto reg = channeler::fsm::get_standard_registry<address_t>(ctx);
+
   event_route_map routemap;
   simple_filter_t filter{reg, routemap};
 
@@ -95,20 +107,30 @@ TEST(PipeStateHandlingFilter, throw_on_invalid_event)
 }
 
 
-TEST(PipeStateHandlingFilter, create_message_on_channel_new)
+TEST(PipeIngressStateHandlingFilter, create_message_on_channel_new)
 {
   using namespace channeler::pipe;
 
-  ctx_t ctx {
-    200,
-    [](ctx_t::timeouts_type::duration d) { return d; },
+  channeler::peerid self;
+  channeler::peerid peer;
+
+  node_t node{
+    self,
+    PACKET_SIZE,
     []() -> std::vector<std::byte> { return {}; }
   };
-  auto reg = channeler::fsm::get_standard_registry(ctx);
-  event_route_map routemap;
+
+  connection_t ctx{
+    node,
+    peer,
+    [](channeler::support::timeouts::duration d) { return d; },
+  };
+
+  auto reg = channeler::fsm::get_standard_registry<address_t>(ctx);
 
   // Register callbacks; in this case we need to get an egress
   // message as a result.
+  event_route_map routemap;
   using namespace std::placeholders;
   event_capture cap_egress;
   routemap[EC_EGRESS] = std::bind(&event_capture::func, &cap_egress, _1);
@@ -116,7 +138,7 @@ TEST(PipeStateHandlingFilter, create_message_on_channel_new)
   simple_filter_t filter{reg, routemap};
 
   // Copy packet data before parsing header
-  pool_type pool{PACKET_SIZE};
+  typename node_t::pool_type pool{PACKET_SIZE};
   auto data = pool.allocate();
   ::memcpy(data.data(), packet_regular_channelid, packet_regular_channelid_size);
   channeler::packet_wrapper packet{data.data(), data.size()};
@@ -125,7 +147,7 @@ TEST(PipeStateHandlingFilter, create_message_on_channel_new)
       test::message_channel_new, test::message_channel_new_size, true
   );
   auto ev = std::make_unique<simple_filter_t::input_event>(123, 321, packet, data,
-      channel_set::channel_ptr{},
+      typename connection_t::channel_set_type::channel_ptr{},
       std::move(msg)
   );
   auto res = filter.consume(std::move(ev));

@@ -18,12 +18,11 @@
  * PARTICULAR PURPOSE.
  **/
 
-#include "../lib/pipe/out_buffer.h"
-#include "../lib/channel_data.h"
+#include "../lib/pipe/egress/add_checksum.h"
 
 #include <gtest/gtest.h>
 
-#include "../../packets.h"
+#include "../../../packets.h"
 
 namespace {
 
@@ -34,17 +33,9 @@ constexpr std::size_t PACKET_SIZE = 200;
 
 using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE>;
 
-using channel_data = ::channeler::channel_data<
-  POOL_BLOCK_SIZE
-  // TODO lock policy
->;
-using channel_set = ::channeler::channels<channel_data>;
-
 struct next
 {
-  using input_event = channeler::pipe::packet_out_enqueued_event<
-    channel_data
-  >;
+  using input_event = channeler::pipe::packet_out_event<POOL_BLOCK_SIZE>;
 
   inline channeler::pipe::action_list_type consume(std::unique_ptr<channeler::pipe::event> event)
   {
@@ -55,26 +46,24 @@ struct next
 };
 
 
-using filter_t = channeler::pipe::out_buffer_filter<
+using filter_t = channeler::pipe::add_checksum_filter<
   address_t,
   POOL_BLOCK_SIZE,
   next,
-  next::input_event,
-  channel_data
+  next::input_event
 >;
 
 } // anonymous namespace
 
 
 
-TEST(PipeOutBufferFilter, throw_on_invalid_event)
+TEST(PipeIngressAddChecksumFilter, throw_on_invalid_event)
 {
   using namespace channeler::pipe;
 
   pool_type pool{PACKET_SIZE};
-  channel_set chs{PACKET_SIZE};
   next n;
-  filter_t filter{&n, chs};
+  filter_t filter{&n};
 
   // Create a default event; this should not be handled.
   auto ev = std::make_unique<event>();
@@ -85,15 +74,13 @@ TEST(PipeOutBufferFilter, throw_on_invalid_event)
 }
 
 
-// TODO enqueue_bad_channel
-TEST(PipeOutBufferFilter, enqueue)
+TEST(PipeIngressAddChecksumFilter, checksum)
 {
   using namespace channeler::pipe;
 
   pool_type pool{PACKET_SIZE};
-  channel_set chs{PACKET_SIZE};
   next n;
-  filter_t filter{&n, chs};
+  filter_t filter{&n};
 
   // Create packet
   auto slot = pool.allocate();
@@ -101,25 +88,26 @@ TEST(PipeOutBufferFilter, enqueue)
       test::packet_default_channel_size);
   auto packet = channeler::packet_wrapper(slot.data(), slot.size(), true);
 
-  // Make sure channel exists for this test case
-  chs.add(packet.channel());
+  // Mess up checksum
+  auto sum = packet.checksum();
+  packet.checksum() = 0;
+  ASSERT_FALSE(packet.has_valid_checksum());
 
   // Pass through filter
   auto ev = std::make_unique<packet_out_event<POOL_BLOCK_SIZE>>(
       std::move(slot),
       std::move(packet)
   );
+
   auto ret = filter.consume(std::move(ev));
 
   ASSERT_EQ(0, ret.size());
 
   // No need to actually test packet header parsing - that's been tested
   // elsewhere. This tests that the filter passes on things well.
-  ASSERT_TRUE(n.m_event);
-  ASSERT_EQ(n.m_event->type, ET_PACKET_OUT_ENQUEUED);
+  ASSERT_EQ(n.m_event->type, ET_PACKET_OUT);
   next::input_event * ptr = reinterpret_cast<next::input_event *>(n.m_event.get());
-  ASSERT_TRUE(ptr->channel);
 
-  // We could check that the packet is in the buffer
-  ASSERT_FALSE(ptr->channel->egress_buffer().empty());
+  ASSERT_EQ(sum, ptr->packet.checksum());
+  ASSERT_TRUE(ptr->packet.has_valid_checksum());
 }

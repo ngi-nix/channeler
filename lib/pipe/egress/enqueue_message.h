@@ -17,8 +17,8 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  * PARTICULAR PURPOSE.
  **/
-#ifndef CHANNELER_PIPE_DE_ENVELOPE_H
-#define CHANNELER_PIPE_DE_ENVELOPE_H
+#ifndef CHANNELER_PIPE_ENQUEUE_MESSAGE_H
+#define CHANNELER_PIPE_ENQUEUE_MESSAGE_H
 
 #ifndef __cplusplus
 #error You are trying to include a C++ only header file
@@ -28,9 +28,9 @@
 
 #include <memory>
 
-#include "../memory/packet_pool.h"
-#include "event.h"
-#include "action.h"
+#include "../../memory/packet_pool.h"
+#include "../event.h"
+#include "../action.h"
 
 #include <channeler/packet.h>
 #include <channeler/error.h>
@@ -39,29 +39,27 @@
 namespace channeler::pipe {
 
 /**
- * The de-envelope filter raw buffers, parses packet headers, and passes on the
- * result.
+ * The enqueue_message filter puts messages into a channel's outgoing
+ * message queue.
  *
- * Expects the next_eventT constructor to take
- * - transport source address
- * - transport destination address
- * - public headers
- * - a pool slot
- *
- * such as e.g. parsed_header_event
+ * This is simply so that we don't keep pushing messages through the filter
+ * chain. Instead, the buffers should be deciding on which message or packet
+ * to process any given time.
  */
 template <
-  typename addressT,
-  std::size_t POOL_BLOCK_SIZE,
+  typename channelT,
   typename next_filterT,
   typename next_eventT
 >
-struct de_envelope_filter
+struct enqueue_message_filter
 {
-  using input_event = raw_buffer_event<addressT, POOL_BLOCK_SIZE>;
+  using input_event = message_out_event;
+  using channel_set = ::channeler::channels<channelT>;
 
-  inline de_envelope_filter(next_filterT * next)
+  inline enqueue_message_filter(next_filterT * next,
+      channel_set & channels)
     : m_next{next}
+    , m_channels{channels}
   {
   }
 
@@ -71,30 +69,31 @@ struct de_envelope_filter
     if (!ev) {
       throw exception{ERR_INVALID_REFERENCE};
     }
-    if (ev->type != ET_RAW_BUFFER) {
+    if (ev->type != ET_MESSAGE_OUT) {
       throw exception{ERR_INVALID_PIPE_EVENT};
     }
 
-    input_event const * in = reinterpret_cast<input_event const *>(ev.get());
+    input_event * in = reinterpret_cast<input_event *>(ev.get());
 
-    // If there is no data passed, we should also throw.
-    if (nullptr == in->data.data()) {
-      throw exception{ERR_INVALID_REFERENCE};
+    // Get the appropriate channel data
+    auto ch = m_channels.get(in->channel);
+    if (!ch) {
+      // Uh-oh, error
+      // TODO
+      return {};
     }
 
-    // Parse header data, and pass on a new event to the next filter
-    ::channeler::public_header_fields header{in->data.data()};
+    // Enqueue message
+    ch->enqueue_egress_message(std::move(in->message));
 
-    auto next = std::make_unique<next_eventT>(
-        in->transport.source,
-        in->transport.destination,
-        header,
-        in->data);
-    return m_next->consume(std::move(next));
+    // Create output event
+    auto out = std::make_unique<message_out_enqueued_event>(in->channel);
+    return m_next->consume(std::move(out));
   }
 
 
   next_filterT *  m_next;
+  channel_set &   m_channels;
 };
 
 

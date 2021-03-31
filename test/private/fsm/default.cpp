@@ -37,7 +37,10 @@ using node_t = ::channeler::context::node<
   // XXX lock policy is null by default
 >;
 
-using connection_t = ::channeler::context::connection<node_t>;
+using connection_t = ::channeler::context::connection<
+  address_t,
+  node_t
+>;
 
 using packet_t = std::pair<
   channeler::packet_wrapper,

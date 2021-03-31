@@ -250,15 +250,20 @@ TEST(InternalAPI, send_data_on_established_channel)
   using namespace channeler::fsm;
   using namespace channeler;
 
+  channeler::fsm::registry reg1;
+  channeler::fsm::registry reg2;
+
   ctx_t ctx1{
     200,
     [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    reg1
   };
   ctx_t ctx2{
     200,
     [](ctx_t::timeouts_type::duration d) { return d; },
-    []() -> std::vector<std::byte> { return {}; }
+    []() -> std::vector<std::byte> { return {}; },
+    reg2
   };
 
   api_t * peer_api1 = nullptr;
