@@ -243,10 +243,10 @@ update_to_buffer(
 {
   // Write checksum to buffer.
   uint32_t tmp = footer.checksum;
-  auto res = liberate::serialization::deserialize_int(
-      tmp,
+  auto res = liberate::serialization::serialize_int(
       buffer + buffer_size - footer.FOOT_SIZE,
-      sizeof(tmp));
+      sizeof(tmp),
+      tmp);
   if (res != sizeof(tmp)) {
     return {ERR_ENCODE, "Could not serialize checksum."};
   }
