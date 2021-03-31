@@ -45,7 +45,7 @@ namespace channeler::pipe {
  * See validate_filter for details.
  */
 template <
-  typename addressT = peerid
+  typename addressT = peerid_wrapper
 >
 struct null_policy
 {
