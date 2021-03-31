@@ -118,6 +118,17 @@ struct message
   std::pair<error_t, std::string>
   parse();
 
+  /**
+   * Serialized size of the message. This is type dependent.
+   */
+  std::size_t serialized_size() const;
+
+  // TODO
+  // std::size_t serialized_size() const
+  // - serialied size of message type (calculate in liberate)
+  // - either hardcoded fixed size
+  //  - or payload_size-based (msg_data)
+
 protected:
   inline message(message_type t)
     : type{t}

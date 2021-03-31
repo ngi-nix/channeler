@@ -25,8 +25,6 @@
 #include <channeler/capabilities.h>
 #include <channeler/cookie.h>
 
-#include <iostream> // FIXME
-
 #include <liberate/serialization/integer.h>
 #include <liberate/serialization/varint.h>
 
@@ -180,6 +178,31 @@ message::parse()
 
 
 
+std::size_t
+message::serialized_size() const
+{
+  auto t = static_cast<::liberate::types::varint>(type);
+  std::size_t result = ::liberate::serialization::serialized_size(t);
+
+  auto pl_size = message_payload_size(type);
+  if (pl_size> 0) {
+    result += pl_size;
+  }
+  else if (pl_size == -1) {
+    t = static_cast<::liberate::types::varint>(payload_size);
+    result += ::liberate::serialization::serialized_size(t);
+    result += payload_size;
+  }
+  else if (pl_size < -2) {
+    // Error, unknown message type
+    return 0;
+  }
+
+  return result;
+}
+
+
+
 /**
  * message_data
  */
@@ -256,7 +279,7 @@ message_data::serialize(std::byte * out, std::size_t max,
 {
   // XXX This assumes that the buffer_size is set. This is done when parsing
   //     and when creating from data, see create() above.
-  if (msg.buffer_size > max) {
+  if (msg.serialized_size() > max) {
     return 0;
   }
   ::memcpy(out, msg.buffer, msg.buffer_size);
@@ -322,11 +345,11 @@ message_channel_new::serialize(std::byte * out, std::size_t max,
     message_channel_new const & msg)
 {
   // We know the buffer size, as it's fixed.
-  if (msg.buffer_size > max) {
+  if (msg.serialized_size() > max) {
     return 0;
   }
 
-  std::size_t remaining = msg.buffer_size;
+  std::size_t remaining = msg.serialized_size();
   std::byte * offset = out;
 
   // Serialize message header
@@ -359,7 +382,7 @@ message_channel_new::serialize(std::byte * out, std::size_t max,
   if (remaining != 0) {
     return 0;
   }
-  return msg.buffer_size;
+  return (offset - out);
 }
 
 
@@ -420,11 +443,11 @@ message_channel_acknowledge::serialize(std::byte * out, std::size_t max,
     message_channel_acknowledge const & msg)
 {
   // We know the buffer size, as it's fixed.
-  if (msg.buffer_size > max) {
+  if (msg.serialized_size() > max) {
     return 0;
   }
 
-  std::size_t remaining = msg.buffer_size;
+  std::size_t remaining = msg.serialized_size();
   std::byte * offset = out;
 
   // Serialize message header
@@ -457,7 +480,7 @@ message_channel_acknowledge::serialize(std::byte * out, std::size_t max,
   if (remaining != 0) {
     return 0;
   }
-  return msg.buffer_size;
+  return (offset - out);
 }
 
 
@@ -532,11 +555,11 @@ message_channel_finalize::serialize(std::byte * out, std::size_t max,
     message_channel_finalize const & msg)
 {
   // We know the buffer size, as it's fixed.
-  if (msg.buffer_size > max) {
+  if (msg.serialized_size() > max) {
     return 0;
   }
 
-  std::size_t remaining = msg.buffer_size;
+  std::size_t remaining = msg.serialized_size();
   std::byte * offset = out;
 
   // Serialize message header
@@ -579,7 +602,7 @@ message_channel_finalize::serialize(std::byte * out, std::size_t max,
   if (remaining != 0) {
     return 0;
   }
-  return msg.buffer_size;
+  return (offset - out);
 }
 
 
@@ -644,11 +667,11 @@ message_channel_cookie::serialize(std::byte * out, std::size_t max,
     message_channel_cookie const & msg)
 {
   // We know the buffer size, as it's fixed.
-  if (msg.buffer_size > max) {
+  if (msg.serialized_size() > max) {
     return 0;
   }
 
-  std::size_t remaining = msg.buffer_size;
+  std::size_t remaining = msg.serialized_size();
   std::byte * offset = out;
 
   // Serialize message header
@@ -682,7 +705,7 @@ message_channel_cookie::serialize(std::byte * out, std::size_t max,
   if (remaining != 0) {
     return 0;
   }
-  return msg.buffer_size;
+  return (offset - out);
 }
 
 
