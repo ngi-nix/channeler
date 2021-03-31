@@ -26,7 +26,7 @@ namespace {
 
 struct channel
 {
-  inline channel(channeler::channelid const &, std::size_t)
+  inline channel(channeler::channelid const &)
   {
   }
 };
@@ -40,7 +40,7 @@ TEST(Channels, empty_set)
 {
   using namespace channeler;
 
-  channels<channel> chs{42};
+  channels<channel> chs;
 
   channelid id = create_new_channelid();
 
@@ -55,7 +55,7 @@ TEST(Channels, add_bad_id_to_set)
 {
   using namespace channeler;
 
-  channels<channel> chs{42};
+  channels<channel> chs;
 
   // An identifier with just a responder is not valid
   channelid id;
@@ -72,7 +72,7 @@ TEST(Channels, add_partial_to_set)
 {
   using namespace channeler;
 
-  channels<channel> chs{42};
+  channels<channel> chs;
 
   channelid id = create_new_channelid();
 
@@ -96,7 +96,7 @@ TEST(Channels, add_full_to_set)
 {
   using namespace channeler;
 
-  channels<channel> chs{42};
+  channels<channel> chs;
 
   channelid id = create_new_channelid();
   complete_channelid(id);
@@ -121,7 +121,7 @@ TEST(Channels, upgrade_partial)
 {
   using namespace channeler;
 
-  channels<channel> chs{42};
+  channels<channel> chs;
 
   // First add partial
   channelid id = create_new_channelid();
@@ -155,7 +155,7 @@ TEST(Channels, add_default_channel)
 
   using namespace channeler;
 
-  channels<channel> chs{42};
+  channels<channel> chs;
 
   channelid id = DEFAULT_CHANNELID;
   auto res = chs.add(id);

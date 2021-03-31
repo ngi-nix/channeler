@@ -69,6 +69,7 @@ namespace channeler {
  */
 template <
   typename channelT
+
   // TODO Lock policy? null policy should be in its own header
   // https://gitlab.com/interpeer/channeler/-/issues/7
 >
@@ -77,8 +78,9 @@ class channels
 public:
   using channel_ptr = std::shared_ptr<channelT>;
 
-  inline channels(std::size_t packet_size)
-    : m_packet_size(packet_size)
+  inline channels()
+    : m_pending{}
+    , m_established{}
   {
   }
 
@@ -165,7 +167,7 @@ public:
       // TODO lock policy pointer
       m_established[id.initiator] = {
         id,
-        std::make_shared<channelT>(id, m_packet_size),
+        std::make_shared<channelT>(id)
       };
       return ERR_SUCCESS;
     }
@@ -173,7 +175,7 @@ public:
     if (id.has_initiator()) {
       // This is pending, so we can just overwrite existing identifiers. It
       // makes no difference.
-      m_pending[id.initiator] = std::make_shared<channelT>(id, m_packet_size);
+      m_pending[id.initiator] = std::make_shared<channelT>(id);
       return ERR_SUCCESS;
     }
 
@@ -213,7 +215,7 @@ public:
     // TODO lock policy pointer
     m_established[id.initiator] = {
       id,
-      std::make_shared<channelT>(id, m_packet_size),
+      std::make_shared<channelT>(id),
     };
 
     return ERR_SUCCESS;
@@ -292,9 +294,6 @@ private:
 
   using channel_map_t = std::unordered_map<channelid::half_type, value_type>;
   channel_map_t m_established;
-
-  // Packet size
-  std::size_t m_packet_size;
 };
 
 } // namespace channeler
