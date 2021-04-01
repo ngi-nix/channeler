@@ -304,10 +304,10 @@ template <
 inline bool validate_packet(char const * const name,
     bufT const & buf, bool expected_value)
 {
-  // Use a temp_buffer, so the packet_wrapper can modify it (not that we want
+  // Use a temp buffer, so the packet_wrapper can modify it (not that we want
   // that now).
-  temp_buffer b{buf, sizeof(buf)};
-  ::channeler::packet_wrapper p{b.buf.get(), b.size};
+  std::vector<std::byte> b{buf, buf + sizeof(buf)};
+  ::channeler::packet_wrapper p{b.data(), b.size()};
   if (p.has_valid_checksum() != expected_value) {
     std::cout << "Packet: " << name << std::endl;
     std::cout << "  Checksum:   " << std::hex << p.checksum() << std::dec << std::endl;

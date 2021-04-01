@@ -20,7 +20,6 @@
 #ifndef TEST_PACKETS_H
 #define TEST_PACKETS_H
 
-#include "temp_buffer.h"
 #include "byte_suffix.h"
 
 #include <channeler/packet.h>

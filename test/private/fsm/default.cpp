@@ -22,8 +22,6 @@
 #include "../lib/context/node.h"
 #include "../lib/context/connection.h"
 
-#include "../../temp_buffer.h"
-
 #include <gtest/gtest.h>
 
 namespace {
@@ -44,21 +42,19 @@ using connection_t = ::channeler::context::connection<
 
 using packet_t = std::pair<
   channeler::packet_wrapper,
-  test::temp_buffer
+  std::shared_ptr<std::vector<std::byte>>
 >;
 
 inline packet_t
 make_packet(channeler::peerid const & sender,
     channeler::peerid const & recipient)
 {
-  constexpr std::size_t packet_size =
-    channeler::public_header_layout::PUB_SIZE
-    + channeler::private_header_layout::PRIV_SIZE
-    + channeler::footer_layout::FOOT_SIZE;
+  constexpr std::size_t packet_size = channeler::packet_wrapper::envelope_size();
 
-  test::temp_buffer buf{packet_size};
+  auto buf = std::make_shared<std::vector<std::byte>>();
+  buf->resize(packet_size, std::byte{0});
 
-  channeler::packet_wrapper pkt{buf.buf.get(), buf.size};
+  channeler::packet_wrapper pkt{buf->data(), buf->size(), false};
   pkt.sender() = sender;
   pkt.recipient() = recipient;
 

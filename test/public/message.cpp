@@ -7,7 +7,7 @@
  *
  * This software is licensed under the terms of the GNU GPLv3 for personal,
  * educational and non-profit use. For all other uses, alternative license
- * options are available. Please contact the copyright temp_buffer for additional
+ * options are available. Please contact the copyright holder for additional
  * information, stating your intended usage.
  *
  * You can find the full text of the GPLv3 in the COPYING file in this code
@@ -30,25 +30,25 @@ namespace {
 
 
 inline void
-assert_message(temp_buffer const & buf,
+assert_message(std::vector<std::byte> const & buf,
     channeler::message_type type,
     std::size_t type_bytes,
     std::size_t length_bytes)
 {
-  ASSERT_NO_THROW((channeler::message{buf.buf.get(), buf.size}));
+  ASSERT_NO_THROW((channeler::message{buf.data(), buf.size()}));
 
   // Validate later
-  channeler::message msg{buf.buf.get(), buf.size, false};
-  ASSERT_EQ(msg.buffer, buf.buf.get());
-  ASSERT_EQ(msg.input_size, buf.size);
+  channeler::message msg{buf.data(), buf.size(), false};
+  ASSERT_EQ(msg.buffer, buf.data());
+  ASSERT_EQ(msg.input_size, buf.size());
   auto err = msg.parse();
   ASSERT_EQ(err.first, channeler::ERR_SUCCESS);
 
   // Payload should start one byte after the buffer.
   ASSERT_EQ(msg.buffer + type_bytes + length_bytes, msg.payload);
   ASSERT_EQ(msg.payload_size + type_bytes + length_bytes, msg.buffer_size);
-  ASSERT_EQ(msg.buffer, buf.buf.get());
-  ASSERT_EQ(msg.buffer_size, buf.size);
+  ASSERT_EQ(msg.buffer, buf.data());
+  ASSERT_EQ(msg.buffer_size, buf.size());
 
   // Assert type
   ASSERT_EQ(msg.type, type);
@@ -57,7 +57,7 @@ assert_message(temp_buffer const & buf,
 
 
 inline void
-assert_single_byte_type_variable_size_message(temp_buffer const & buf,
+assert_single_byte_type_variable_size_message(std::vector<std::byte> const & buf,
     channeler::message_type type, std::size_t length_bytes)
 {
   assert_message(buf, type, 1, length_bytes);
@@ -66,7 +66,7 @@ assert_single_byte_type_variable_size_message(temp_buffer const & buf,
 
 
 inline void
-assert_single_byte_type_fixed_size_message(temp_buffer const & buf,
+assert_single_byte_type_fixed_size_message(std::vector<std::byte> const & buf,
     channeler::message_type type)
 {
   assert_message(buf, type, 1, 0);
@@ -76,14 +76,14 @@ assert_single_byte_type_fixed_size_message(temp_buffer const & buf,
 
 inline void
 assert_serialization_ok(std::vector<std::byte> & out,
-    std::unique_ptr<channeler::message> const & msg, temp_buffer const & buf)
+    std::unique_ptr<channeler::message> const & msg, std::vector<std::byte> const & buf)
 {
   auto res = serialize_message(&out[0], out.size(), msg);
-  ASSERT_EQ(res, buf.size);
+  ASSERT_EQ(res, buf.size());
 
-  for (std::size_t i = 0 ; i < buf.size ; ++i) {
+  for (std::size_t i = 0 ; i < buf.size() ; ++i) {
     // std::cout << "compare index: " << i << std::endl;
-    ASSERT_EQ(out[i], buf.buf.get()[i]);
+    ASSERT_EQ(out[i], buf[i]);
   }
 }
 
@@ -92,14 +92,14 @@ assert_serialization_ok(std::vector<std::byte> & out,
 
 TEST(Message, fail_parse_unknown)
 {
-  temp_buffer b{message_unknown, message_unknown_size};
+  std::vector<std::byte> b{message_unknown, message_unknown + message_unknown_size};
 
   // Exception
-  ASSERT_THROW((channeler::message{b.buf.get(), b.size}),
+  ASSERT_THROW((channeler::message{b.data(), b.size()}),
       channeler::exception);
 
   // Error code
-  channeler::message msg{b.buf.get(), b.size, false};
+  channeler::message msg{b.data(), b.size(), false};
   auto err = msg.parse();
   ASSERT_EQ(err.first, channeler::ERR_INVALID_MESSAGE_TYPE);
 }
@@ -108,11 +108,11 @@ TEST(Message, fail_parse_unknown)
 
 TEST(Message, parse_and_serialize_channel_new)
 {
-  temp_buffer b{message_channel_new, message_channel_new_size};
+  std::vector<std::byte> b{message_channel_new, message_channel_new + message_channel_new_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_NEW);
 
-  auto msg = channeler::parse_message(b.buf.get(), b.size);
+  auto msg = channeler::parse_message(b.data(), b.size());
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_NEW);
 
@@ -130,11 +130,11 @@ TEST(Message, parse_and_serialize_channel_new)
 
 TEST(Message, parse_and_serialize_channel_acknowledge)
 {
-  temp_buffer b{message_channel_acknowledge, message_channel_acknowledge_size};
+  std::vector<std::byte> b{message_channel_acknowledge, message_channel_acknowledge + message_channel_acknowledge_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_ACKNOWLEDGE);
 
-  auto msg = channeler::parse_message(b.buf.get(), b.size);
+  auto msg = channeler::parse_message(b.data(), b.size());
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_ACKNOWLEDGE);
 
@@ -153,11 +153,11 @@ TEST(Message, parse_and_serialize_channel_acknowledge)
 
 TEST(Message, parse_and_serialize_channel_finalize)
 {
-  temp_buffer b{message_channel_finalize, message_channel_finalize_size};
+  std::vector<std::byte> b{message_channel_finalize, message_channel_finalize + message_channel_finalize_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_FINALIZE);
 
-  auto msg = channeler::parse_message(b.buf.get(), b.size);
+  auto msg = channeler::parse_message(b.data(), b.size());
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_FINALIZE);
 
@@ -176,11 +176,11 @@ TEST(Message, parse_and_serialize_channel_finalize)
 
 TEST(Message, parse_and_serialize_channel_cookie)
 {
-  temp_buffer b{message_channel_cookie, message_channel_cookie_size};
+  std::vector<std::byte> b{message_channel_cookie, message_channel_cookie + message_channel_cookie_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_COOKIE);
 
-  auto msg = channeler::parse_message(b.buf.get(), b.size);
+  auto msg = channeler::parse_message(b.data(), b.size());
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_CHANNEL_COOKIE);
 
@@ -198,12 +198,12 @@ TEST(Message, parse_and_serialize_channel_cookie)
 
 TEST(Message, parse_and_serialize_data)
 {
-  temp_buffer b{message_data, message_data_size};
+  std::vector<std::byte> b{message_data, message_data + message_data_size};
 
   assert_single_byte_type_variable_size_message(b, channeler::MSG_DATA,
       1);
 
-  auto msg = channeler::parse_message(b.buf.get(), b.size);
+  auto msg = channeler::parse_message(b.data(), b.size());
   ASSERT_TRUE(msg);
   ASSERT_EQ(msg->type, channeler::MSG_DATA);
 
@@ -216,9 +216,9 @@ TEST(Message, parse_and_serialize_data)
 
 TEST(Message, iterator_single_message)
 {
-  temp_buffer b{message_data, message_data_size};
+  std::vector<std::byte> b{message_data, message_data + message_data_size};
 
-  channeler::messages msgs{b.buf.get(), b.size};
+  channeler::messages msgs{b.data(), b.size()};
 
   std::size_t count = 0;
   auto iter = msgs.begin();
@@ -241,9 +241,9 @@ TEST(Message, iterator_single_message)
 
 TEST(Message, iterator_message_block)
 {
-  temp_buffer b{message_block, message_block_size};
+  std::vector<std::byte> b{message_block, message_block + message_block_size};
 
-  channeler::messages msgs{b.buf.get(), b.size};
+  channeler::messages msgs{b.data(), b.size()};
 
   std::size_t count = 0;
   auto iter = msgs.begin();

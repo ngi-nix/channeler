@@ -25,7 +25,6 @@
 
 #include "../../messages.h"
 #include "../../packets.h"
-#include "../../temp_buffer.h"
 
 namespace {
 
@@ -102,8 +101,9 @@ TEST(FSMChannelResponder, process_msg_channel_new)
   // We create the packet just so we have a packet slot for the FSM.
   // This is a little unfortunate, but we need the packet's sender and
   // recipient information to generate a response.
-  temp_buffer data{packet_with_messages, packet_with_messages_size};
-  channeler::packet_wrapper pkt{data.buf.get(), data.size};
+  std::vector<std::byte> data{packet_with_messages,
+    packet_with_messages + packet_with_messages_size};
+  channeler::packet_wrapper pkt{data.data(), data.size()};
 
   // TODO I don't like having to pass the pool block size here at all.
   using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;
@@ -154,8 +154,9 @@ TEST(FSMChannelResponder, process_msg_channel_finalize)
   // We create the packet just so we have a packet slot for the FSM.
   // This is a little unfortunate, but we need the packet's sender and
   // recipient information to generate a response.
-  temp_buffer data{packet_with_messages, packet_with_messages_size};
-  channeler::packet_wrapper pkt{data.buf.get(), data.size};
+  std::vector<std::byte> data{packet_with_messages,
+    packet_with_messages + packet_with_messages_size};
+  channeler::packet_wrapper pkt{data.data(), data.size()};
 
   // TODO I don't like having to pass the pool block size here at all.
   using channel_t = channel_data<TEST_POOL_BLOCK_SIZE>;

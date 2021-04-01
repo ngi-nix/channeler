@@ -25,7 +25,6 @@
 
 #include "../../messages.h"
 #include "../../packets.h"
-#include "../../temp_buffer.h"
 
 namespace {
 
@@ -207,8 +206,9 @@ TEST(FSMChannelInitiator, acknowledge_channel)
       initiator);
 
   // Need a packet buffer, even if the contents are not used
-  test::temp_buffer data{test::packet_with_messages, test::packet_with_messages_size};
-  channeler::packet_wrapper pkt{data.buf.get(), data.size};
+  std::vector<std::byte> data{test::packet_with_messages,
+    test::packet_with_messages + test::packet_with_messages_size};
+  channeler::packet_wrapper pkt{data.data(), data.size()};
   pkt.sender() = recipient;
   pkt.recipient() = sender;
 

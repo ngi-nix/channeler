@@ -7,7 +7,7 @@
  *
  * This software is licensed under the terms of the GNU GPLv3 for personal,
  * educational and non-profit use. For all other uses, alternative license
- * options are available. Please contact the copyright temp_buffer for additional
+ * options are available. Please contact the copyright holder for additional
  * information, stating your intended usage.
  *
  * You can find the full text of the GPLv3 in the COPYING file in this code
@@ -38,9 +38,10 @@ TEST(PacketWrapper, construct_from_buffer_failure_too_small)
 
 TEST(PacketWrapper, construct_from_buffer)
 {
-  temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
+  std::vector<std::byte> data{packet_default_channel_trailing_bytes,
+    packet_default_channel_trailing_bytes + packet_default_channel_trailing_bytes_size};
 
-  channeler::packet_wrapper pkt{data.buf.get(), data.size};
+  channeler::packet_wrapper pkt{data.data(), data.size()};
 
   ASSERT_EQ(pkt.proto(), 0xdeadd00d);
   ASSERT_FALSE(pkt.has_valid_proto());
@@ -80,8 +81,10 @@ TEST(PacketWrapper, construct_from_buffer)
 
 TEST(PacketWrapper, copy)
 {
-  temp_buffer data{packet_default_channel_trailing_bytes, packet_default_channel_trailing_bytes_size};
-  channeler::packet_wrapper pkt0{data.buf.get(), data.size};
+  std::vector<std::byte> data{packet_default_channel_trailing_bytes,
+    packet_default_channel_trailing_bytes + packet_default_channel_trailing_bytes_size};
+
+  channeler::packet_wrapper pkt0{data.data(), data.size()};
 
   // Create copy
   auto buf = pkt0.copy();
@@ -110,9 +113,10 @@ TEST(PacketWrapper, copy)
 
 TEST(PacketWrapper, message_iteration)
 {
-  temp_buffer data{packet_with_messages, packet_with_messages_size};
+  std::vector<std::byte> data{packet_with_messages,
+    packet_with_messages + packet_with_messages_size};
 
-  channeler::packet_wrapper pkt{data.buf.get(), data.size};
+  channeler::packet_wrapper pkt{data.data(), data.size()};
 
   // We have a payload of 26 Bytes
   ASSERT_EQ(pkt.payload_size(), 26);

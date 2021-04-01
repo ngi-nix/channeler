@@ -24,7 +24,6 @@
 
 #include "../../messages.h"
 #include "../../packets.h"
-#include "../../temp_buffer.h"
 
 namespace {
 
@@ -108,8 +107,9 @@ TEST(FSMData, remote_data_existing_channel)
   // We need a packet with the above channel ID. Which won't exist, ever,
   // because we only have half a channel ID. But the important part is that
   // the initiator is the same.
-  test::temp_buffer buf{test::packet_regular_channelid, test::packet_regular_channelid_size};
-  packet_wrapper pkt{buf.buf.get(), buf.size};
+  std::vector<std::byte> buf{test::packet_regular_channelid,
+    test::packet_regular_channelid + test::packet_regular_channelid_size};
+  packet_wrapper pkt{buf.data(), buf.size()};
 
   chs.add(pkt.channel());
   auto ch = chs.get(pkt.channel());
@@ -170,8 +170,9 @@ TEST(FSMData, remote_data_pending_channel)
   // We need a packet with the above channel ID. Which won't exist, ever,
   // because we only have half a channel ID. But the important part is that
   // the initiator is the same.
-  test::temp_buffer buf{test::packet_regular_channelid, test::packet_regular_channelid_size};
-  packet_wrapper pkt{buf.buf.get(), buf.size};
+  std::vector<std::byte> buf{test::packet_regular_channelid,
+    test::packet_regular_channelid + test::packet_regular_channelid_size};
+  packet_wrapper pkt{buf.data(), buf.size()};
   pkt.channel().initiator = cid;
 
   // If we feed the FSM anything other than a ET_MESSAGE event, it will return

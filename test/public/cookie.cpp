@@ -7,7 +7,7 @@
  *
  * This software is licensed under the terms of the GNU GPLv3 for personal,
  * educational and non-profit use. For all other uses, alternative license
- * options are available. Please contact the copyright temp_buffer for additional
+ * options are available. Please contact the copyright holder for additional
  * information, stating your intended usage.
  *
  * You can find the full text of the GPLv3 in the COPYING file in this code
