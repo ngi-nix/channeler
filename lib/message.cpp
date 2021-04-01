@@ -28,6 +28,8 @@
 #include <liberate/serialization/integer.h>
 #include <liberate/serialization/varint.h>
 
+#include "macros.h"
+
 namespace channeler {
 
 
@@ -45,6 +47,8 @@ serialize_header(std::byte * buf, std::size_t max, message_type type,
       buf + total,
       max - total,
       tmp);
+  LIBLOG_DEBUG("Used " << used << " Bytes for message type: 0x"
+      << std::hex << type << std::dec << " (" << type << ")");
   if (used <= 0) {
     return 0;
   }
@@ -57,6 +61,7 @@ serialize_header(std::byte * buf, std::size_t max, message_type type,
         buf + total,
         max - total,
         tmp);
+    LIBLOG_DEBUG("Used " << used << " Bytes for message size.");
     if (used <= 0) {
       return 0;
     }
@@ -407,8 +412,20 @@ message_channel_acknowledge::extract_features(message const & wrap)
   offset += used;
   size -= used;
 
-  // And the cookie
+  // And cookie1
   cookie_serialize s;
+  used = liberate::serialization::deserialize_int(s,
+      offset, size);
+  if (used != sizeof(s)) {
+    delete ptr;
+    return {};
+  }
+  ptr->cookie1 = s;
+
+  offset += used;
+  size -= used;
+
+  // cookie2
   used = liberate::serialization::deserialize_int(s,
       offset, size);
   if (used != sizeof(s)) {
