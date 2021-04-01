@@ -173,7 +173,7 @@ TEST(InternalAPI, create)
 
   api_t api{
     ctx,
-    [](error_t, channeler::channelid) {},
+    [](channeler::error_t, channeler::channelid) {},
     [](channeler::channelid){},
     [](channeler::channelid, std::size_t) {}
   };
