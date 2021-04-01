@@ -37,7 +37,7 @@ namespace {
 // For testing
 using address_t = uint16_t;
 constexpr std::size_t POOL_BLOCK_SIZE = 3;
-std::size_t PACKET_SIZE = packet_with_messages_size;
+std::size_t PACKET_SIZE = 200;
 
 using node_t = ::channeler::context::node<
   POOL_BLOCK_SIZE
@@ -143,8 +143,8 @@ TEST(PipeIngressStateHandlingFilter, create_message_on_channel_new)
   ::memcpy(data.data(), packet_regular_channelid, packet_regular_channelid_size);
   channeler::packet_wrapper packet{data.data(), data.size()};
 
-  auto msg = std::make_unique<channeler::message>(
-      test::message_channel_new, test::message_channel_new_size, true
+  auto msg = channeler::parse_message(
+      test::message_channel_new, test::message_channel_new_size
   );
   auto ev = std::make_unique<simple_filter_t::input_event>(123, 321, packet, data,
       typename connection_t::channel_set_type::channel_ptr{},
