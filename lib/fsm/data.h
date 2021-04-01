@@ -27,7 +27,6 @@
 #include <channeler.h>
 
 #include <functional>
-#include <iostream> // FIXME
 
 #include "base.h"
 
