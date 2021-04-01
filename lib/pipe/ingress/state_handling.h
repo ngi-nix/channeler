@@ -85,13 +85,14 @@ struct state_handling_filter
 
     auto processed = m_registry.process(in, actions, events);
     if (!processed) {
-      // TODO something?
+      LIBLOG_WARN("Mmessage was not processed by registry: " << in->message->type);
     }
 
     for (auto & shared_ev : events) {
       auto iter = m_event_route_map.find(shared_ev->category);
       if (iter == m_event_route_map.end()) {
-        // TODO log something?
+        LIBLOG_ERROR("Do not know how to dispatch result event of category: "
+            << shared_ev->category);
         continue;
       }
 
@@ -99,6 +100,7 @@ struct state_handling_filter
       actions.merge(acts);
     }
 
+    LIBLOG_DEBUG("Returning actions: " << actions.size());
     return actions;
   }
 
