@@ -23,6 +23,10 @@
 
 #include <gtest/gtest.h>
 
+#include "../../../byte_suffix.h"
+
+using namespace test;
+
 namespace {
 
 constexpr std::size_t PACKET_SIZE = 200;
@@ -82,9 +86,8 @@ TEST(PipeEgressEnqueueMessageFilter, enqueue_message)
   EXPECT_EQ(channeler::ERR_SUCCESS, err);
   auto ch = chs.get(channel);
 
-  std::byte buf[130]; // It does not matter what's in this memory, but it
-                      // does matter somewhat that the size of the buffer
-                      // exceeds a length encodable in a single byte.
+  std::byte buf[130] = { 0x0f_b };
+
   auto msg = channeler::message_data::create(buf, sizeof(buf));
   auto ev = std::make_unique<message_out_event>(
       channel,
