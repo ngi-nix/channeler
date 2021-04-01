@@ -226,7 +226,7 @@ struct CHANNELER_API public_header_fields
 
 
 struct CHANNELER_API private_header_fields
-  : public public_header_layout
+  : public private_header_layout
 {
   sequence_no_t   sequence_no;
   payload_size_t  payload_size;
