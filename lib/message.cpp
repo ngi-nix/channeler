@@ -91,7 +91,7 @@ message_payload_size(message_type_base type)
     case MSG_CHANNEL_ACKNOWLEDGE:
       // - channelid.full
       // - cookie2
-      return sizeof(channelid::full_type) + sizeof(cookie_serialize);
+      return sizeof(channelid::full_type) + sizeof(cookie_serialize) * 2;
 
     case MSG_CHANNEL_FINALIZE:
       // - channelid.full
@@ -467,8 +467,18 @@ message_channel_acknowledge::serialize(std::byte * out, std::size_t max,
   offset += used;
   remaining -= used;
 
-  // Serialize the cookie
-  cookie_serialize tmp = msg.cookie2;
+  // Serialize cookie1
+  cookie_serialize tmp = msg.cookie1;
+  used = liberate::serialization::serialize_int(offset, remaining,
+      tmp);
+  if (used != sizeof(tmp)) {
+    return 0;
+  }
+  offset += used;
+  remaining -= used;
+
+  // Serialize cookie2
+  tmp = msg.cookie2;
   used = liberate::serialization::serialize_int(offset, remaining,
       tmp);
   if (used != sizeof(tmp)) {
