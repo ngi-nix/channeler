@@ -103,10 +103,25 @@ public:
     return entry;
   }
 
-  // TODO pop for reading
+  inline void release(slot_type slot)
+  {
+    auto iter = m_buffer.begin();
+    for ( ; iter != m_buffer.end() ; ++iter) {
+      if (iter->data == slot) {
+        m_buffer.erase(iter);
+        break;
+      }
+    }
+  }
+
   inline bool empty() const
   {
     return m_buffer.empty();
+  }
+
+  inline std::size_t size() const
+  {
+    return m_buffer.size();
   }
 
 private:

@@ -126,6 +126,11 @@ public:
       return m_impl.use_count();
     }
 
+    inline bool operator==(slot const & other) const
+    {
+      return m_impl == other.m_impl;
+    }
+
   private:
     friend class packet_pool;
 
