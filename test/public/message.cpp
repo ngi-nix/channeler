@@ -140,7 +140,8 @@ TEST(Message, parse_and_serialize_channel_acknowledge)
 
   auto ptr = reinterpret_cast<channeler::message_channel_acknowledge *>(msg.get());
   ASSERT_EQ(0xbeefd00d, ptr->id.full);
-  ASSERT_EQ(0xbeefb4be, ptr->cookie2);
+  ASSERT_EQ(0xbeefb4be, ptr->cookie1);
+  ASSERT_EQ(0xdeadd00d, ptr->cookie2);
 
   // Serialize
   std::vector<std::byte> out;

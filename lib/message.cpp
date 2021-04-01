@@ -28,8 +28,6 @@
 #include <liberate/serialization/integer.h>
 #include <liberate/serialization/varint.h>
 
-#include "macros.h"
-
 namespace channeler {
 
 
@@ -47,8 +45,6 @@ serialize_header(std::byte * buf, std::size_t max, message_type type,
       buf + total,
       max - total,
       tmp);
-  LIBLOG_DEBUG("Used " << used << " Bytes for message type: 0x"
-      << std::hex << type << std::dec << " (" << type << ")");
   if (used <= 0) {
     return 0;
   }
@@ -61,7 +57,6 @@ serialize_header(std::byte * buf, std::size_t max, message_type type,
         buf + total,
         max - total,
         tmp);
-    LIBLOG_DEBUG("Used " << used << " Bytes for message size.");
     if (used <= 0) {
       return 0;
     }
@@ -249,15 +244,13 @@ message_data::create(std::byte const * buf, std::size_t size)
 
   // We need to understand the length of the serialized message header. We know
   // it is at maximum two varints in size, so we'll serialize this first.
-  std::byte header[liberate::serialization::VARINT_MAX_BUFSIZE * 2];
-  auto used = serialize_header(header, sizeof(header),
+  std::vector<std::byte> result;
+  std::size_t reserved = liberate::serialization::VARINT_MAX_BUFSIZE * 2;
+  result.resize(size + reserved);
+  auto used = serialize_header(&result[0], reserved,
       MSG_DATA, size);
 
-  // Allocate a vector of the right size.
-  std::vector<std::byte> result;
-  result.resize(used + size);
-
-  memcpy(&result[0], header, used);
+  result.resize(size + used);
   memcpy(&result[0] + used, buf, size);
 
   auto ptr = new message_data{std::move(result)};
@@ -269,10 +262,24 @@ message_data::create(std::byte const * buf, std::size_t size)
 std::unique_ptr<message>
 message_data::create(std::vector<std::byte> & data)
 {
-  if (!data.size()) {
+  if (data.empty()) {
     return {};
   }
-  auto ptr = new message_data{std::move(data)};
+
+  // We need to understand the length of the serialized message header. We know
+  // it is at maximum two varints in size, so we'll serialize this first.
+  std::vector<std::byte> result;
+  std::size_t reserved = liberate::serialization::VARINT_MAX_BUFSIZE * 2;
+  result.resize(data.size() + reserved);
+  auto used = serialize_header(&result[0], reserved,
+      MSG_DATA, data.size());
+
+  result.resize(used);
+  result.insert(result.end(),
+      std::make_move_iterator(data.begin()),
+      std::make_move_iterator(data.end()));
+
+  auto ptr = new message_data{std::move(result)};
   return std::unique_ptr<message>(ptr);
 }
 

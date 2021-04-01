@@ -50,7 +50,8 @@ std::byte const message_channel_acknowledge[] = {
 
   0xbe_b, 0xef_b, 0xd0_b, 0x0d_b, // Channel ID
 
-  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie)
+  0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // crc32 (cookie1)
+  0xde_b, 0xad_b, 0xd0_b, 0x0d_b, // crc32 (cookie2)
 };
 std::size_t const message_channel_acknowledge_size = sizeof(message_channel_acknowledge);
 
