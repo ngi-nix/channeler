@@ -160,7 +160,7 @@ struct connection_api
     // This *should* produce a message out event. If that's not happening, it's unclear
     // what we should do.
     if (ev->type != pipe::ET_MESSAGE_OUT) {
-      LIBLOG_ERROR("Registry dit not produce an outgoing message!");
+      LIBLOG_ERROR("Registry did not produce an outgoing message!");
       return ERR_STATE;
     }
 
@@ -190,15 +190,48 @@ struct connection_api
   inline error_t channel_write(channelid const & id, std::byte const * data,
       std::size_t length, std::size_t & written)
   {
+    written = 0;
     if (id == DEFAULT_CHANNELID || !id.has_responder()) {
       return ERR_INVALID_CHANNELID;
     }
 
-    // TODO
-    // - feed to FSM as user data
-    // - feed the resulting data message to egress pipe
-    return ERR_UNEXPECTED;
+    // The user data event carries unbounded amounts of data. It's up to the
+    // FSM to split this up.
+    std::vector<std::byte> payload{data, data + length};
+    auto event = pipe::user_data_written_event(id, std::move(payload));
 
+    pipe::action_list_type result_actions;
+    pipe::event_list_type result_events;
+    auto processed = m_registry.process(&event, result_actions, result_events);
+    if (!processed || result_events.empty()) {
+      return ERR_STATE;
+    }
+
+    auto ev = std::move(result_events.front());
+    result_events.pop_front(); // XXX necessary? probably not.
+    if (!ev) {
+      LIBLOG_ERROR("Registry did not produce a result event!");
+      return ERR_STATE;
+    }
+
+    // This *should* produce a message out event. If that's not happening, it's unclear
+    // what we should do.
+    if (ev->type != pipe::ET_MESSAGE_OUT) {
+      LIBLOG_ERROR("Registry did not produce an outgoing message!");
+      return ERR_STATE;
+    }
+
+    // Since this is ET_MESSAGE_OUT, feed this to the egress pipe. The pipe
+    // then produces callbacks as necessary.
+    result_actions = m_egress.consume(std::move(ev));
+    if (!result_actions.empty()) {
+      // TODO handle better
+      LIBLOG_ERROR("TODO");
+      return ERR_UNEXPECTED;
+    }
+
+    LIBLOG_DEBUG("Data written successfully.");
+    written = length;
     return ERR_SUCCESS;
   }
 
@@ -220,11 +253,46 @@ struct connection_api
   inline error_t channel_read(channelid const & id, std::byte * data,
       std::size_t max, std::size_t & read)
   {
-    // TODO
-    // - If channel data has data available, return it.
-    return ERR_UNEXPECTED;
+    LIBLOG_DEBUG("User wants to read data of up to " << max
+        << " Bytes from channel " << id);
 
-    return ERR_SUCCESS;
+    auto channel = m_context.channels().get(id);
+    if (!channel) {
+      return ERR_INVALID_CHANNELID;
+    }
+
+    // FIXME this will need a rework once we have better buffer management with
+    //       resends, etc.
+    //
+    //       The local buffer isn't *wrong* as such, but the release from the
+    //       ingress buffer is a little brutal. Also, this should be taken
+    //       care of by channel_data somehow, rather than having yet another
+    //       channel -> data mapping.
+    auto err = ERR_UNEXPECTED;
+    auto & ev = m_user_data_buffer[id].front();
+    if (!ev) {
+      read = 0;
+      err = ERR_DATA_UNAVAILABLE;
+    }
+    else {
+      // XXX skip safeguards here (for now), because we're the only one
+      //     writign this kind of event here.
+      auto converted = reinterpret_cast<pipe::user_data_to_read_event<connection_contextT::POOL_BLOCK_SIZE> *>(ev.get());
+      std::size_t to_copy = std::min(converted->message->payload_size, max);
+      LIBLOG_DEBUG("Copying " << to_copy << " Bytes of " << converted->message->payload_size
+          << " to buffer of size " << max);
+      ::memcpy(data, converted->message->payload, to_copy);
+
+      // FIXME This is not taking into account partial reads of a message, so
+      //       this needs fixing.
+      channel->ingress_buffer().release(converted->slot);
+
+      read = to_copy;
+      err = ERR_SUCCESS;
+    }
+
+    m_user_data_buffer[id].pop_front();
+    return err;
   }
 
   inline error_t channel_read(channelid const & id, char * data,
@@ -337,12 +405,14 @@ private:
   pipe::action_list_type handle_ingress_event(std::unique_ptr<pipe::event> ev)
   {
     LIBLOG_DEBUG("Handling ingress event of type: " << ev->type);
+    // TODO
     return {};
   }
 
   pipe::action_list_type handle_unknown_event(std::unique_ptr<pipe::event> ev)
   {
     LIBLOG_DEBUG("Handling unknown event of type: " << ev->type);
+    // TODO
     return {};
   }
 
@@ -355,18 +425,46 @@ private:
   pipe::action_list_type handle_user_event(std::unique_ptr<pipe::event> ev)
   {
     LIBLOG_DEBUG("Handling user event of type: " << ev->type);
+    // TODO
     return {};
   }
 
   pipe::action_list_type handle_system_event(std::unique_ptr<pipe::event> ev)
   {
     LIBLOG_DEBUG("Handling system event of type: " << ev->type);
+    // TODO
     return {};
   }
 
   pipe::action_list_type handle_notification_event(std::unique_ptr<pipe::event> ev)
   {
     LIBLOG_DEBUG("Handling notification event of type: " << ev->type);
+    switch (ev->type) {
+      case pipe::ET_USER_DATA_TO_READ:
+        {
+          auto converted = reinterpret_cast<
+            pipe::user_data_to_read_event<connection_contextT::POOL_BLOCK_SIZE> *
+          >(ev.get());
+
+          if (converted->message->type != MSG_DATA) {
+            LIBLOG_ERROR("Unknown message type for user data available: " << converted->message->type);
+            return {};
+          }
+
+          auto id = converted->channel;
+          auto size = converted->message->payload_size;
+
+          m_user_data_buffer[id].push_back(std::move(ev));
+
+          LIBLOG_DEBUG("Notifying data available on channel: " << converted->channel);
+          m_data_available_cb(id, size);
+        }
+        break;
+
+      default:
+        break;
+    }
+
     return {};
   }
 
@@ -383,6 +481,11 @@ private:
   channel_establishment_callback  m_remote_establishment_cb;
   packet_to_send_callback         m_packet_to_send_cb;
   data_available_callback         m_data_available_cb;
+
+  // XXX This we'd like to have more efficient with improved buffer management
+  //     in the next milestone.
+  using user_data_buffer = std::map<channelid, pipe::event_list_type>;
+  user_data_buffer                m_user_data_buffer = {};
 };
 
 

@@ -32,6 +32,8 @@
 
 #include <channeler/message.h>
 
+#include "../macros.h"
+
 #include "../channels.h"
 #include "../channel_data.h"
 #include "../support/timeouts.h"
@@ -93,6 +95,7 @@ struct fsm_data
       ::channeler::pipe::event_list_type & output_events)
   {
     namespace pipe = channeler::pipe;
+    LIBLOG_DEBUG("Data FSM got event of type: " << to_process->type);
 
     // Distinguish incoming event types
     switch (to_process->type) {
@@ -109,6 +112,7 @@ struct fsm_data
         }
 
       default:
+        LIBLOG_WARN("Data FSM does not handle messages of type: " << to_process->type);
         break;
     }
 
@@ -123,6 +127,7 @@ struct fsm_data
   {
     if (event->message->type != MSG_DATA) {
       // We process only data messages.
+      LIBLOG_DEBUG("Data FSM handles only data messages.");
       return false;
     }
 
@@ -135,6 +140,7 @@ struct fsm_data
       //      class *should* be used. But things that should never happen have
       //      a way of happening anyway, so... maybe we can return an action
       //      here if we do find an occurrence?
+      LIBLOG_DEBUG("Cannot handle data message; channel is not established. Dropping message.");
       return true;
     }
 
@@ -147,6 +153,7 @@ struct fsm_data
     );
     output_events.push_back(std::move(result));
 
+    LIBLOG_DEBUG("Generated data event.");
     return true;
   }
 
@@ -155,16 +162,20 @@ struct fsm_data
       ::channeler::pipe::action_list_type & result_actions,
       ::channeler::pipe::event_list_type & output_events)
   {
+    LIBLOG_DEBUG("User wants to write " << event->data.size() << " Bytes.");
+
     // If we don't know the given channel, then we must error out via an
     // action.
     if (!m_channels.has_channel(event->channel)) {
       result_actions.push_back(std::make_unique<channeler::pipe::error_action>(
             ERR_INVALID_CHANNELID));
+      LIBLOG_ERROR("Received data for unknown channel.");
       return true;
     }
 
     // If we have a channel, we need to wrap the data into a data message and
     // produce an appropriate output event.
+    // TODO split data here into individual messages if it's too large.
     auto msg = message_data::create(event->data);
     auto ev = std::make_unique<channeler::pipe::message_out_event>(
         event->channel,
@@ -172,6 +183,7 @@ struct fsm_data
     );
     output_events.push_back(std::move(ev));
 
+    LIBLOG_DEBUG("Sending data to egress.");
     return true;
   }
 

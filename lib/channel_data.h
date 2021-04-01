@@ -86,6 +86,17 @@ struct channel_data
   }
 
 
+  inline buffer_type const & ingress_buffer() const
+  {
+    return m_ingress_buffer;
+  }
+
+
+  inline buffer_type & ingress_buffer()
+  {
+    return m_ingress_buffer;
+  }
+
 
   inline channelid const & id() const
   {
