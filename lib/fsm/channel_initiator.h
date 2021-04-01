@@ -32,6 +32,7 @@
 
 #include <channeler/message.h>
 
+#include "../macros.h"
 #include "../channels.h"
 #include "../channel_data.h"
 #include "../support/timeouts.h"
@@ -141,6 +142,7 @@ struct fsm_channel_initiator
         }
 
       default:
+        LIBLOG_WARN("Event type not handled by channel_initiator: " << to_process->type);
         break;
     }
 
@@ -189,15 +191,22 @@ struct fsm_channel_initiator
   {
     // Check that message type is MSG_CHANNEL_ACKNOWLEDGE or abort.
     if (event->message->type != MSG_CHANNEL_ACKNOWLEDGE) {
+      LIBLOG_DEBUG("Initiator only handles MSG_CHANNEL_ACKNOWLEDGE, got: " << event->message->type);
       return false;
     }
     auto msg = reinterpret_cast<message_channel_acknowledge const *>(event->message.get());
+
+    LIBLOG_DEBUG("MSG_CHANNEL_ACKNOWLEDGE(channel["
+        << std::hex << msg->id << "]/"
+        << "cookie1[" << std::hex << msg->cookie1 << "]/"
+        << "cookie2[" << std::hex << msg->cookie2 << "])"
+        << std::dec);
 
     // Pick channel identifier from message, grab channel data for it. 
     auto channel = m_channels.get(msg->id);
     if (!channel) {
       // We cannot acknowledge a channel we know nothing about.
-
+      LIBLOG_ERROR("Initiator knows nothing about channel: " << msg->id);
       return false;
     }
 
@@ -208,6 +217,7 @@ struct fsm_channel_initiator
       // this message as one we should not process.
       // XXX We may want to consider blocking this responder, but that has usage
       //     implications.
+      LIBLOG_ERROR("Initiator does not have a pending channel: " << msg->id);
       return false;
     }
 
@@ -232,6 +242,9 @@ struct fsm_channel_initiator
       //       we don't have to recreate the cookie above.
       //       https://gitlab.com/interpeer/channeler/-/issues/12
       m_channels.remove(msg->id);
+      LIBLOG_ERROR("Removed pending channel due to mismatching cookie: " << msg->id
+          << " calculated: " << std::hex << cookie1 << " but got "
+          << msg->cookie1 << std::dec);
       return true;
     }
 
@@ -242,8 +255,17 @@ struct fsm_channel_initiator
       // have to remove the channel and abort. Something in our channel
       // bookkeeping went very much wrong.
       m_channels.remove(msg->id);
+      LIBLOG_ET("Could not turn pending channel into full channel: " << msg->id,
+          res);
       return true;
     }
+
+    // We have success! The caller needs to know this, so we'll use an action
+    // here.
+    LIBLOG_DEBUG("Channel fully established: " << msg->id);
+    result_actions.push_back(std::move(
+        std::make_unique<::channeler::pipe::notify_channel_established_action>(msg->id)
+    ));
 
     // At this point, we have an acknowledgement. From our point of view,
     // the channel is established. We'll just send a MSG_CHANNEL_FINALIZE or
@@ -260,9 +282,11 @@ struct fsm_channel_initiator
     if (channel->has_egress_data_pending()) {
       // TODO MSG_CHANNEL_COOKIE
       //      https://gitlab.com/interpeer/channeler/-/issues/13
+      LIBLOG_DEBUG("Sending MSG_CHANNEL_COOKIE: " << msg->id);
     }
     else {
       // MSG_CHANNEL_FINALIZE
+      LIBLOG_DEBUG("Sending MSG_CHANNEL_FINALIZE: " << msg->id);
       auto response = std::make_unique<message_channel_finalize>(msg->id, msg->cookie2,
           capabilities_t{}); // TODO capabilities not used yet.
                              // https://gitlab.com/interpeer/channeler/-/issues/14
@@ -286,6 +310,7 @@ struct fsm_channel_initiator
         && event->context.scope != CHANNEL_TIMEOUT_TAG)
     {
       // Not a timeout for us.
+      LIBLOG_DEBUG("Ignoring timeout; we didn't ask for it.");
       return false;
     }
 
@@ -299,6 +324,7 @@ struct fsm_channel_initiator
       //      limit
       //      https://gitlab.com/interpeer/channeler/-/issues/15
       m_channels.remove(id);
+      LIBLOG_DEBUG("Removing channel due to timeout: " << id);
       return true;
     }
 

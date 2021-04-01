@@ -42,8 +42,11 @@ enum action_type : uint_fast16_t
 {
   AT_UNKNOWN = 0,
   AT_ERROR,               // Report error to upstream
-  AT_FILTER_TRANSPORT,
+
+  AT_FILTER_TRANSPORT,    // Request filtering of transport or peer address
   AT_FILTER_PEER,
+
+  AT_NOTIFY_CHANNEL_ESTABLISHED,
 };
 
 
@@ -122,6 +125,25 @@ struct error_action
   }
 
   virtual ~error_action() = default;
+};
+
+
+
+/**
+ * Action for reporting channel established
+ */
+struct notify_channel_established_action
+  : public action
+{
+  channelid channel;
+
+  inline notify_channel_established_action(channelid const & id)
+    : action{AT_NOTIFY_CHANNEL_ESTABLISHED}
+    , channel{id}
+  {
+  }
+
+  virtual ~notify_channel_established_action() = default;
 };
 
 

@@ -231,11 +231,17 @@ TEST(FSMChannelInitiator, acknowledge_channel)
   events.clear();
   auto ret = fsm.process(&ack_ev, actions, events);
   ASSERT_TRUE(ret);
-  ASSERT_EQ(0, actions.size());
+  ASSERT_EQ(1, actions.size());
   ASSERT_EQ(1, events.size());
 
   ASSERT_FALSE(chs.has_pending_channel(initiator));
   ASSERT_TRUE(chs.has_established_channel(initiator));
+
+  // The returned action should notify us of this channel.
+  auto & act = *actions.begin();
+  ASSERT_EQ(act->type, AT_NOTIFY_CHANNEL_ESTABLISHED);
+  auto actconv = reinterpret_cast<notify_channel_established_action *>(act.get());
+  ASSERT_EQ(actconv->channel.initiator, initiator);
 
   // We should also ensure that the out event is a message event, and contains
   // a message_channel_finalize with the appropriate cookie2

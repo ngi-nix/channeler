@@ -203,7 +203,7 @@ TEST(FSMStandardRegistry, negotiate_channel)
 
   result = peer1_reg.process(&ev3, actions, events);
   ASSERT_TRUE(result);
-  ASSERT_EQ(0, actions.size());
+  ASSERT_EQ(1, actions.size()); // Expect one action; tested in individual FSMs
   ASSERT_EQ(1, events.size());
 
   auto & result_ev3 = *events.begin();
@@ -229,7 +229,7 @@ TEST(FSMStandardRegistry, negotiate_channel)
 
   result = peer2_reg.process(&ev4, actions, events);
   ASSERT_TRUE(result);
-  ASSERT_EQ(0, actions.size());
+  ASSERT_EQ(1, actions.size()); // Expect one action; tested in individual FSMs
   ASSERT_EQ(0, events.size());
 
   ASSERT_TRUE(peer1_ctx.channels().has_established_channel(id));

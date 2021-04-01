@@ -32,6 +32,7 @@
 
 #include <channeler/message.h>
 
+#include "../macros.h"
 #include "../channels.h"
 #include "../channel_data.h"
 
@@ -120,11 +121,13 @@ struct fsm_channel_responder
 
     // Ensure correct event and message type(s)
     if (to_process->type != pipe::ET_MESSAGE) {
+      LIBLOG_WARN("Event type not handled by channel_responder: " << to_process->type);
       return false;
     }
 
     auto input = reinterpret_cast<message_event_type *>(to_process);
     auto msg_type = input->message->type;
+    LIBLOG_DEBUG("Got message of type: " << msg_type);
     switch (msg_type) {
       case MSG_CHANNEL_NEW:
         return handle_new(reinterpret_cast<message_channel_new *>(input->message.get()),
@@ -142,6 +145,7 @@ struct fsm_channel_responder
             result_actions, output_events);
 
       default:
+        LIBLOG_WARN("Message type not handled by channel_responder: " << msg_type);
         break;
     }
 
@@ -155,6 +159,10 @@ struct fsm_channel_responder
       ::channeler::pipe::action_list_type & result_actions [[maybe_unused]],
       ::channeler::pipe::event_list_type & output_events [[maybe_unused]])
   {
+    LIBLOG_DEBUG("MSG_CHANNEL_NEW(init["
+        << std::hex << msg->initiator_part << "]/"
+        << "cookie1[" << std::hex << msg->cookie1 << "])"
+        << std::dec);
     // If we got a MSG_CHANNEL_NEW, we have one of three possible situations to
     // consider:
     // a) We already have a pending channel with this partial identifier. That
@@ -176,6 +184,7 @@ struct fsm_channel_responder
       m_channels.drop_pending_channel(msg->initiator_part);
       // TODO notify other channel_initiator via action?
       //      https://gitlab.com/interpeer/channeler/-/issues/16
+      LIBLOG_ERROR("Received an init request for a pending channel; we'll abort.");
       return false;
     }
 
@@ -190,6 +199,7 @@ struct fsm_channel_responder
         // TODO report this somehow? I don't know what the exact right thing
         // to do here would be.
         // https://gitlab.com/interpeer/channeler/-/issues/17
+        LIBLOG_ET("Could not complete the channel id", err);
         return false;
       }
     }
@@ -209,9 +219,13 @@ struct fsm_channel_responder
     if (data && data->has_egress_data_pending()) {
       // TODO MSG_CHANNEL_COOKIE
       //      https://gitlab.com/interpeer/channeler/-/issues/13
+      LIBLOG_DEBUG("Sending MSG_CHANNEL_COOKIE: " << full_id);
     }
     else {
       // MSG_CHANNEL_ACKNOWLEDGE
+      LIBLOG_DEBUG("Sending MSG_CHANNEL_ACKNOWLEDGE: " << full_id
+          << " with cookie1 " << std::hex << msg->cookie1
+          << " and cookie2 " << cookie2 << std::dec);
       auto response = std::make_unique<message_channel_acknowledge>(full_id, msg->cookie1, cookie2);
       auto ev = std::make_unique<channeler::pipe::message_out_event>(
             packet.channel(), // XXX should be DEFAULT_CHANNELID
@@ -229,6 +243,12 @@ struct fsm_channel_responder
       ::channeler::pipe::action_list_type & result_actions [[maybe_unused]],
       ::channeler::pipe::event_list_type & output_events [[maybe_unused]])
   {
+    LIBLOG_DEBUG("MSG_CHANNEL_FINALIZE(channel["
+        << std::hex << msg->id << "]/"
+        << "cookie2[" << std::hex << msg->cookie2 << "]/"
+        << "capabilities[" << std::hex << msg->capabilities << "])"
+        << std::dec);
+
     // If we got a MSG_CHANNEL_NEW, we have one of three possible situations to
     // consider:
     // a) We already have a pending channel with this partial identifier. That
@@ -249,11 +269,13 @@ struct fsm_channel_responder
     if (m_channels.has_pending_channel(msg->id.initiator)) {
       m_channels.drop_pending_channel(msg->id.initiator);
       // TODO notify other channel_initiator via action?
+      LIBLOG_ERROR("Received a finalize for a pending channel; we'll abort.");
       return false;
     }
 
     // If the full channel exists, we're done. We just ignore the message entirely.
     if (m_channels.has_established_channel(msg->id)) {
+      LIBLOG_DEBUG("Ignoring finalize; the channel is already established.");
       return true;
     }
 
@@ -272,6 +294,9 @@ struct fsm_channel_responder
     if (msg->cookie2 != cookie) {
       // TODO report this?
       // https://gitlab.com/interpeer/channeler/-/issues/17
+      LIBLOG_ERROR("Ignoring finalize due to mismatching cookie: " << msg->id
+          << " calculated: " << std::hex << cookie << " but got "
+          << msg->cookie2 << std::dec);
       return false;
     }
 
@@ -281,8 +306,18 @@ struct fsm_channel_responder
     if (ERR_SUCCESS != err) {
       // TODO report this?
       // https://gitlab.com/interpeer/channeler/-/issues/17
+      LIBLOG_ET("Could not add channel: " << msg->id, err);
       return false;
     }
+
+    LIBLOG_DEBUG("Channel fully established: " << msg->id);
+    result_actions.push_back(std::move(
+        std::make_unique<::channeler::pipe::notify_channel_established_action>(msg->id)
+    ));
+
+    // Add timeout TODO
+    // m_timeouts.add({CHANNEL_TIMEOUT_TAG, msg->id.initiator},
+    //     ::channeler::support::timeouts::duration{CHANNEL_TIMEOUT});
 
     return true;
   }
@@ -293,6 +328,7 @@ struct fsm_channel_responder
       ::channeler::pipe::action_list_type & result_actions [[maybe_unused]],
       ::channeler::pipe::event_list_type & output_events [[maybe_unused]])
   {
+    LIBLOG_DEBUG("TODO: MSG_CHANNEL_COOKIE");
     // TODO
     // https://gitlab.com/interpeer/channeler/-/issues/13
     return true;
