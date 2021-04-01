@@ -28,7 +28,6 @@
 
 #include <map>
 #include <vector>
-#include <iostream> // FIXME
 
 #include <channeler/channelid.h>
 
