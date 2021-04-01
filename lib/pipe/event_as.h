@@ -26,9 +26,7 @@
 
 #include <channeler.h>
 
-#if defined(DEBUG) && !defined(NDEBUG)
-#include <iostream>
-#endif // DEBUG
+#include "../macros.h"
 
 #include "event.h"
 
@@ -39,10 +37,10 @@ event_assert_set(char const * caller, event * raw)
 {
 #if defined(DEBUG) && !defined(NDEBUG)
   if (!raw) {
-    std::cerr << caller << " received empty event." << std::endl;
+    LIBLOG_ERROR(caller << " received empty event.");
     throw exception{ERR_INVALID_REFERENCE};
   }
-  std::cout << caller << " received event type: " << raw->type << std::endl;
+  LIBLOG_DEBUG(caller << " received event type: " << raw->type);
 #endif // DEBUG
 }
 
@@ -63,9 +61,8 @@ event_as(char const * caller, event * raw, event_type expected_type)
 
 #if defined(DEBUG) && !defined(NDEBUG)
   if (raw->type != expected_type) {
-    std::cerr << caller << " received unexpected event type: " << raw->type
-      << " (wanted: " << expected_type << ")"
-      << std::endl;
+    LIBLOG_ERROR(caller << " received unexpected event type: " << raw->type
+      << " (wanted: " << expected_type << ")");
     throw exception{ERR_INVALID_PIPE_EVENT};
   }
 #endif // DEBUG
