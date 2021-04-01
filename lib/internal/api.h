@@ -31,6 +31,8 @@
 #include <channeler/channelid.h>
 #include <channeler/error.h>
 
+#include "../macros.h"
+
 #include "../fsm/default.h"
 #include "../pipe/ingress.h"
 #include "../pipe/egress.h"
@@ -120,11 +122,18 @@ struct connection_api
   /**
    * Initiate a channel.
    *
-   * The callback will be invoked with an error code; if ERR_SUCCESS is
-   * reported, the channelid parameter contains the id of the newly
-   * established channel.
+   * ERR_SUCCESS means the initial establishment message was sent properly,
+   * and does not indicate overall success. On overall success,
+   * the channel establishment callback will be invoked.
+   *
+   * Note that this does not permit the user to tie a *purpose* to a particular
+   * channel, which is less than ideal.
+   *
+   * TODO: also store a user-provided tag in channel data, so that the
+   *       establishment callback can be used to tie a new channel back to
+   *       the user's action.
    */
-  inline error_t establish_channel(peerid const & peer, channel_establishment_callback cb)
+  inline error_t establish_channel(peerid const & peer)
   {
     // Channel establishment happens on the default channel; we need to create a
     // default channel entry if we haven't already.
@@ -141,20 +150,17 @@ struct connection_api
       return ERR_STATE;
     }
 
-    std::cout << "processed: " << processed << std::endl;
-    std::cout << "actions:   " << result_actions.size() << std::endl;
-    std::cout << "events:    " << result_events.size() << std::endl;
-
     auto ev = std::move(result_events.front());
     result_events.pop_front(); // XXX necessary? probably not.
     if (!ev) {
+      LIBLOG_ERROR("Registry did not produce a result event!");
       return ERR_STATE;
     }
 
     // This *should* produce a message out event. If that's not happening, it's unclear
     // what we should do.
     if (ev->type != pipe::ET_MESSAGE_OUT) {
-      // TODO details?
+      LIBLOG_ERROR("Registry dit not produce an outgoing message!");
       return ERR_STATE;
     }
 
@@ -163,13 +169,11 @@ struct connection_api
     result_actions = m_egress.consume(std::move(ev));
     if (!result_actions.empty()) {
       // TODO handle better
+      LIBLOG_ERROR("TODO");
       return ERR_UNEXPECTED;
     }
 
-    // TODO maybe when a channel is added, we want a result action for
-    //      notifying the caller, with the channel identifier?
-
-    std::cout << "consumed! We should have some callback?" << std::endl;
+    LIBLOG_DEBUG("Channel established successfully.");
     return ERR_SUCCESS;
   }
 
@@ -255,7 +259,7 @@ struct connection_api
       address_type const & destination,
       slot_type const & slot)
   {
-    std::cout << "received packet: " << slot.size() << std::endl;
+    LIBLOG_DEBUG("Received packet: " << slot.size());
     auto ev = std::make_unique<
       pipe::raw_buffer_event<
         address_type, connection_contextT::POOL_BLOCK_SIZE
@@ -264,12 +268,28 @@ struct connection_api
 
     // Feed into default ingress pipe
     auto actions = m_ingress.consume(std::move(ev));
-    if (!actions.empty()) {
-      // TODO handle
-      std::cout << "oops?" << std::endl;
-      return ERR_UNEXPECTED;
+
+    for (auto & act : actions) {
+      // We cannot handle all actions. However, we do expect a channel
+      // establishment notification action here.
+      // TODO also: error
+      switch (act->type) {
+        case pipe::AT_NOTIFY_CHANNEL_ESTABLISHED:
+          {
+            auto actconv = reinterpret_cast<pipe::notify_channel_established_action *>(act.get());
+            LIBLOG_DEBUG("FSM reports channel established: " << actconv->channel);
+            m_remote_establishment_cb(ERR_SUCCESS, actconv->channel);
+          }
+          break;
+
+        default:
+          LIBLOG_ERROR("Ingress pipe reports action we don't understand: "
+              << act->type);
+          return ERR_UNEXPECTED;
+      }
     }
-    std::cout << "ok, packet received and processed." << std::endl;
+
+    LIBLOG_DEBUG("Packet processed after receipt.");
     return ERR_SUCCESS;
   }
 
@@ -293,7 +313,7 @@ private:
 
   pipe::action_list_type redirect_egress_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "egress event produced: " << ev->type << std::endl;
+    LIBLOG_DEBUG("Egress event produced: " << ev->category << " / " << ev->type);
     switch (ev->type) {
       case pipe::ET_PACKET_OUT_ENQUEUED:
         {
@@ -301,7 +321,7 @@ private:
             pipe::packet_out_enqueued_event<typename connection_contextT::channel_type> *
           >(ev.get());
           auto channel = converted->channel->id();
-          std::cout << "have a packet to send: " << channel << std::endl;
+          LIBLOG_DEBUG("Notifying packet available on channel: " << channel);
           m_packet_to_send_cb(channel);
         }
         break;
@@ -316,37 +336,37 @@ private:
 
   pipe::action_list_type handle_ingress_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "ingress event of type: " << ev->type << std::endl;
+    LIBLOG_DEBUG("Handling ingress event of type: " << ev->type);
     return {};
   }
 
   pipe::action_list_type handle_unknown_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "unknown event" << std::endl;
+    LIBLOG_DEBUG("Handling unknown event of type: " << ev->type);
     return {};
   }
 
   pipe::action_list_type handle_egress_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "egress event of type: " << ev->type << std::endl;
+    LIBLOG_DEBUG("Handling egress event of type: " << ev->type);
     return m_egress.consume(std::move(ev));
   }
 
   pipe::action_list_type handle_user_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "user event of type: " << ev->type << std::endl;
+    LIBLOG_DEBUG("Handling user event of type: " << ev->type);
     return {};
   }
 
   pipe::action_list_type handle_system_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "system event of type: " << ev->type << std::endl;
+    LIBLOG_DEBUG("Handling system event of type: " << ev->type);
     return {};
   }
 
   pipe::action_list_type handle_notification_event(std::unique_ptr<pipe::event> ev)
   {
-    std::cout << "notification event of type: " << ev->type << std::endl;
+    LIBLOG_DEBUG("Handling notification event of type: " << ev->type);
     return {};
   }
 

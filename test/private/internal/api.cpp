@@ -65,7 +65,6 @@ struct packet_loop_callback
 
     // If we have a packet to send, we'll just feed it to our peer.
     auto entry = m_self->packet_to_send(channel);
-    test::hexdump(std::cerr, entry.packet.buffer(), entry.packet.buffer_size());
 
     // Allocate a peer slot, copy packet.
     auto peer_slot = m_peer->allocate();
@@ -225,7 +224,7 @@ TEST(InternalAPI, establish_channel)
 
   peer_api1 = new api_t{
     ctx1,
-    [](channeler::error_t, channelid) {},
+    std::bind(&channel_establishment_callback::callback, &ccb1, _1, _2),
     std::bind(&packet_loop_callback::packet_to_send, &loop1, _1),
     [](channelid, std::size_t) {}
   };
@@ -241,22 +240,13 @@ TEST(InternalAPI, establish_channel)
   ASSERT_EQ(DEFAULT_CHANNELID, ccb2.m_id);
 
   // Establish channel
-  auto err = peer_api1->establish_channel(
-    ctx2.node().id(),
-    std::bind(&channel_establishment_callback::callback, &ccb1, _1, _2)
-  );
+  auto err = peer_api1->establish_channel(ctx2.node().id());
   ASSERT_EQ(ERR_SUCCESS, err);
-  std::cout << loop1.m_call_count << std::endl;
-  std::cout << loop2.m_call_count << std::endl;
-
 
   // After channel establishment: identifiers are non-default and must match
   ASSERT_NE(DEFAULT_CHANNELID, ccb1.m_id);
   ASSERT_NE(DEFAULT_CHANNELID, ccb2.m_id);
   ASSERT_EQ(ccb1.m_id, ccb2.m_id);
-
-  std::cout << loop1.m_call_count << std::endl;
-  std::cout << loop2.m_call_count << std::endl;
 
   delete peer_api1;
   delete peer_api2;
@@ -278,6 +268,7 @@ TEST(InternalAPI, send_data_on_established_channel)
   packet_loop_callback loop2{peer_api2, peer_api1};
 
   channel_establishment_callback ccb1;
+  channel_establishment_callback ccb2;
 
   data_available_callback dcb1;
   data_available_callback dcb2;
@@ -286,22 +277,19 @@ TEST(InternalAPI, send_data_on_established_channel)
 
   peer_api1 = new api_t{
     ctx1,
-    [](channeler::error_t, channelid) {},
+    std::bind(&channel_establishment_callback::callback, &ccb1, _1, _2),
     std::bind(&packet_loop_callback::packet_to_send, &loop1, _1),
     std::bind(&data_available_callback::callback, &dcb1, _1, _2)
   };
   peer_api2 = new api_t{
     ctx2,
-    [](channeler::error_t, channelid) {},
+    std::bind(&channel_establishment_callback::callback, &ccb2, _1, _2),
     std::bind(&packet_loop_callback::packet_to_send, &loop2, _1),
     std::bind(&data_available_callback::callback, &dcb2, _1, _2)
   };
 
   // *** Establish channel
-  auto err = peer_api1->establish_channel(
-    ctx2.node().id(),
-    std::bind(&channel_establishment_callback::callback, &ccb1, _1, _2)
-  );
+  auto err = peer_api1->establish_channel(ctx2.node().id());
   EXPECT_EQ(ERR_SUCCESS, err);
 
   // *** Send data from peer1 to peer2
