@@ -98,6 +98,9 @@ CHANNELER_ERRDEF(ERR_STATE,
     10,
     "State machine error.")
 
+CHANNELER_ERRDEF(ERR_DATA_UNAVAILABLE,
+    11,
+    "No data available.")
 
 CHANNELER_END_ERRORS
 
