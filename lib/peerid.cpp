@@ -24,8 +24,6 @@
 
 #include <cstring>
 
-#include <iostream> // FIXME
-
 #include <stdexcept>
 
 #include <liberate/string/hexencode.h>
