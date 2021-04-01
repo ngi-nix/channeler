@@ -27,6 +27,7 @@
 #include <channeler.h>
 
 #include <vector>
+#include <ostream>
 
 #include <liberate/types.h>
 #include <liberate/serialization/varint.h>
@@ -71,6 +72,13 @@ enum message_type : message_type_base
   // MSG_START_ENCRYPTION
   // https://gitlab.com/interpeer/channeler/-/issues/3
 };
+
+inline std::ostream &
+operator<<(std::ostream & os, message_type type)
+{
+  os << static_cast<message_type_base>(type);
+  return os;
+}
 
 
 /**
