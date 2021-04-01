@@ -244,7 +244,7 @@ struct fsm_channel_initiator
       m_channels.remove(msg->id);
       LIBLOG_ERROR("Removed pending channel due to mismatching cookie: " << msg->id
           << " calculated: " << std::hex << cookie1 << " but got "
-          << msg->cookie1 << std::dec);
+          << std::hex << msg->cookie1 << std::dec);
       return true;
     }
 
