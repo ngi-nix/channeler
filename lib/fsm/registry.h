@@ -85,7 +85,16 @@ public:
 
     for (auto & fsm : m_fsms) {
       if (fsm->process(to_process, result_actions, output_events)) {
+        // Once processed, the *event* may still live (because it's passed
+        // as a raw pointer), but e.g. if it was a message event, the
+        // *message* may have been moved. We therefore need to break out
+        // of the loop.
+        // This means that no two FSMs can process the same message, which is a little
+        // restrictive in some sense. Let's see if this will work out. It should, with
+        // good separation of sub-protocols, but it's not clear.
+        // TODO: revisit this decision later
         processed = true;
+        break;
       }
     }
 
