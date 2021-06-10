@@ -1,0 +1,55 @@
+version: '{build}-{branch}'
+
+os: Visual Studio 2017
+
+environment:
+  global:
+    PYTHON: "C:\\Python38-x64"
+    PYTHON_VERSION: "3.8.x"
+    PYTHON_ARCH: "64"
+
+  matrix:
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat
+#
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat
+#
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat
+
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#      VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat
+
+configuration:
+  - Debug
+
+build:
+  verbosity: detailed
+
+install:
+- cmd: |
+    %PYTHON%\\python.exe -m pip install --disable-pip-version-check --user meson
+
+build_script:
+- cmd: |
+    call "%VCVARSALL%"
+    mkdir build
+    cd build
+    meson ..
+    ninja
+
+test_script:
+- cmd: |
+    copy subprojects\\liberate\\erate-0.dll .
+    test\\public_tests "--gtest_output=xml:test\\public-test-results.xml"
+    test\\private_tests "--gtest_output=xml:test\\private-test-results.xml"
+
+on_finish:
+- ps: |
+    If (Test-Path test\\public-test-results.xml) {
+      (New-Object System.Net.WebClient).UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path test\\public-test-results.xml))
+    }
+    If (Test-Path test\\private-test-results.xml) {
+      (New-Object System.Net.WebClient).UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path test\\private-test-results.xml))
+    }
