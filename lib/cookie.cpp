@@ -38,9 +38,8 @@ create_cookie_initiator(
     channelid::half_type initiator_part)
 {
   // Buffer for the cookie inputs
-  std::vector<byte> buf{
-    secret_size + (PEERID_SIZE_BYTES * 2) + sizeof(channelid::half_type)
-  };
+  std::vector<byte> buf;
+  buf.resize(secret_size + (PEERID_SIZE_BYTES * 2) + sizeof(channelid::half_type));
 
   // First the secret
   byte * offs = &buf[0];
@@ -74,9 +73,8 @@ create_cookie_responder(
     channelid const & id)
 {
   // Buffer for the cookie inputs
-  std::vector<byte> buf{
-    secret_size + (PEERID_SIZE_BYTES * 2) + sizeof(channelid)
-  };
+  std::vector<byte> buf;
+  buf.resize(secret_size + (PEERID_SIZE_BYTES * 2) + sizeof(channelid));
 
   // First the secret
   byte * offs = &buf[0];
