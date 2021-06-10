@@ -21,13 +21,13 @@
 
 #include <channeler/channelid.h>
 
-#include "support/random_bits.h"
+#include <liberate/random/unsafe_bits.h>
 
 namespace channeler {
 
 channelid create_new_channelid()
 {
-  support::random_bits<uint16_t> rng;
+  liberate::random::unsafe_bits<uint16_t> rng;
 
   uint16_t cur;
   do {
@@ -54,7 +54,7 @@ error_t complete_channelid(channelid & id)
   }
 
   // Generate
-  support::random_bits<uint16_t> rng;
+  liberate::random::unsafe_bits<uint16_t> rng;
 
   uint16_t cur;
   do {

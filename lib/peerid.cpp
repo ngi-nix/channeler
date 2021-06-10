@@ -28,8 +28,7 @@
 
 #include <liberate/string/hexencode.h>
 #include <liberate/cpp/hash.h>
-
-#include "support/random_bits.h"
+#include <liberate/random/unsafe_bits.h>
 
 namespace channeler {
 
@@ -111,7 +110,7 @@ peerid_wrapper::operator=(peerid_wrapper const & other)
 peerid::peerid()
   : peerid_wrapper{buffer, PEERID_SIZE_BYTES}
 {
-  support::random_bits<unsigned char> rng;
+  liberate::random::unsafe_bits<unsigned char> rng;
   byte * offset = buffer;
   while (offset < buffer + PEERID_SIZE_BYTES) {
     *offset = static_cast<byte>(rng.get());
