@@ -34,7 +34,7 @@
 namespace channeler {
 
 
-peerid_wrapper::peerid_wrapper(std::byte const * start, size_t bufsize)
+peerid_wrapper::peerid_wrapper(byte const * start, size_t bufsize)
   : raw{start}
 {
   if (!raw || bufsize < size()) {
@@ -100,7 +100,7 @@ peerid_wrapper::operator=(peerid_wrapper const & other)
     throw std::logic_error("Should never happen; see regular ctor.");
   }
   if (raw != other.raw) {
-    memcpy(const_cast<std::byte*>(raw), other.raw, size());
+    memcpy(const_cast<byte*>(raw), other.raw, size());
   }
   return *this;
 }
@@ -112,16 +112,16 @@ peerid::peerid()
   : peerid_wrapper{buffer, PEERID_SIZE_BYTES}
 {
   support::random_bits<unsigned char> rng;
-  std::byte * offset = buffer;
+  byte * offset = buffer;
   while (offset < buffer + PEERID_SIZE_BYTES) {
-    *offset = static_cast<std::byte>(rng.get());
+    *offset = static_cast<byte>(rng.get());
     ++offset;
   }
 }
 
 
 
-peerid::peerid(std::byte const * buf, size_t bufsize)
+peerid::peerid(byte const * buf, size_t bufsize)
   : peerid_wrapper{buffer, bufsize}
 {
   ::memcpy(buffer, buf, PEERID_SIZE_BYTES);
@@ -150,7 +150,7 @@ peerid::peerid(char const * buf, size_t bufsize)
   }
 
   auto used = liberate::string::hexdecode(buffer, PEERID_SIZE_BYTES,
-      reinterpret_cast<std::byte const *>(start), buflen);
+      reinterpret_cast<byte const *>(start), buflen);
   if (used != PEERID_SIZE_BYTES) {
     throw exception{ERR_DECODE,
       "Could not decode hexadecimal peer identifier."};

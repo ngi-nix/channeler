@@ -59,7 +59,7 @@ TEST(PipeIngress, create)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; },
+    []() -> std::vector<channeler::byte> { return {}; },
     [](channeler::support::timeouts::duration d) { return d; },
   };
 

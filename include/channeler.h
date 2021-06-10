@@ -69,8 +69,12 @@
 // Visibility macros are used by all, so they must come first.
 #include <channeler/visibility.h>
 
-// We want standard int types across the board.
+// We want standard int types across the board. We also want a standard
+// byte type.
 #include <liberate/types.h>
+namespace channeler {
+  using byte = ::liberate::types::byte;
+} // namespace channeler
 
 // Not all, but the very basic headers are always included.
 #include <channeler/error.h>

@@ -187,7 +187,7 @@ struct connection_api
    * Note that for simplicity's sake, this API does *not* currently break down
    * too-large data chunks into individual packets. TODO
    */
-  inline error_t channel_write(channelid const & id, std::byte const * data,
+  inline error_t channel_write(channelid const & id, byte const * data,
       std::size_t length, std::size_t & written)
   {
     written = 0;
@@ -197,7 +197,7 @@ struct connection_api
 
     // The user data event carries unbounded amounts of data. It's up to the
     // FSM to split this up.
-    std::vector<std::byte> payload{data, data + length};
+    std::vector<byte> payload{data, data + length};
     auto event = pipe::user_data_written_event(id, std::move(payload));
 
     pipe::action_list_type result_actions;
@@ -239,7 +239,7 @@ struct connection_api
       std::size_t length, std::size_t & written)
   {
     return channel_write(id,
-        reinterpret_cast<std::byte const *>(data),
+        reinterpret_cast<byte const *>(data),
         length, written);
   }
 
@@ -250,7 +250,7 @@ struct connection_api
    *
    * Again, this is raw application data.
    */
-  inline error_t channel_read(channelid const & id, std::byte * data,
+  inline error_t channel_read(channelid const & id, byte * data,
       std::size_t max, std::size_t & read)
   {
     LIBLOG_DEBUG("User wants to read data of up to " << max
@@ -299,7 +299,7 @@ struct connection_api
       std::size_t max, std::size_t & read)
   {
     return channel_read(id,
-        reinterpret_cast<std::byte *>(data),
+        reinterpret_cast<byte *>(data),
         max, read);
   }
 

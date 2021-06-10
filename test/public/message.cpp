@@ -30,7 +30,7 @@ namespace {
 
 
 inline void
-assert_message(std::vector<std::byte> const & buf,
+assert_message(std::vector<channeler::byte> const & buf,
     channeler::message_type type,
     std::size_t type_bytes,
     std::size_t length_bytes)
@@ -57,7 +57,7 @@ assert_message(std::vector<std::byte> const & buf,
 
 
 inline void
-assert_single_byte_type_variable_size_message(std::vector<std::byte> const & buf,
+assert_single_byte_type_variable_size_message(std::vector<channeler::byte> const & buf,
     channeler::message_type type, std::size_t length_bytes)
 {
   assert_message(buf, type, 1, length_bytes);
@@ -66,7 +66,7 @@ assert_single_byte_type_variable_size_message(std::vector<std::byte> const & buf
 
 
 inline void
-assert_single_byte_type_fixed_size_message(std::vector<std::byte> const & buf,
+assert_single_byte_type_fixed_size_message(std::vector<channeler::byte> const & buf,
     channeler::message_type type)
 {
   assert_message(buf, type, 1, 0);
@@ -75,8 +75,8 @@ assert_single_byte_type_fixed_size_message(std::vector<std::byte> const & buf,
 
 
 inline void
-assert_serialization_ok(std::vector<std::byte> & out,
-    std::unique_ptr<channeler::message> const & msg, std::vector<std::byte> const & buf)
+assert_serialization_ok(std::vector<channeler::byte> & out,
+    std::unique_ptr<channeler::message> const & msg, std::vector<channeler::byte> const & buf)
 {
   auto res = serialize_message(&out[0], out.size(), msg);
   ASSERT_EQ(res, buf.size());
@@ -92,7 +92,7 @@ assert_serialization_ok(std::vector<std::byte> & out,
 
 TEST(Message, fail_parse_unknown)
 {
-  std::vector<std::byte> b{message_unknown, message_unknown + message_unknown_size};
+  std::vector<channeler::byte> b{message_unknown, message_unknown + message_unknown_size};
 
   // Exception
   ASSERT_THROW((channeler::message{b.data(), b.size()}),
@@ -108,7 +108,7 @@ TEST(Message, fail_parse_unknown)
 
 TEST(Message, parse_and_serialize_channel_new)
 {
-  std::vector<std::byte> b{message_channel_new, message_channel_new + message_channel_new_size};
+  std::vector<channeler::byte> b{message_channel_new, message_channel_new + message_channel_new_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_NEW);
 
@@ -121,7 +121,7 @@ TEST(Message, parse_and_serialize_channel_new)
   ASSERT_EQ(0xbeefb4be, ptr->cookie1);
 
   // Serialize
-  std::vector<std::byte> out;
+  std::vector<channeler::byte> out;
   out.resize(200);
   assert_serialization_ok(out, msg, b);
 }
@@ -130,7 +130,7 @@ TEST(Message, parse_and_serialize_channel_new)
 
 TEST(Message, parse_and_serialize_channel_acknowledge)
 {
-  std::vector<std::byte> b{message_channel_acknowledge, message_channel_acknowledge + message_channel_acknowledge_size};
+  std::vector<channeler::byte> b{message_channel_acknowledge, message_channel_acknowledge + message_channel_acknowledge_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_ACKNOWLEDGE);
 
@@ -144,7 +144,7 @@ TEST(Message, parse_and_serialize_channel_acknowledge)
   ASSERT_EQ(0xdeadd00d, ptr->cookie2);
 
   // Serialize
-  std::vector<std::byte> out;
+  std::vector<channeler::byte> out;
   out.resize(200);
   assert_serialization_ok(out, msg, b);
 }
@@ -153,7 +153,7 @@ TEST(Message, parse_and_serialize_channel_acknowledge)
 
 TEST(Message, parse_and_serialize_channel_finalize)
 {
-  std::vector<std::byte> b{message_channel_finalize, message_channel_finalize + message_channel_finalize_size};
+  std::vector<channeler::byte> b{message_channel_finalize, message_channel_finalize + message_channel_finalize_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_FINALIZE);
 
@@ -167,7 +167,7 @@ TEST(Message, parse_and_serialize_channel_finalize)
   ASSERT_TRUE(ptr->capabilities.none());
 
   // Serialize
-  std::vector<std::byte> out;
+  std::vector<channeler::byte> out;
   out.resize(200);
   assert_serialization_ok(out, msg, b);
 }
@@ -176,7 +176,7 @@ TEST(Message, parse_and_serialize_channel_finalize)
 
 TEST(Message, parse_and_serialize_channel_cookie)
 {
-  std::vector<std::byte> b{message_channel_cookie, message_channel_cookie + message_channel_cookie_size};
+  std::vector<channeler::byte> b{message_channel_cookie, message_channel_cookie + message_channel_cookie_size};
 
   assert_single_byte_type_fixed_size_message(b, channeler::MSG_CHANNEL_COOKIE);
 
@@ -189,7 +189,7 @@ TEST(Message, parse_and_serialize_channel_cookie)
   ASSERT_TRUE(ptr->capabilities.none());
 
   // Serialize
-  std::vector<std::byte> out;
+  std::vector<channeler::byte> out;
   out.resize(200);
   assert_serialization_ok(out, msg, b);
 }
@@ -198,7 +198,7 @@ TEST(Message, parse_and_serialize_channel_cookie)
 
 TEST(Message, parse_and_serialize_data)
 {
-  std::vector<std::byte> b{message_data, message_data + message_data_size};
+  std::vector<channeler::byte> b{message_data, message_data + message_data_size};
 
   assert_single_byte_type_variable_size_message(b, channeler::MSG_DATA,
       1);
@@ -208,7 +208,7 @@ TEST(Message, parse_and_serialize_data)
   ASSERT_EQ(msg->type, channeler::MSG_DATA);
 
   // Serialize
-  std::vector<std::byte> out;
+  std::vector<channeler::byte> out;
   out.resize(200);
   assert_serialization_ok(out, msg, b);
 }
@@ -216,7 +216,7 @@ TEST(Message, parse_and_serialize_data)
 
 TEST(Message, iterator_single_message)
 {
-  std::vector<std::byte> b{message_data, message_data + message_data_size};
+  std::vector<channeler::byte> b{message_data, message_data + message_data_size};
 
   channeler::messages msgs{b.data(), b.size()};
 
@@ -241,7 +241,7 @@ TEST(Message, iterator_single_message)
 
 TEST(Message, iterator_message_block)
 {
-  std::vector<std::byte> b{message_block, message_block + message_block_size};
+  std::vector<channeler::byte> b{message_block, message_block + message_block_size};
 
   channeler::messages msgs{b.data(), b.size()};
 

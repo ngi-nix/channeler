@@ -30,7 +30,8 @@ TEST(PeerID, default_constructed_random)
   // this as an unlikely case - if this test fails, that's the reason.
   size_t zerobytes = 0;
   for (size_t i = 0 ; i < channeler::PEERID_SIZE_BYTES ; ++i) {
-    if (id.buffer[i] == std::byte{}) {
+    using namespace liberate::types::literals;
+    if (id.buffer[i] == 0x00_b) {
       ++zerobytes;
     }
   }
@@ -71,7 +72,7 @@ TEST(PeerID, constructed_from_buffer)
 
 TEST(PeerID, construction_failure_from_buffer)
 {
-  std::byte * buf = nullptr;
+  channeler::byte * buf = nullptr;
 
   ASSERT_THROW((channeler::peerid{buf, 0}), channeler::exception);
   ASSERT_THROW((channeler::peerid{buf, 1}), channeler::exception);
@@ -110,7 +111,7 @@ TEST(PeerID, construct_from_bytes)
     '\xde', '\xad', '\xd0', '\x0d',
   };
 
-  channeler::peerid id{reinterpret_cast<std::byte const *>(test_arr),
+  channeler::peerid id{reinterpret_cast<channeler::byte const *>(test_arr),
     sizeof(test_arr)};
 
   ASSERT_EQ(test, id.display());
@@ -138,8 +139,8 @@ TEST(PeerIDWrapper, use_with_peerid)
 
   // Ok, modify a byte in the wrapper - this should yield the same comparisons
   auto idhash = id.hash();
-  std::byte * target = const_cast<std::byte *>(wrap.raw);
-  target[0] = static_cast<std::byte>(static_cast<char>(wrap.raw[0]) + 128);
+  channeler::byte * target = const_cast<channeler::byte *>(wrap.raw);
+  target[0] = static_cast<channeler::byte>(static_cast<char>(wrap.raw[0]) + 128);
 
   ASSERT_EQ(id.hash(), wrap.hash());
   ASSERT_EQ(id.display(), wrap.display());

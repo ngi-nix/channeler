@@ -217,7 +217,7 @@ struct CHANNELER_API public_header_fields
 
   packet_size_t   packet_size;
 
-  public_header_fields(std::byte const * buf)
+  public_header_fields(byte const * buf)
     : sender{buf + PUB_OFFS_SENDER, peerid::size()}
     , recipient{buf + PUB_OFFS_RECIPIENT, peerid::size()}
   {
@@ -252,8 +252,8 @@ class CHANNELER_API packet_wrapper
 protected:
   // Keep these here - this is so that buffer and size are initialized before
   // any other fields. Also keep the entire private section at the top.
-  std::byte * m_buffer;
-  size_t      m_size;
+  byte *  m_buffer;
+  size_t  m_size;
 
   // Deserialized info
   public_header_fields  m_public_header;
@@ -267,7 +267,7 @@ public:
    * buffer, but merely presents a packet interface for it. This means
    * (de-)serializing from/to the buffer as necessary.
    */
-  packet_wrapper(std::byte * buf, size_t buffer_size,
+  packet_wrapper(byte * buf, size_t buffer_size,
       bool validate_now = true);
 
   /**
@@ -435,8 +435,8 @@ public:
   /**
    * Return a pointer to the start of the payload.
    */
-  std::byte const * payload() const;
-  std::byte * payload();
+  byte const * payload() const;
+  byte * payload();
 
   /**
    * Return a pointer to the start of the buffer.
@@ -445,14 +445,14 @@ public:
    * should be considered potentially expensive. In very rare circumstances,
    * it may throw if the header data cannot be serialised.
    */
-  std::byte const * buffer() const;
-  std::byte * buffer();
+  byte const * buffer() const;
+  byte * buffer();
 
   /**
    * Copy packet_size() Bytes from the buffer intoa new buffer, and return
    * that.
    */
-  std::unique_ptr<std::byte[]> copy() const;
+  std::unique_ptr<byte[]> copy() const;
 
   /**
    * Calculate and validate checksum

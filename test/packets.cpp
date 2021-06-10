@@ -25,7 +25,9 @@
 
 namespace test {
 
-std::byte const packet_default_channel_trailing_bytes[] = {
+using namespace liberate::types::literals;
+
+channeler::byte const packet_default_channel_trailing_bytes[] = {
   // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
@@ -69,7 +71,7 @@ std::size_t const packet_default_channel_trailing_bytes_size = sizeof(packet_def
 
 
 
-std::byte const packet_default_channel[] = {
+channeler::byte const packet_default_channel[] = {
   // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
@@ -109,7 +111,7 @@ std::size_t const packet_default_channel_size = sizeof(packet_default_channel);
 
 
 
-std::byte const packet_partial_channelid_initiator[] = {
+channeler::byte const packet_partial_channelid_initiator[] = {
   // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
@@ -149,7 +151,7 @@ std::size_t const packet_partial_channelid_initiator_size = sizeof(packet_partia
 
 
 
-std::byte const packet_partial_channelid_responder[] = {
+channeler::byte const packet_partial_channelid_responder[] = {
   // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
@@ -189,7 +191,7 @@ std::size_t const packet_partial_channelid_responder_size = sizeof(packet_partia
 
 
 
-std::byte const packet_regular_channelid[] = {
+channeler::byte const packet_regular_channelid[] = {
   // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
@@ -229,7 +231,7 @@ std::size_t const packet_regular_channelid_size = sizeof(packet_regular_channeli
 
 
 
-std::byte const packet_with_messages[] = {
+channeler::byte const packet_with_messages[] = {
   // **** public header
   // Proto
   0xde_b, 0xad_b, 0xd0_b, 0x0d_b,
@@ -306,7 +308,7 @@ inline bool validate_packet(char const * const name,
 {
   // Use a temp buffer, so the packet_wrapper can modify it (not that we want
   // that now).
-  std::vector<std::byte> b{buf, buf + sizeof(buf)};
+  std::vector<channeler::byte> b{buf, buf + sizeof(buf)};
   ::channeler::packet_wrapper p{b.data(), b.size()};
   if (p.has_valid_checksum() != expected_value) {
     std::cout << "Packet: " << name << std::endl;

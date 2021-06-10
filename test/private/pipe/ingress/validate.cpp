@@ -25,6 +25,7 @@
 #include "../../../packets.h"
 
 using namespace test;
+using namespace liberate::types::literals;
 
 namespace {
 

@@ -100,9 +100,9 @@ TEST(PipeEgressMessageBundlingFilter, bundle_message)
   auto err = chs.add(channel);
   EXPECT_EQ(channeler::ERR_SUCCESS, err);
 
-  std::byte buf[130]; // It does not matter what's in this memory, but it
-                      // does matter somewhat that the size of the buffer
-                      // exceeds a length encodable in a single byte.
+  channeler::byte buf[130]; // It does not matter what's in this memory, but it
+                            // does matter somewhat that the size of the buffer
+                            // exceeds a length encodable in a single byte.
   auto msg = channeler::message_data::create(buf, sizeof(buf));
   auto ch = chs.get(channel);
   ch->enqueue_egress_message(std::move(msg));

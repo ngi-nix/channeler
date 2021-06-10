@@ -493,11 +493,11 @@ struct user_data_written_event
   channelid               channel;
   // TODO would be nice to have a pool reference instead of an allocation here,
   //      but we can deal with that later.
-  std::vector<std::byte>  data;
+  std::vector<byte>  data;
 
   inline user_data_written_event(
       channelid const & _channel,
-      std::vector<std::byte> const & _data)
+      std::vector<byte> const & _data)
     : event{EC_USER, ET_USER_DATA_WRITTEN}
     , channel{_channel}
     , data{_data}

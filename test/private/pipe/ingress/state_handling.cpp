@@ -84,7 +84,7 @@ TEST(PipeIngressStateHandlingFilter, throw_on_invalid_event)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; },
+    []() -> std::vector<channeler::byte> { return {}; },
     [](channeler::support::timeouts::duration d) { return d; },
   };
 
@@ -117,7 +117,7 @@ TEST(PipeIngressStateHandlingFilter, create_message_on_channel_new)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; },
+    []() -> std::vector<channeler::byte> { return {}; },
     [](channeler::support::timeouts::duration d) { return d; },
   };
 

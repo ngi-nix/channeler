@@ -33,7 +33,7 @@ inline
 std::pair<error_t, std::string>
 update_from_buffer(
     public_header_fields & pub_header,
-    std::byte const * buffer,
+    byte const * buffer,
     size_t buffer_size)
 {
   // Read proto ID from buffer
@@ -82,7 +82,7 @@ inline
 std::pair<error_t, std::string>
 update_from_buffer(
     private_header_fields & priv_header,
-    std::byte const * buffer,
+    byte const * buffer,
     size_t packet_size)
 {
   // Sequence number
@@ -114,7 +114,7 @@ inline
 std::pair<error_t, std::string>
 update_from_buffer(
     footer_fields & footer,
-    std::byte const * buffer,
+    byte const * buffer,
     size_t buffer_size)
 {
   // Read checksum from buffer.
@@ -139,7 +139,7 @@ update_from_buffer(
     public_header_fields & pub_header,
     private_header_fields & priv_header,
     footer_fields & footer,
-    std::byte const * buffer,
+    byte const * buffer,
     size_t buffer_size)
 {
   auto err = update_from_buffer(pub_header, buffer, buffer_size);
@@ -165,7 +165,7 @@ update_from_buffer(
 inline
 std::pair<error_t, std::string>
 update_to_buffer(
-    std::byte * buffer,
+    byte * buffer,
     size_t buffer_size [[maybe_unused]],
     public_header_fields const & pub_header)
 {
@@ -215,7 +215,7 @@ update_to_buffer(
 inline
 std::pair<error_t, std::string>
 update_to_buffer(
-    std::byte * buffer,
+    byte * buffer,
     size_t buffer_size [[maybe_unused]],
     private_header_fields const & priv_header)
 {
@@ -237,7 +237,7 @@ update_to_buffer(
 inline
 std::pair<error_t, std::string>
 update_to_buffer(
-    std::byte * buffer,
+    byte * buffer,
     size_t buffer_size,
     footer_fields const & footer)
 {
@@ -259,7 +259,7 @@ update_to_buffer(
 inline
 std::pair<error_t, std::string>
 update_to_buffer(
-    std::byte * buffer,
+    byte * buffer,
     size_t buffer_size,
     public_header_fields const & pub_header,
     private_header_fields const & priv_header,
@@ -286,7 +286,7 @@ update_to_buffer(
 
 } // anonymous namespace
 
-packet_wrapper::packet_wrapper(std::byte * buf, size_t buffer_size,
+packet_wrapper::packet_wrapper(byte * buf, size_t buffer_size,
     bool validate_now /* = true */)
   : m_buffer{buf}
   , m_size{buffer_size}
@@ -319,7 +319,7 @@ packet_wrapper::validate()
 
 
 
-std::byte const *
+byte const *
 packet_wrapper::payload() const
 {
   return m_buffer + public_header_size() + private_header_size();
@@ -327,7 +327,7 @@ packet_wrapper::payload() const
 
 
 
-std::byte *
+byte *
 packet_wrapper::payload()
 {
   return m_buffer + public_header_size() + private_header_size();
@@ -335,11 +335,11 @@ packet_wrapper::payload()
 
 
 
-std::byte const *
+byte const *
 packet_wrapper::buffer() const
 {
   auto err = update_to_buffer(
-      const_cast<std::byte *>(m_buffer),
+      const_cast<byte *>(m_buffer),
       m_size,
       m_public_header,
       m_private_header,
@@ -352,7 +352,7 @@ packet_wrapper::buffer() const
 
 
 
-std::byte *
+byte *
 packet_wrapper::buffer()
 {
   auto err = update_to_buffer(
@@ -369,12 +369,12 @@ packet_wrapper::buffer()
 
 
 
-std::unique_ptr<std::byte[]>
+std::unique_ptr<byte[]>
 packet_wrapper::copy() const
 {
-  std::byte * ptr = new std::byte[m_public_header.packet_size];
+  byte * ptr = new byte[m_public_header.packet_size];
   std::memcpy(ptr, buffer(), m_public_header.packet_size);
-  return std::unique_ptr<std::byte[]>{ptr};
+  return std::unique_ptr<byte[]>{ptr};
 }
 
 
@@ -383,7 +383,7 @@ liberate::checksum::crc32_checksum
 packet_wrapper::calculate_checksum() const
 {
   using namespace liberate::checksum;
-  std::byte * const end = m_buffer + m_public_header.packet_size
+  byte * const end = m_buffer + m_public_header.packet_size
     - footer_size();
   return crc32<CRC32C>(m_buffer, end);
 }

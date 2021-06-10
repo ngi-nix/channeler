@@ -57,7 +57,7 @@ struct node
   using pool_type = ::channeler::memory::packet_pool<POOL_BLOCK_SIZE, lock_policy_type>;
   using slot_type = typename pool_type::slot;
 
-  using secret_type = std::vector<std::byte>;
+  using secret_type = std::vector<byte>;
   using secret_generator_func = std::function<secret_type ()>;
 
   // The timeouts *type* should be node defined, but the instance is per

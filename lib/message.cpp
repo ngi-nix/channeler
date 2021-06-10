@@ -34,7 +34,7 @@ namespace channeler {
 namespace {
 
 inline std::size_t
-serialize_header(std::byte * buf, std::size_t max, message_type type,
+serialize_header(byte * buf, std::size_t max, message_type type,
     std::size_t payload_size = 0)
 {
   std::size_t total = 0;
@@ -68,7 +68,7 @@ serialize_header(std::byte * buf, std::size_t max, message_type type,
 
 
 inline std::size_t
-serialize_header(std::byte * buf, std::size_t max, message const & msg)
+serialize_header(byte * buf, std::size_t max, message const & msg)
 {
   return serialize_header(buf, max, msg.type);
 }
@@ -118,7 +118,7 @@ message_payload_size(message_type_base type)
 /**
  * message
  */
-message::message(std::byte const * buf, std::size_t max,
+message::message(byte const * buf, std::size_t max,
     bool parse_now /* = true */)
   : buffer{buf}
   , input_size{max}
@@ -157,7 +157,7 @@ message::parse()
       return {ERR_INSUFFICIENT_BUFFER_SIZE, "The message type requires a bigger input buffer."};
     }
     *const_cast<std::size_t *>(&buffer_size) = fixed_size + used;
-    *const_cast<std::byte const **>(&payload) = buffer + used;
+    *const_cast<byte const **>(&payload) = buffer + used;
     *const_cast<std::size_t *>(&payload_size) = buffer_size - used;
   }
   else {
@@ -168,7 +168,7 @@ message::parse()
     }
     *const_cast<std::size_t *>(&payload_size) = static_cast<std::size_t>(tmp);
     *const_cast<std::size_t *>(&buffer_size) = payload_size + used + used2;
-    *const_cast<std::byte const **>(&payload) = buffer + used + used2;
+    *const_cast<byte const **>(&payload) = buffer + used + used2;
   }
 
   // Payload processing is part of subtypes, and not happening here.
@@ -221,11 +221,11 @@ message_data::message_data(message const & wrap)
 }
 
 
-message_data::message_data(std::vector<std::byte> && data)
+message_data::message_data(std::vector<byte> && data)
   : message{nullptr, 0, false}
   , owned_buffer{std::move(data)}
 {
-  *const_cast<std::byte const **>(&buffer) = &owned_buffer[0];
+  *const_cast<byte const **>(&buffer) = &owned_buffer[0];
   *const_cast<std::size_t *>(&input_size) = owned_buffer.size();
 
   auto err = parse();
@@ -236,7 +236,7 @@ message_data::message_data(std::vector<std::byte> && data)
 
 
 std::unique_ptr<message>
-message_data::create(std::byte const * buf, std::size_t size)
+message_data::create(byte const * buf, std::size_t size)
 {
   if (!buf || !size) {
     return {};
@@ -244,7 +244,7 @@ message_data::create(std::byte const * buf, std::size_t size)
 
   // We need to understand the length of the serialized message header. We know
   // it is at maximum two varints in size, so we'll serialize this first.
-  std::vector<std::byte> result;
+  std::vector<byte> result;
   std::size_t reserved = liberate::serialization::VARINT_MAX_BUFSIZE * 2;
   result.resize(size + reserved);
   auto used = serialize_header(&result[0], reserved,
@@ -260,7 +260,7 @@ message_data::create(std::byte const * buf, std::size_t size)
 
 
 std::unique_ptr<message>
-message_data::create(std::vector<std::byte> & data)
+message_data::create(std::vector<byte> & data)
 {
   if (data.empty()) {
     return {};
@@ -268,7 +268,7 @@ message_data::create(std::vector<std::byte> & data)
 
   // We need to understand the length of the serialized message header. We know
   // it is at maximum two varints in size, so we'll serialize this first.
-  std::vector<std::byte> result;
+  std::vector<byte> result;
   std::size_t reserved = liberate::serialization::VARINT_MAX_BUFSIZE * 2;
   result.resize(data.size() + reserved);
   auto used = serialize_header(&result[0], reserved,
@@ -286,7 +286,7 @@ message_data::create(std::vector<std::byte> & data)
 
 
 std::size_t
-message_data::serialize(std::byte * out, std::size_t max,
+message_data::serialize(byte * out, std::size_t max,
     message_data const & msg)
 {
   // XXX This assumes that the buffer_size is set. This is done when parsing
@@ -308,7 +308,7 @@ std::unique_ptr<message>
 message_channel_new::extract_features(message const & wrap)
 {
   auto * ptr = new message_channel_new{wrap};
-  std::byte const * offset = ptr->payload;
+  byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
   // First comes the partial channel id
@@ -353,7 +353,7 @@ message_channel_new::message_channel_new(message const & wrap)
 
 
 std::size_t
-message_channel_new::serialize(std::byte * out, std::size_t max,
+message_channel_new::serialize(byte * out, std::size_t max,
     message_channel_new const & msg)
 {
   // We know the buffer size, as it's fixed.
@@ -362,7 +362,7 @@ message_channel_new::serialize(std::byte * out, std::size_t max,
   }
 
   std::size_t remaining = msg.serialized_size();
-  std::byte * offset = out;
+  byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
@@ -406,7 +406,7 @@ std::unique_ptr<message>
 message_channel_acknowledge::extract_features(message const & wrap)
 {
   auto * ptr = new message_channel_acknowledge{wrap};
-  std::byte const * offset = ptr->payload;
+  byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
   // First comes the channel id
@@ -463,7 +463,7 @@ message_channel_acknowledge::message_channel_acknowledge(message const & wrap)
 
 
 std::size_t
-message_channel_acknowledge::serialize(std::byte * out, std::size_t max,
+message_channel_acknowledge::serialize(byte * out, std::size_t max,
     message_channel_acknowledge const & msg)
 {
   // We know the buffer size, as it's fixed.
@@ -472,7 +472,7 @@ message_channel_acknowledge::serialize(std::byte * out, std::size_t max,
   }
 
   std::size_t remaining = msg.serialized_size();
-  std::byte * offset = out;
+  byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
@@ -526,7 +526,7 @@ std::unique_ptr<message>
 message_channel_finalize::extract_features(message const & wrap)
 {
   auto * ptr = new message_channel_finalize{wrap};
-  std::byte const * offset = ptr->payload;
+  byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
   // First comes the channel id
@@ -585,7 +585,7 @@ message_channel_finalize::message_channel_finalize(message const & wrap)
 
 
 std::size_t
-message_channel_finalize::serialize(std::byte * out, std::size_t max,
+message_channel_finalize::serialize(byte * out, std::size_t max,
     message_channel_finalize const & msg)
 {
   // We know the buffer size, as it's fixed.
@@ -594,7 +594,7 @@ message_channel_finalize::serialize(std::byte * out, std::size_t max,
   }
 
   std::size_t remaining = msg.serialized_size();
-  std::byte * offset = out;
+  byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
@@ -648,7 +648,7 @@ std::unique_ptr<message>
 message_channel_cookie::extract_features(message const & wrap)
 {
   auto * ptr = new message_channel_cookie{wrap};
-  std::byte const * offset = ptr->payload;
+  byte const * offset = ptr->payload;
   std::size_t size = ptr->payload_size;
 
   // The cookie...
@@ -697,7 +697,7 @@ message_channel_cookie::message_channel_cookie(message const & wrap)
 
 
 std::size_t
-message_channel_cookie::serialize(std::byte * out, std::size_t max,
+message_channel_cookie::serialize(byte * out, std::size_t max,
     message_channel_cookie const & msg)
 {
   // We know the buffer size, as it's fixed.
@@ -706,7 +706,7 @@ message_channel_cookie::serialize(std::byte * out, std::size_t max,
   }
 
   std::size_t remaining = msg.serialized_size();
-  std::byte * offset = out;
+  byte * offset = out;
 
   // Serialize message header
   auto used = serialize_header(offset, remaining, msg);
@@ -782,7 +782,7 @@ extract_message_features(message const & msg)
 
 
 std::size_t
-serialize_message(std::byte * output, std::size_t max,
+serialize_message(byte * output, std::size_t max,
     std::unique_ptr<message> const & msg)
 {
   // TODO *especially* this screams for some kind of registry for factory

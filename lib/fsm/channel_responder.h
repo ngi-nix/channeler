@@ -95,7 +95,7 @@ struct fsm_channel_responder
   : public fsm_base
 {
   using channel_set = ::channeler::channels<channelT>;
-  using secret_type = std::vector<std::byte>;
+  using secret_type = std::vector<byte>;
   using secret_generator = std::function<secret_type ()>;
 
   using message_event_type = ::channeler::pipe::message_event<addressT, POOL_BLOCK_SIZE, channelT>;

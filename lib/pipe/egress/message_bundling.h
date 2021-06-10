@@ -120,7 +120,7 @@ struct message_bundling_filter
     // - add padding only when requesting the buffer
 
     size_t remaining = packet.max_payload_size();
-    std::byte * offset = packet.payload();
+    byte * offset = packet.payload();
 
     do {
       std::size_t next_size = ch->next_egress_message_size();
@@ -145,7 +145,7 @@ struct message_bundling_filter
     // Bytes.
     uint8_t pad_value = remaining % 0xff;
     for (std::size_t i = 0 ; i < remaining ; ++i) {
-      offset[i] = static_cast<std::byte>(pad_value);
+      offset[i] = static_cast<byte>(pad_value);
     }
 
     // Pass slot and packet on to next filter

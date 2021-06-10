@@ -23,9 +23,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../../byte_suffix.h"
-
-using namespace test;
+using namespace liberate::types::literals;
 
 namespace {
 
@@ -86,7 +84,8 @@ TEST(PipeEgressEnqueueMessageFilter, enqueue_message)
   EXPECT_EQ(channeler::ERR_SUCCESS, err);
   auto ch = chs.get(channel);
 
-  std::byte buf[130] = { 0x0f_b };
+  using namespace liberate::types::literals;
+  channeler::byte buf[130] = { 0x0f_b };
 
   auto msg = channeler::message_data::create(buf, sizeof(buf));
   auto ev = std::make_unique<message_out_event>(

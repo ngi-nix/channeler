@@ -55,7 +55,7 @@ using cookie_serialize = liberate::checksum::crc32_serialize;
 CHANNELER_API
 cookie
 create_cookie_initiator(
-    std::byte const * secret, std::size_t secret_size,
+    byte const * secret, std::size_t secret_size,
     peerid_wrapper const & initiator,
     peerid_wrapper const & responder,
     channelid::half_type initiator_part);
@@ -64,7 +64,7 @@ create_cookie_initiator(
 CHANNELER_API
 cookie
 create_cookie_responder(
-    std::byte const * secret, std::size_t secret_size,
+    byte const * secret, std::size_t secret_size,
     peerid_wrapper const & initiator,
     peerid_wrapper const & responder,
     channelid const & id);
@@ -75,7 +75,7 @@ create_cookie_responder(
  */
 inline bool
 validate_cookie(cookie const & c,
-    std::byte const * secret, std::size_t secret_size,
+    byte const * secret, std::size_t secret_size,
     peerid_wrapper const & initiator,
     peerid_wrapper const & responder,
     channelid::half_type initiator_part)
@@ -86,7 +86,7 @@ validate_cookie(cookie const & c,
 
 inline bool
 validate_cookie(cookie const & c,
-    std::byte const * secret, std::size_t secret_size,
+    byte const * secret, std::size_t secret_size,
     peerid_wrapper const & initiator,
     peerid_wrapper const & responder,
     channelid const & id)

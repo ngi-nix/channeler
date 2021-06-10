@@ -59,7 +59,7 @@ private:
   struct chunk
   {
     chunk_header  header;
-    std::byte *   data;
+    byte *   data;
   };
 
 public:
@@ -67,7 +67,7 @@ public:
   // We allocate and deallocate in slots.
   struct slot
   {
-    inline std::byte * data()
+    inline byte * data()
     {
       if (m_index == capacity()) {
         return nullptr;
@@ -75,7 +75,7 @@ public:
       return m_block.m_chunks[m_index].data;
     }
 
-    inline std::byte const * data() const
+    inline byte const * data() const
     {
       if (m_index == capacity()) {
         return nullptr;
@@ -110,7 +110,7 @@ public:
   // Block implementation
   inline packet_block(std::size_t packet_size)
     : m_packet_size{packet_size}
-    , m_data{new std::byte[m_packet_size * CAPACITY]}
+    , m_data{new byte[m_packet_size * CAPACITY]}
     , m_chunks{new chunk[CAPACITY]}
   {
     // Allocate data and chunks.
@@ -236,7 +236,7 @@ private:
   std::size_t const m_packet_size;
 
   // Chunk headers and data.
-  std::byte *       m_data = nullptr;
+  byte *       m_data = nullptr;
   chunk *           m_chunks = nullptr;
 
   // We also need a free list is the head of the current free list, as a pointer

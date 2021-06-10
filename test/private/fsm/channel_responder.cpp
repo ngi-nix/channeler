@@ -101,7 +101,7 @@ TEST(FSMChannelResponder, process_msg_channel_new)
   // We create the packet just so we have a packet slot for the FSM.
   // This is a little unfortunate, but we need the packet's sender and
   // recipient information to generate a response.
-  std::vector<std::byte> data{packet_with_messages,
+  std::vector<channeler::byte> data{packet_with_messages,
     packet_with_messages + packet_with_messages_size};
   channeler::packet_wrapper pkt{data.data(), data.size()};
 
@@ -154,7 +154,7 @@ TEST(FSMChannelResponder, process_msg_channel_finalize)
   // We create the packet just so we have a packet slot for the FSM.
   // This is a little unfortunate, but we need the packet's sender and
   // recipient information to generate a response.
-  std::vector<std::byte> data{packet_with_messages,
+  std::vector<channeler::byte> data{packet_with_messages,
     packet_with_messages + packet_with_messages_size};
   channeler::packet_wrapper pkt{data.data(), data.size()};
 

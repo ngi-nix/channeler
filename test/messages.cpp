@@ -25,7 +25,9 @@
 
 namespace test {
 
-std::byte const message_unknown[] = {
+using namespace liberate::types::literals;
+
+channeler::byte const message_unknown[] = {
   0x7f_b, // Nothing, but below one byte
 
   0xbe_b, 0xef_b, 0xb4_b, 0xbe_b, // junk
@@ -34,7 +36,7 @@ std::size_t const message_unknown_size = sizeof(message_unknown);
 
 
 
-std::byte const message_channel_new[] = {
+channeler::byte const message_channel_new[] = {
   0x0a_b, // MSG_CHANNEL_NEW
 
   0xbe_b, 0xef_b, // Half channel ID
@@ -45,7 +47,7 @@ std::size_t const message_channel_new_size = sizeof(message_channel_new);
 
 
 
-std::byte const message_channel_acknowledge[] = {
+channeler::byte const message_channel_acknowledge[] = {
   0x0b_b, // MSG_CHANNEL_ACKNOWLEDGE
 
   0xbe_b, 0xef_b, 0xd0_b, 0x0d_b, // Channel ID
@@ -57,7 +59,7 @@ std::size_t const message_channel_acknowledge_size = sizeof(message_channel_ackn
 
 
 
-std::byte const message_channel_finalize[] = {
+channeler::byte const message_channel_finalize[] = {
   0x0c_b, // MSG_CHANNEL_FINALIZE
 
   0xbe_b, 0xef_b, 0xd0_b, 0x0d_b, // Channel ID
@@ -70,7 +72,7 @@ std::size_t const message_channel_finalize_size = sizeof(message_channel_finaliz
 
 
 
-std::byte const message_channel_cookie[] = {
+channeler::byte const message_channel_cookie[] = {
   0x0d_b, // MSG_CHANNEL_COOKIE
 
   // Channel ID is in header
@@ -84,7 +86,7 @@ std::size_t const message_channel_cookie_size = sizeof(message_channel_cookie);
 
 
 
-std::byte const message_data[] = {
+channeler::byte const message_data[] = {
   0x14_b, // MSG_DATA
 
   0x06_b, // *Payload* size
@@ -96,7 +98,7 @@ std::size_t const message_data_size = sizeof(message_data);
 
 
 
-std::byte const message_block[] = {
+channeler::byte const message_block[] = {
   0x14_b, // MSG_DATA
 
   0x06_b, // *Payload* size

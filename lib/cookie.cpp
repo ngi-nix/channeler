@@ -32,18 +32,18 @@ namespace channeler {
 
 cookie
 create_cookie_initiator(
-    std::byte const * secret, std::size_t secret_size,
+    byte const * secret, std::size_t secret_size,
     peerid_wrapper const & initiator,
     peerid_wrapper const & responder,
     channelid::half_type initiator_part)
 {
   // Buffer for the cookie inputs
-  std::vector<std::byte> buf{
+  std::vector<byte> buf{
     secret_size + (PEERID_SIZE_BYTES * 2) + sizeof(channelid::half_type)
   };
 
   // First the secret
-  std::byte * offs = &buf[0];
+  byte * offs = &buf[0];
   ::memcpy(offs, secret, secret_size);
   offs += secret_size;
 
@@ -68,18 +68,18 @@ create_cookie_initiator(
 
 cookie
 create_cookie_responder(
-    std::byte const * secret, std::size_t secret_size,
+    byte const * secret, std::size_t secret_size,
     peerid_wrapper const & initiator,
     peerid_wrapper const & responder,
     channelid const & id)
 {
   // Buffer for the cookie inputs
-  std::vector<std::byte> buf{
+  std::vector<byte> buf{
     secret_size + (PEERID_SIZE_BYTES * 2) + sizeof(channelid)
   };
 
   // First the secret
-  std::byte * offs = &buf[0];
+  byte * offs = &buf[0];
   if (secret_size > 0) {
     ::memcpy(offs, secret, secret_size);
     offs += secret_size;

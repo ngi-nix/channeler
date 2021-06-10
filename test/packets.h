@@ -20,8 +20,6 @@
 #ifndef TEST_PACKETS_H
 #define TEST_PACKETS_H
 
-#include "byte_suffix.h"
-
 #include <channeler/packet.h>
 
 namespace test {
@@ -30,22 +28,22 @@ namespace test {
 /**
  * Packet definitions
  */
-extern std::byte const packet_default_channel_trailing_bytes[];
+extern channeler::byte const packet_default_channel_trailing_bytes[];
 extern std::size_t const packet_default_channel_trailing_bytes_size;
 
-extern std::byte const packet_default_channel[];
+extern channeler::byte const packet_default_channel[];
 extern std::size_t const packet_default_channel_size;
 
-extern std::byte const packet_partial_channelid_initiator[];
+extern channeler::byte const packet_partial_channelid_initiator[];
 extern std::size_t const packet_partial_channelid_initiator_size;
 
-extern std::byte const packet_partial_channelid_responder[];
+extern channeler::byte const packet_partial_channelid_responder[];
 extern std::size_t const packet_partial_channelid_responder_size;
 
-extern std::byte const packet_regular_channelid[];
+extern channeler::byte const packet_regular_channelid[];
 extern std::size_t const packet_regular_channelid_size;
 
-extern std::byte const packet_with_messages[];
+extern channeler::byte const packet_with_messages[];
 extern std::size_t const packet_with_messages_size;
 
 } // namespace test

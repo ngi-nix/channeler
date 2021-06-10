@@ -26,9 +26,12 @@
 
 using namespace test;
 
+
 TEST(PacketWrapper, construct_from_buffer_failure_too_small)
 {
-  std::byte buf[] = { 0xab_b, 0xcd_b };
+  using namespace liberate::types::literals;
+
+  channeler::byte buf[] = { 0xab_b, 0xcd_b };
 
   ASSERT_THROW((channeler::packet_wrapper{buf, 0}), channeler::exception);
   ASSERT_THROW((channeler::packet_wrapper{buf, sizeof(buf)}), channeler::exception);
@@ -38,7 +41,7 @@ TEST(PacketWrapper, construct_from_buffer_failure_too_small)
 
 TEST(PacketWrapper, construct_from_buffer)
 {
-  std::vector<std::byte> data{packet_default_channel_trailing_bytes,
+  std::vector<channeler::byte> data{packet_default_channel_trailing_bytes,
     packet_default_channel_trailing_bytes + packet_default_channel_trailing_bytes_size};
 
   channeler::packet_wrapper pkt{data.data(), data.size()};
@@ -81,7 +84,7 @@ TEST(PacketWrapper, construct_from_buffer)
 
 TEST(PacketWrapper, copy)
 {
-  std::vector<std::byte> data{packet_default_channel_trailing_bytes,
+  std::vector<channeler::byte> data{packet_default_channel_trailing_bytes,
     packet_default_channel_trailing_bytes + packet_default_channel_trailing_bytes_size};
 
   channeler::packet_wrapper pkt0{data.data(), data.size()};
@@ -113,7 +116,7 @@ TEST(PacketWrapper, copy)
 
 TEST(PacketWrapper, message_iteration)
 {
-  std::vector<std::byte> data{packet_with_messages,
+  std::vector<channeler::byte> data{packet_with_messages,
     packet_with_messages + packet_with_messages_size};
 
   channeler::packet_wrapper pkt{data.data(), data.size()};

@@ -107,7 +107,7 @@ TEST(FSMData, remote_data_existing_channel)
   // We need a packet with the above channel ID. Which won't exist, ever,
   // because we only have half a channel ID. But the important part is that
   // the initiator is the same.
-  std::vector<std::byte> buf{test::packet_regular_channelid,
+  std::vector<channeler::byte> buf{test::packet_regular_channelid,
     test::packet_regular_channelid + test::packet_regular_channelid_size};
   packet_wrapper pkt{buf.data(), buf.size()};
 
@@ -170,7 +170,7 @@ TEST(FSMData, remote_data_pending_channel)
   // We need a packet with the above channel ID. Which won't exist, ever,
   // because we only have half a channel ID. But the important part is that
   // the initiator is the same.
-  std::vector<std::byte> buf{test::packet_regular_channelid,
+  std::vector<channeler::byte> buf{test::packet_regular_channelid,
     test::packet_regular_channelid + test::packet_regular_channelid_size};
   packet_wrapper pkt{buf.data(), buf.size()};
   pkt.channel().initiator = cid;
@@ -252,7 +252,7 @@ TEST(FSMData, local_data_existing_channel)
   // false.
   action_list_type actions;
   event_list_type events;
-  std::vector<std::byte> data;
+  std::vector<channeler::byte> data;
   event_t ev{id, data};
   auto ret = fsm.process(&ev, actions, events);
 
@@ -297,7 +297,7 @@ TEST(FSMData, local_data_pending_channel)
   // false.
   action_list_type actions;
   event_list_type events;
-  std::vector<std::byte> data;
+  std::vector<channeler::byte> data;
   event_t ev{id, data};
   auto ret = fsm.process(&ev, actions, events);
 
@@ -340,7 +340,7 @@ TEST(FSMData, local_data_unknown_channel)
   // false.
   action_list_type actions;
   event_list_type events;
-  std::vector<std::byte> data;
+  std::vector<channeler::byte> data;
   event_t ev{id, data};
   auto ret = fsm.process(&ev, actions, events);
 

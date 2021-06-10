@@ -104,19 +104,19 @@ struct message
   message_type const      type = MSG_UNKNOWN;
 
   // Buffer
-  std::byte const * const buffer = nullptr;
+  byte const * const      buffer = nullptr;
   std::size_t const       input_size = 0;
   std::size_t const       buffer_size = 0;
 
   // Payload
-  std::byte const * const payload = nullptr;
+  byte const * const      payload = nullptr;
   std::size_t const       payload_size = 0;
 
   /**
    * Constructor parses the input buffer, and fills the basic fields
    * above.
    */
-  message(std::byte const * buf, std::size_t max, bool parse_now = true);
+  message(byte const * buf, std::size_t max, bool parse_now = true);
 
   virtual ~message() = default;
 
@@ -173,7 +173,7 @@ std::unique_ptr<message>
 extract_message_features(message const & msg);
 
 inline std::unique_ptr<message>
-parse_message(std::byte const * buffer, std::size_t size)
+parse_message(byte const * buffer, std::size_t size)
 {
   message msg{buffer, size, false};
   auto err = msg.parse();
@@ -195,7 +195,7 @@ parse_message(std::byte const * buffer, std::size_t size)
  * TODO also this will move into the registry
  */
 std::size_t
-serialize_message(std::byte * output, std::size_t max_size,
+serialize_message(byte * output, std::size_t max_size,
     std::unique_ptr<message> const & msg);
 
 
@@ -221,7 +221,7 @@ struct message_channel_new
   extract_features(message const & wrap);
 
   static std::size_t
-  serialize(std::byte * out, std::size_t max, message_channel_new const & msg);
+  serialize(byte * out, std::size_t max, message_channel_new const & msg);
 
 private:
   explicit message_channel_new(message const & wrap);
@@ -249,7 +249,7 @@ struct message_channel_acknowledge
   extract_features(message const & wrap);
 
   static std::size_t
-  serialize(std::byte * out, std::size_t max, message_channel_acknowledge const & msg);
+  serialize(byte * out, std::size_t max, message_channel_acknowledge const & msg);
 
 private:
   explicit message_channel_acknowledge(message const & wrap);
@@ -279,7 +279,7 @@ struct message_channel_finalize
   extract_features(message const & wrap);
 
   static std::size_t
-  serialize(std::byte * out, std::size_t max, message_channel_finalize const & msg);
+  serialize(byte * out, std::size_t max, message_channel_finalize const & msg);
 
 private:
   explicit message_channel_finalize(message const & wrap);
@@ -296,7 +296,7 @@ struct message_channel_cookie
   extract_features(message const & wrap);
 
   static std::size_t
-  serialize(std::byte * out, std::size_t max, message_channel_cookie const & msg);
+  serialize(byte * out, std::size_t max, message_channel_cookie const & msg);
 
 private:
   explicit message_channel_cookie(message const & wrap);
@@ -319,22 +319,22 @@ struct message_data
    * what we do here. That means that the vector version moves the data.
    */
   static std::unique_ptr<message>
-  create(std::byte const * buf, std::size_t max);
+  create(byte const * buf, std::size_t max);
 
   static std::unique_ptr<message>
-  create(std::vector<std::byte> & data);
+  create(std::vector<byte> & data);
 
   static std::unique_ptr<message>
   extract_features(message const & wrap);
 
   static std::size_t
-  serialize(std::byte * out, std::size_t max, message_data const & msg);
+  serialize(byte * out, std::size_t max, message_data const & msg);
 
 private:
   explicit message_data(message const & wrap);
-  explicit message_data(std::vector<std::byte> && data);
+  explicit message_data(std::vector<byte> && data);
 
-  std::vector<std::byte>  owned_buffer;
+  std::vector<byte>  owned_buffer;
 };
 
 
@@ -441,7 +441,7 @@ struct messages
 
   using const_iterator = iterator const;
 
-  inline messages(std::byte const * buffer, std::size_t size)
+  inline messages(byte const * buffer, std::size_t size)
     : m_buffer{buffer}
     , m_size{size}
   {
@@ -480,7 +480,7 @@ struct messages
   }
 
 
-  std::byte const * m_buffer;
+  byte const *      m_buffer;
   std::size_t       m_size;
 };
 

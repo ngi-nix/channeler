@@ -97,7 +97,7 @@ public:
   class slot
   {
   public:
-    inline std::byte * data()
+    inline byte * data()
     {
       if (!m_impl) {
         return nullptr;
@@ -105,7 +105,7 @@ public:
       return m_impl->block_slot.data();
     }
 
-    inline std::byte const * data() const
+    inline byte const * data() const
     {
       if (!m_impl) {
         return nullptr;

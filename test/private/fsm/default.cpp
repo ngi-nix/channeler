@@ -42,7 +42,7 @@ using connection_t = ::channeler::context::connection<
 
 using packet_t = std::pair<
   channeler::packet_wrapper,
-  std::shared_ptr<std::vector<std::byte>>
+  std::shared_ptr<std::vector<channeler::byte>>
 >;
 
 inline packet_t
@@ -51,8 +51,8 @@ make_packet(channeler::peerid const & sender,
 {
   constexpr std::size_t packet_size = channeler::packet_wrapper::envelope_size();
 
-  auto buf = std::make_shared<std::vector<std::byte>>();
-  buf->resize(packet_size, std::byte{0});
+  auto buf = std::make_shared<std::vector<channeler::byte>>();
+  buf->resize(packet_size, channeler::byte{0});
 
   channeler::packet_wrapper pkt{buf->data(), buf->size(), false};
   pkt.sender() = sender;
@@ -74,7 +74,7 @@ TEST(FSMStandardRegistry, create)
   node_t node{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; },
+    []() -> std::vector<channeler::byte> { return {}; },
     [](channeler::support::timeouts::duration d) { return d; },
   };
 
@@ -112,13 +112,13 @@ TEST(FSMStandardRegistry, negotiate_channel)
   node_t node1{
     self,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; },
+    []() -> std::vector<channeler::byte> { return {}; },
     [](channeler::support::timeouts::duration d) { return d; },
   };
   node_t node2{
     peer,
     PACKET_SIZE,
-    []() -> std::vector<std::byte> { return {}; },
+    []() -> std::vector<channeler::byte> { return {}; },
     [](channeler::support::timeouts::duration d) { return d; },
   };
 

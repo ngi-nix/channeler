@@ -22,11 +22,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../byte_suffix.h"
-
-using namespace test;
-
 namespace {
+
+using namespace liberate::types::literals;
 
 auto const secret1 = "s3kr1t"_b;
 auto const secret2 = "t1rk3s"_b;

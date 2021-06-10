@@ -206,7 +206,7 @@ TEST(FSMChannelInitiator, acknowledge_channel)
       initiator);
 
   // Need a packet buffer, even if the contents are not used
-  std::vector<std::byte> data{test::packet_with_messages,
+  std::vector<channeler::byte> data{test::packet_with_messages,
     test::packet_with_messages + test::packet_with_messages_size};
   channeler::packet_wrapper pkt{data.data(), data.size()};
   pkt.sender() = recipient;

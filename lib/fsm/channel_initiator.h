@@ -84,7 +84,7 @@ struct fsm_channel_initiator
   : public fsm_base
 {
   using channel_set = ::channeler::channels<channelT>;
-  using secret_type = std::vector<std::byte>;
+  using secret_type = std::vector<byte>;
   using secret_generator = std::function<secret_type ()>;
 
   using new_channel_event_type = ::channeler::pipe::new_channel_event;
