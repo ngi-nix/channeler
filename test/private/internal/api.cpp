@@ -71,8 +71,9 @@ struct packet_loop_callback
     ASSERT_EQ(entry.packet.buffer_size(), peer_slot.size());
     memcpy(peer_slot.data(), entry.packet.buffer(), peer_slot.size());
 
-    liberate::string::wide_hexdump hd;
-    std::cerr << hd(peer_slot.data(), peer_slot.size()) << std::endl;
+    // liberate::string::wide_hexdump hd;
+    liberate::string::canonical_hexdump hd;
+    LIBLOG_DEBUG("Packet data: " << std::endl << hd(peer_slot.data(), peer_slot.size()));
 
     // Let the peer consume its slot
     m_peer->received_packet(123, 321, peer_slot);
