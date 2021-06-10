@@ -26,6 +26,8 @@
 
 #include <channeler.h>
 
+#include <cstring>
+
 namespace channeler::memory {
 
 /**
@@ -59,7 +61,7 @@ private:
   struct chunk
   {
     chunk_header  header;
-    byte *   data;
+    byte *        data;
   };
 
 public:
@@ -114,6 +116,7 @@ public:
     , m_chunks{new chunk[CAPACITY]}
   {
     // Allocate data and chunks.
+    std::memset(m_data, 0, m_packet_size * CAPACITY);
 
     // We have to initialize the free list. This means a) setting the freelist
     // to point at the first chunk, and b) setting the header of each chunk but
@@ -236,7 +239,7 @@ private:
   std::size_t const m_packet_size;
 
   // Chunk headers and data.
-  byte *       m_data = nullptr;
+  byte *            m_data = nullptr;
   chunk *           m_chunks = nullptr;
 
   // We also need a free list is the head of the current free list, as a pointer
