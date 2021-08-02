@@ -21,12 +21,16 @@
       # Nixpkgs instantiated for supported system types.
       nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; overlays = [ self.overlay liberateflake.overlay ]; config.allowUnfree = true; });
 
-      removeMesonWrap = path: name:
+      removeMesonWrap = path: name: libname:
         let
           meson-build = builtins.toFile "meson.build" ''
             project('${name}')
 
-            ${name}_dep = dependency('gtest')
+            compiler = meson.get_compiler('cpp')
+            ${name}_dep = dependency('${libname}', required: false, allow_fallback: false)
+            if not ${name}_dep.found()
+              ${name}_dep = compiler.find_library('${libname}', required: true)
+            endif
           '';
         in ''
           rm ./subprojects/${path}.wrap
@@ -41,14 +45,16 @@
 
           src = ./.;
 
-          postPatch =
-            removeMesonWrap "liberate" "liberate"
-            + removeMesonWrap "gtest" "gtest";
+          postPatch = ''
+            echo > ./test/meson.build
+          ''
+            + removeMesonWrap "liberate" "liberate" "erate"
+            + removeMesonWrap "gtest" "gtest" "gtest";
 
           buildInputs = [ gtest liberate ];
           nativeBuildInputs = [ meson ninja ];
 
-          doCheck = true;
+          doCheck = false;
 
           meta = with lib; {
             description = "A reference implementation for a multi-channel and -link protocol for peer-to-peer communications.";
