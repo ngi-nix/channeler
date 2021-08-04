@@ -54,7 +54,7 @@
           buildInputs = [ gtest liberate ];
           nativeBuildInputs = [ meson ninja ];
 
-          doCheck = false;
+          doCheck = true;
 
           meta = with lib; {
             description = "A reference implementation for a multi-channel and -link protocol for peer-to-peer communications.";
