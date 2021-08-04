@@ -93,5 +93,7 @@
         });
 
       defaultPackage = forAllSystems (system: self.packages.${system}.channeler);
+
+      hydraJobs.channeler = self.defaultPackage;
     };
 }
